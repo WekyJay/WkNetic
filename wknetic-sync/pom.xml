@@ -10,6 +10,7 @@
     </parent>
 
     <artifactId>wknetic-sync</artifactId>
+    <description>游戏数据同步中心：负责与 Minecraft 插件进行双向通讯</description>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
