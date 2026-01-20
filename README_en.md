@@ -65,7 +65,7 @@ My goal is to build a long-term maintained open-source project. The current deve
 
 ### Phase 2: Security & Authentication
 
-* [ ] **Auth**: Integrate Spring Security for JWT login and renewal
+* [x] **Auth**: Integrate Spring Security for JWT login and renewal
 * [ ] **Log**: Asynchronous logging based on AOP + Virtual Threads
 * [ ] **UI**: Login page implementation with Vue3 + UnoCSS
 

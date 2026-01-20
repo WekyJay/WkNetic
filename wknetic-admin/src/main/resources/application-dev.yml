@@ -2,3 +2,20 @@ wknetic:
   jwt:
     secret: "WkNeticCoreSecretKeyForSpringSecurityVersion2026MakeItLong"
     expiration: 2592000
+spring:
+  data:
+    redis:
+      # 基础连接信息
+      host: localhost       # 如果是用 Docker 部署，这里可能需要改成 'redis' 或者服务器 IP
+      port: 6379
+      password: 123456      # 如果没有密码留空，如果有必须填
+      database: 0           # Redis 默认有 16 个库 (0-15)，我们用 0 号库
+      # 连接超时时间
+      timeout: 3000ms
+      # Lettuce 连接池配置 (高并发关键)
+      lettuce:
+        pool:
+          max-active: 8     # 最大连接数 (默认 8)，生产环境可根据并发量调大
+          max-wait: -1ms    # 最大阻塞等待时间 (-1 表示无限等待)
+          max-idle: 8       # 最大空闲连接
+          min-idle: 0       # 最小空闲连接
