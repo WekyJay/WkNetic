@@ -22,14 +22,13 @@ Here is the translated English version of your README. It maintains the technica
 
 **WkNetic** (Pronounced: `/wikeɪ-ˈnetɪk/`) is an open-source full-stack game community system designed to eliminate the gap between Minecraft servers and the Web.
 
-Unlike traditional forums, WkNetic utilizes **Netty** and **Redis** to achieve millisecond-level bidirectional data synchronization. Built with **Java 21 Virtual Threads**, it ensures extreme performance under high concurrency. With its built-in **Flowable** workflow engine and **n8n** automation interfaces, it provides server owners and developers with an out-of-the-box automated operations experience.
+Unlike traditional forums, WkNetic utilizes **Netty** and **Redis** to achieve millisecond-level bidirectional data synchronization. Built with **Java 21 Virtual Threads**, it ensures extreme performance under high concurrency. With its built-in **Flowable** workflow engine, it provides server owners and developers with an out-of-the-box automated operations experience.
 
 ### ✨ Key Features
 
 * **⚡ Kinetic Sync**: Real-time synchronization of in-game chat, status, and inventory data with the web interface via Netty WebSocket.
 * **🧵 Virtual Thread Driven**: Fully embraces Java 21 Virtual Threads to handle tens of thousands of concurrent connections effortlessly, eliminating "callback hell."
 * **🎨 Pixel & Modern (Dual Theme)**: Built-in SPI theme engine supporting one-click switching between "Modern Minimalist" and "8-bit Pixel" styles.
-* **🤖 Automation First**: Deep integration with n8n Webhooks for automated weekly server reports and player activity analytics.
 * **🧩 Modular Monolith**: Modular isolation of source code (Auth/Sync/Community) with lightweight deployment (Single Docker container).
 
 ## 🏗️ Architecture Overview
@@ -40,7 +39,7 @@ graph TD
     Player[Mc Player] -- TCP/Netty --> Sync[Sync Module]
     
     subgraph "WkNetic Core (Modular Monolith)"
-        Gateway --> Auth[Auth Module <br> Sa-Token]
+        Gateway --> Auth[Auth Module <br> Spring Security]
         Gateway --> Community[Community Module <br> Flowable]
         Sync -.-> Bus(Event Bus)
         Bus -.-> Community
@@ -60,8 +59,8 @@ My goal is to build a long-term maintained open-source project. The current deve
 ### Phase 1: Infrastructure
 
 * [x] **Project Init**: Setup Maven multi-module architecture (Common, Auth, Admin) `Doing`
-* [ ] **Core Utils**: Encapsulate `ThreadUtil` (Java 21 Virtual Thread support)
-* [ ] **Response**: Define unified response body `Result<T>` and global exception handling
+* [x] **Core Utils**: Encapsulate `ThreadUtil` (Java 21 Virtual Thread support)
+* [x] **Response**: Define unified response body `Result<T>` and global exception handling
 * [ ] **Docs**: Complete architecture design document `DESIGN.md`
 
 ### Phase 2: Security & Authentication
