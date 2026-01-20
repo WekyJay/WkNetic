@@ -9,6 +9,7 @@ import cn.wekyjay.wknetic.common.config.JwtProperties;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
+@Component
 public class JwtUtil {
 
     @Resource

@@ -64,7 +64,7 @@ graph TD
 
 ### Phase 2: 安全与认证 (Security)
 
-- [ ] **Auth**: 集成 Spring Security，实现 JWT 登录与续签
+- [x] **Auth**: 集成 Spring Security，实现 JWT 登录与续签
 - [ ] **Log**: 基于 AOP + 虚拟线程的异步日志记录
 - [ ] **UI**: Vue3 + UnoCSS 登录页实现
 
