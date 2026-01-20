@@ -1,4 +1,4 @@
-package com.wknetic.common.model;
+package cn.wekyjay.wknetic.common.model;
 
 /**
  * @Description: 允许 Result 对象接收任何实现了此接口的枚举，方便未来拆分微服务。

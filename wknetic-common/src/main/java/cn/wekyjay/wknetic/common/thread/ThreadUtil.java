@@ -1,4 +1,4 @@
-package com.wknetic.common.thread;
+package cn.wekyjay.wknetic.common.thread;
 import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.*;
 

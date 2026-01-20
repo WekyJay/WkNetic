@@ -35,7 +35,6 @@
     <properties>
         <java.version>21</java.version>
         <hutool.version>5.8.38</hutool.version>
-        <jackson.version>2.21.0</jackson.version>
         <mybatis-plus.version>3.5.16</mybatis-plus.version>
         <slf4j-api.version>2.0.9</slf4j-api.version>
     </properties>
@@ -58,11 +57,6 @@
                 <version>${hutool.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
                 <version>${mybatis-plus.version}</version>
@@ -74,9 +68,4 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-
-
-
-
 </project>

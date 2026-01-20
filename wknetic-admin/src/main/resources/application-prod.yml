@@ -1,0 +1,6 @@
+wknetic:
+  jwt:
+    # 语法：${环境变量名:默认值}
+    # 生产环境读取 WKNETIC_JWT_SECRET，如果没读到，就用后面的默认值
+    secret: ${WKNETIC_JWT_SECRET:WkNeticCoreSecretKeyForSpringSecurityVersion2026MakeItLong}
+    expiration: 2592000

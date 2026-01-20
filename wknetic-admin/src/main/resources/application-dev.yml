@@ -1,0 +1,4 @@
+wknetic:
+  jwt:
+    secret: "WkNeticCoreSecretKeyForSpringSecurityVersion2026MakeItLong"
+    expiration: 2592000

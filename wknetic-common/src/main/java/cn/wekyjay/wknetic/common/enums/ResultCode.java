@@ -1,6 +1,6 @@
-package com.wknetic.common.enums;
+package cn.wekyjay.wknetic.common.enums;
 
-import com.wknetic.common.model.IResultCode;
+import cn.wekyjay.wknetic.common.model.IResultCode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
