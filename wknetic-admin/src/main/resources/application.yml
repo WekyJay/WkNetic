@@ -9,3 +9,7 @@ spring:
     active: dev
   application:
     name: WkNetic
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
+    use-code-as-default-message: true

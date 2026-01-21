@@ -6,9 +6,9 @@ import lombok.Data;
 @Data
 public class LoginBody {
 
-    @NotBlank(message = "用户名不能为空")
+    @NotBlank(message = "{user.username.required}")
     private String username;
 
-    @NotBlank(message = "密码不能为空")
+    @NotBlank(message = "{user.password.required}")
     private String password;
 }

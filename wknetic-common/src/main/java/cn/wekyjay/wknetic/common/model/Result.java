@@ -1,6 +1,7 @@
 package cn.wekyjay.wknetic.common.model;
 
 import cn.wekyjay.wknetic.common.enums.ResultCode;
+import cn.wekyjay.wknetic.common.util.MessageUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -50,8 +51,15 @@ public class Result<T> implements Serializable {
         return success(null);
     }
 
+
+
+
+
+
     public static <T> Result<T> success(T data) {
-        return new Result<>(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), data);
+        // 自动去翻译工具类拿文字
+        String msg = MessageUtils.get(ResultCode.SUCCESS.getMessage());
+        return new Result<>(ResultCode.SUCCESS.getCode(), msg, data);
     }
     
     public static <T> Result<T> success(String message, T data) {
@@ -64,7 +72,9 @@ public class Result<T> implements Serializable {
      * 直接使用枚举返回错误
      */
     public static <T> Result<T> error(IResultCode resultCode) {
-        return new Result<>(resultCode.getCode(), resultCode.getMessage(), null);
+        // 自动翻译错误信息
+        String msg = MessageUtils.get(resultCode.getMessage());
+        return new Result<>(resultCode.getCode(), msg, null);
     }
 
     /**

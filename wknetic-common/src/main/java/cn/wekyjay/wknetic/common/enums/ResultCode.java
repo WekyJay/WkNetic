@@ -16,38 +16,38 @@ import lombok.Getter;
 public enum ResultCode implements IResultCode {
 
     /* ================= 基础状态 ================= */
-    SUCCESS(20000, "操作成功"),
-    SYSTEM_ERROR(50000, "系统繁忙，请稍后重试"),
+    SUCCESS(20000, "code.success"),
+    SYSTEM_ERROR(50000, "code.system.error"),
 
     /* ================= 客户端错误 (40xxx) ================= */
-    CLIENT_ERROR(40000, "客户端请求参数错误"),
-    PARAM_VALID_ERROR(40001, "参数校验失败"),
+    CLIENT_ERROR(40000, "code.client.error"),
+    PARAM_VALID_ERROR(40001, "code.param.error"),
     
     /* ================= 认证与安全 (401xx - 403xx) ================= */
-    unauthorized(40100, "尚未登录或Token已失效"),
-    TOKEN_INVALID(40101, "Token无效或已过期"),
+    unauthorized(40100, "code.unauthorized"),
+    TOKEN_INVALID(40101, "code.token.invalid"),
     
     // 【关键】WkNetic 特有：API 接口签名错误 (针对 Mc 插件/第三方接入)
-    SIGN_MISSING(40102, "缺少签名参数"),
-    SIGN_INVALID(40103, "API签名验证失败"),
-    SIGN_EXPIRED(40104, "API请求时间戳已过期"), // 防重放攻击
+    SIGN_MISSING(40102, "code.sign.missing"),
+    SIGN_INVALID(40103, "code.sign.invalid"),
+    SIGN_EXPIRED(40104, "code.sign.expired"), // 防重放攻击
 
-    FORBIDDEN(40300, "您没有权限执行此操作"),
+    FORBIDDEN(40300, "code.forbidden"),
     
     /* ================= 业务资源 (404xx) ================= */
-    RESOURCE_NOT_FOUND(40400, "请求的资源不存在"),
-    USER_NOT_FOUND(40401, "用户不存在"),
-    SERVER_NOT_FOUND(40402, "未找到指定的Minecraft服务器"),
+    RESOURCE_NOT_FOUND(40400, "code.noresource"),
+    USER_NOT_FOUND(40401, "code.user.not_found"),
+    SERVER_NOT_FOUND(40402, "code.server.not_found"),
 
     /* ================= 核心业务异常 (5xxxx) ================= */
     // 【关键】Netty 与 游戏同步相关
-    GAME_SYNC_TIMEOUT(50100, "游戏服务器响应超时"),
-    GAME_SERVER_OFFLINE(50101, "游戏服务器未连接到云端"),
-    GAME_CMD_FAILED(50102, "指令发送失败"),
+    GAME_SYNC_TIMEOUT(50100, "code.game.sync_timeout"),
+    GAME_SERVER_OFFLINE(50101, "code.game.offline"),
+    GAME_CMD_FAILED(50102, "code.game.cmd_failed"),
 
     // Flowable 工作流相关
-    FLOW_PROCESS_ERROR(50200, "流程执行异常"),
-    FLOW_TASK_NOT_FOUND(50201, "当前任务不存在或已完结");
+    FLOW_PROCESS_ERROR(50200, "code.flow.error"),
+    FLOW_TASK_NOT_FOUND(50201, "code.flow.task_not_found");
 
     private final Integer code;
     private final String message;
