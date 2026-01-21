@@ -1,0 +1,70 @@
+/* src/styles/theme.css */
+
+:root {
+    /* ==============================================
+       亮色模式 (Light Mode - 默认)
+       设计思路：使用高亮度的白/灰底，搭配深色文字
+    ============================================== */
+
+    /* --- 背景层 --- */
+    /* DEFAULT: 纯白或极淡的锌灰，保持干净 */
+    --bg-default: #ffffff;
+    /* raised: 略微带点灰，用于区分层级 */
+    --bg-raised: #f4f4f5;
+    /* surface: 卡片背景，纯白 */
+    --bg-surface: #ffffff;
+    /* hover: 极淡的灰色悬停 */
+    --bg-hover: #f4f4f5;
+    /* input: 输入框通常带个淡灰背景或纯白带框，这里选淡灰 */
+    --bg-input: #f4f4f5;
+
+    /* --- 品牌色 (Brand) --- */
+    /* 柿红橙在亮色下依然通用，无需大幅调整，或者微调深浅 */
+    --brand-default: #ff6b35;
+    --brand-hover: #e6521f;
+    --brand-light: #ff956b;
+    --brand-dark: #cc441a;
+
+    /* --- 文字 (Text) --- */
+    /* 既然背景是白的，文字就要反转成深色 */
+    --text-default: #18181b; /* 对应你原来的背景色，作为亮色下的主文字 */
+    --text-secondary: #52525b; /* Zinc-600 */
+    --text-muted: #a1a1aa;     /* Zinc-400 */
+    --text-disabled: #d4d4d8;  /* Zinc-300 */
+
+    /* --- 边框 (Border) --- */
+    --border-default: #e4e4e7; /* Zinc-200 */
+    --border-light: #f4f4f5;   /* Zinc-100 */
+    --border-dark: #d4d4d8;    /* Zinc-300 */
+}
+
+/* ==============================================
+   暗黑模式 (Dark Mode)
+   直接把你提供的 Hex 代码搬运到这里
+============================================== */
+html.dark {
+    /* --- 背景层 --- */
+    --bg-default: #18181b; /* 你原来的 DEFAULT */
+    --bg-raised: #27272a;
+    --bg-surface: #303036;
+    --bg-hover: #3f3f46;
+    --bg-input: #121214;
+
+    /* --- 品牌色 --- */
+    /* 暗黑模式下通常不需要变，或者稍微提亮一点点 */
+    --brand-default: #ff6b35;
+    --brand-hover: #e6521f;
+    --brand-light: #ff956b;
+    --brand-dark: #cc441a;
+
+    /* --- 文字 --- */
+    --text-default: #ffffff;
+    --text-secondary: #a1a1aa; /* 你的调整：中性暖灰 */
+    --text-muted: #71717a;
+    --text-disabled: #52525b;
+
+    /* --- 边框 --- */
+    --border-default: #3f3f46;
+    --border-light: #52525b;
+    --border-dark: #27272a;
+}

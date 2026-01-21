@@ -9,13 +9,21 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.5.24"
+    "@vueuse/core": "^14.1.0",
+    "vue": "^3.5.24",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@iconify-json/carbon": "^1.2.18",
+    "@iconify-json/tabler": "^1.2.26",
+    "@iconify/utils": "^3.1.0",
     "@types/node": "^24.10.1",
+    "@unocss/preset-wind3": "^66.6.0",
+    "@unocss/reset": "^66.6.0",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/tsconfig": "^0.8.1",
     "typescript": "~5.9.3",
+    "unocss": "^66.6.0",
     "vite": "npm:rolldown-vite@7.2.5",
     "vue-tsc": "^3.1.4"
   },
