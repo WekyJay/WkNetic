@@ -13,3 +13,7 @@ spring:
     basename: i18n/messages
     encoding: UTF-8
     use-code-as-default-message: true
+
+wknetic:
+  socket:
+    port: 8081

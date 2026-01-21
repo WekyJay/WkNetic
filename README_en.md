@@ -58,23 +58,23 @@ graph TD
 
 My goal is to build a long-term maintained open-source project. The current development cycle for 2026 Q1 is planned as follows:
 
-### Phase 1: Infrastructure
+### Phase 1: Infrastructure (✅DONE)
 
 * [x] **Project Init**: Setup Maven multi-module architecture (Common, Auth, Admin) `Doing`
 * [x] **Core Utils**: Encapsulate `ThreadUtil` (Java 21 Virtual Thread support)
 * [x] **Response**: Define unified response body `Result<T>` and global exception handling
-* [ ] **Docs**: Complete architecture design document `DESIGN.md`
+* [x] **Docs**: Complete architecture design document `DESIGN.md`
 
 ### Phase 2: Security & Authentication
 
 * [x] **Auth**: Integrate Spring Security for JWT login and renewal
 * [ ] **Log**: Asynchronous logging based on AOP + Virtual Threads
-* [ ] **UI**: Login page implementation with Vue3 + UnoCSS
+* [x] **UI**: Login page implementation with Vue3 + UnoCSS
 
 ### Phase 3: The Kinetic Core
 
-* [ ] **Netty Server**: Implement WebSocket server and heartbeat detection
-* [ ] **Spigot Client**: Develop the Netty Client for the Minecraft plugin side
+* [x] **Netty Server**: Implement WebSocket server and heartbeat detection
+* [x] **Spigot Client**: Develop the Netty Client for the Minecraft plugin side
 * [ ] **Chat Sync**: Bidirectional chat synchronization between Web and Game
 * [ ] **Data Stream**: Real-time player status and metadata synchronization (Redis)
 

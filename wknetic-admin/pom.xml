@@ -43,6 +43,12 @@
             <artifactId>wknetic-auth</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>cn.wekyjay.wknetic</groupId>
+            <artifactId>wknetic-socket</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 

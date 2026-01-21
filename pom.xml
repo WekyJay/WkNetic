@@ -45,6 +45,7 @@
         <module>wknetic-auth</module>
         <module>wknetic-community</module>
         <module>wknetic-sync</module>
+        <module>wknetic-socket</module>
     </modules>
 
     <dependencies>
@@ -89,6 +90,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                            <version>1.18.42</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
