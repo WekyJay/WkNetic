@@ -16,6 +16,8 @@ Here is the translated English version of your README. It maintains the technica
 
 *The project is currently in early-stage development (Alpha). Star us to follow the progress!*
 
+![index_preview_02.jpeg](images/index_preview_02.jpeg)
+
 </div>
 
 ## 📖 Introduction

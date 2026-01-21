@@ -17,6 +17,8 @@
 ### 🚧 Project Status: Active Development (WIP) 🚧
 *目前项目处于早期开发阶段 (Alpha)，欢迎 Star 关注进度！*
 
+![index_preview_02.jpeg](images/index_preview_02.jpeg)
+
 </div>
 
 ## 📖 简介 | Introduction
