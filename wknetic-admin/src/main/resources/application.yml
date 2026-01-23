@@ -9,11 +9,26 @@ spring:
     active: dev
   application:
     name: WkNetic
+  threads:
+    virtual:
+      enabled: true
   messages:
     basename: i18n/messages
     encoding: UTF-8
     use-code-as-default-message: true
 
+# MyBatis-Plus 配置
+mybatis-plus:
+  # 实体类扫描包 (对应你的 domain 路径)
+  type-aliases-package: cn.wekyjay.wknetic.admin.system.domain
+  configuration:
+    # 开启 SQL 日志打印 (开发环境必开，方便调试)
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 开启驼峰命名转换 (oper_id -> operId)
+    map-underscore-to-camel-case: true
+    
 wknetic:
   socket:
     port: 8081
+  # 是否开启数据库自动初始化
+  db-auto-init: true

@@ -21,3 +21,18 @@ spring:
           max-wait: -1ms    # 最大阻塞等待时间 (-1 表示无限等待)
           max-idle: 8       # 最大空闲连接
           min-idle: 0
+  datasource:
+    # 1. 数据库驱动 (MySQL 8+ 推荐用 cj.jdbc.Driver)
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 2. 连接地址 (关键参数详解见下方)
+    # ⚠️ 请确保先手动创建数据库: CREATE DATABASE wknetic DEFAULT CHARACTER SET utf8mb4;
+    url: jdbc:mysql://127.0.0.1:3306/wknetic?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    # 3. 账号密码
+    username: root
+    password: 你的数据库密码
+    # 4. 连接池配置 (HikariCP - SpringBoot默认最强连接池)
+    hikari:
+      minimum-idle: 5        # 最小空闲连接
+      maximum-pool-size: 20  # 最大连接数
+      max-lifetime: 1800000  # 连接最大存活时间(ms)
+      connection-timeout: 30000 # 等待连接超时时间(ms)
