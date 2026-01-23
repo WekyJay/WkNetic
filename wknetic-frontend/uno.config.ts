@@ -18,7 +18,6 @@ export default defineConfig({
         presetIcons({
             scale: 1.2,
             warn: true, // 找不到图标时在控制台警告
-            cdn: 'https://esm.sh/',
             extraProperties: {
                 'display': 'inline-block',
                 'vertical-align': 'middle',

@@ -2,20 +2,47 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 // 定义路由配置
 const routes: RouteRecordRaw[] = [
+        // 首页布局
         {
             path: '/',
-            name: 'home',
-            component: () => import('../pages/HomePage.vue'),
+            name: 'home-layout',
+            component: () => import('@/components/layout/HomeLayout.vue'),
+            children: [
+                {
+                    path: '',
+                    name: 'home-home',
+                    component: () => import('@/pages/HomePage.vue'),
+                },
+                {
+                    path: '/mods',
+                    name: 'mods',
+                    component: () => import('@/pages/SearchPage.vue'),
+                },
+                {
+                    path: '/project/:id',
+                    name: 'project',
+                    component: () => import('@/pages/ProjectPage.vue'),
+                }
+            ]
         },
+        // 管理后台路由
         {
-            path: '/mods',
-            name: 'mods',
-            component: () => import('../pages/SearchPage.vue'),
+            path: '/admin',
+            name: 'admin-layout',
+            component: () => import('@/components/layout/admin/AdminLayout.vue'),
+            children: [
+                {
+                    path: '',
+                    name: 'admin-home',
+                    component: () => import('@/pages/admin/DashboardPage.vue'),
+                }
+            ]
         },
+        // 管理员登录页面
         {
-            path: '/project/:id',
-            name: 'project',
-            component: () => import('../pages/ProjectPage.vue'),
+            path: '/admin/login',
+            name: 'admin-login',
+            component: () => import('@/pages/admin/LoginPage.vue'),
         },
         // 404 页面捕获
         {
@@ -24,6 +51,8 @@ const routes: RouteRecordRaw[] = [
             component: () => import('../pages/NotFoundPage.vue'),
         }
     ]
+
+
 
 const router = createRouter({
     // 使用 HTML5 History 模式 (URL 不带 #)
