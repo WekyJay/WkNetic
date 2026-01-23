@@ -65,10 +65,10 @@ My goal is to build a long-term maintained open-source project. The current deve
 * [x] **Response**: Define unified response body `Result<T>` and global exception handling
 * [x] **Docs**: Complete architecture design document `DESIGN.md`
 
-### Phase 2: Security & Authentication
+### Phase 2: Security & Authentication (✅DONE)
 
 * [x] **Auth**: Integrate Spring Security for JWT login and renewal
-* [ ] **Log**: Asynchronous logging based on AOP + Virtual Threads
+* [x] **Log**: Asynchronous logging based on AOP + Virtual Threads
 * [x] **UI**: Login page implementation with Vue3 + UnoCSS
 
 ### Phase 3: The Kinetic Core

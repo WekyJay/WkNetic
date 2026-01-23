@@ -64,10 +64,10 @@ graph TD
 - [x] **Response**: 定义统一响应体 `Result<T>` 与全局异常拦截
 - [ ] **Docs**: 完成架构设计文档 `DESIGN.md`
 
-### Phase 2: 安全与认证 (Security)
+### Phase 2: 安全与认证 (Security) (✅DONE)
 
 - [x] **Auth**: 集成 Spring Security，实现 JWT 登录与续签
-- [ ] **Log**: 基于 AOP + 虚拟线程的异步日志记录
+- [x] **Log**: 基于 AOP + 虚拟线程的异步日志记录
 - [x] **UI**: Vue3 + UnoCSS 登录页实现
 
 ### Phase 3: 动能同步核心 (The Kinetic Core)
