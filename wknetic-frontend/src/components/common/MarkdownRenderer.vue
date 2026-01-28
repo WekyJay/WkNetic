@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref, h, defineComponent, watch, resolveComponent } from 'vue'
 import { marked } from 'marked'
-// import 'highlight.js/styles/atom-one-dark.css'
-import 'highlight.js/styles/github-dark.css' // 引入代码高亮样式
+import 'highlight.js/styles/atom-one-dark.css' // 引入代码高亮样式
 import DOMPurify from 'dompurify'
 
 const props = defineProps<{
@@ -79,7 +78,7 @@ const DynamicMarkdown = defineComponent({
           return h('div', { class: 'code-block-wrapper', key: `code-${idx}` }, [
             // 代码块头部（语言标签 + 复制按钮）
             h('div', { class: 'code-block-header' }, [
-              h('span', { class: 'code-block-language' }, block.language || 'plaintext'),
+              h('span', { class: 'code-block-language' }, block.language?.toUpperCase() || 'PLAINTEXT'),
               h('button', {
                 class: 'code-block-copy-btn',
                 onClick: (e: Event) => copyCode(block.code, e),
@@ -96,8 +95,10 @@ const DynamicMarkdown = defineComponent({
           ])
         } else if (part.trim()) {
           const sanitized = DOMPurify.sanitize(part, {
-            ADD_TAGS: ['figure', 'figcaption'],
-            ADD_ATTR: ['loading'],
+            // ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'code', 'a', 'ul', 'ol', 'li', 'blockquote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr','element', 'figure', 'figcaption', 'img'],
+            // ALLOWED_ATTR: ['href', 'title', 'target', 'rel', 'src', 'alt', 'loading'],
+            FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed'],
+            FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
           })
           return h('div', {
             innerHTML: sanitized,
@@ -229,7 +230,9 @@ watch(
   margin: 1.5em 0;
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--border-default);
+  border: 1px solid #292e35;
+  background: #282c34;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* 代码块头部 */
@@ -238,14 +241,13 @@ watch(
   justify-content: space-between;
   align-items: center;
   padding: 0.5rem 1rem;
-  background: var(--bg-black);
-  border-bottom: 1px solid var(--border-black);
+  background: #21252b;
+  border-bottom: 1px solid #27292d;
 }
 
 .code-block-language {
   font-size: 0.75rem;
-  text-transform: uppercase;
-  color: var(--text-secondary);
+  color: #abb2bf;
   font-weight: 600;
   letter-spacing: 0.05em;
 }
@@ -253,7 +255,8 @@ watch(
 .code-block-copy-btn {
   font-size: 0.75rem;
   padding: 0.25rem 0.75rem;
-  color: var(--text-secondary);
+  color: #abb2bf;
+  background: transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s;
@@ -261,9 +264,8 @@ watch(
 }
 
 .code-block-copy-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-default);
-  border-color: var(--border-light);
+  background: #2c313a;
+  color: #61afef;
 }
 
 .code-block-copy-btn:active {
@@ -273,8 +275,8 @@ watch(
 /* 代码块内容容器 */
 .rendered-code-block {
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace !important;
-  font-size: 0.8125rem !important;
-  line-height: 1.6 !important;
+  background: #282c34;
+  font-size: smaller;
 }
 
 /* 代码块 pre 元素样式 */
@@ -282,28 +284,52 @@ watch(
   overflow-x: auto;
   padding: 1rem;
   margin: 0;
+  background: #282c34 !important;
 }
+
 
 .markdown-body-content table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin: 1em 0;
+  border: 1px solid #d0d7de;
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .markdown-body-content th,
 .markdown-body-content td {
-  border: 1px solid var(--color-border);
   padding: 0.6em 1em;
-  text-align: left;
+  border-bottom: 1px solid #d0d7de;
+  border-right: 1px solid #d0d7de;
+}
+
+.markdown-body-content th:last-child,
+.markdown-body-content td:last-child {
+  border-right: none;
+}
+
+.markdown-body-content tr:last-child td {
+  border-bottom: none;
 }
 
 .markdown-body-content th {
-  background: var(--bg-surface);
+  background: #f6f8fa;
   font-weight: 600;
+  color: #24292f;
 }
 
-.markdown-body-content tr:nth-child(even) {
-  background: var(--color-bg-surface);
+.markdown-body-content tbody tr:nth-child(even) {
+  background: #f6f8fa;
+}
+
+.markdown-body-content tbody tr:hover {
+  background: #eef2f5;
+}
+
+.markdown-body-content tbody tr:hover {
+  background: #eef2f5;
 }
 
 .markdown-body-content hr {
@@ -327,6 +353,8 @@ watch(
   font-size: 0.875rem;
   color: var(--color-text-muted);
   margin-top: 0.5em;
+  text-align: center;
+  display: block;
 }
 
 /* 任务列表 */

@@ -85,5 +85,39 @@
     "recent_activities": "最近活动",
     "download_chart": "下载图表",
     "user_growth": "用户增长"
+  },
+  "register": {
+    "title": "创建账户",
+    "subtitle": "加入我们的社区",
+    "backToHome": "返回首页",
+    "username": "用户名",
+    "usernamePlaceholder": "选择一个用户名",
+    "email": "邮箱",
+    "emailPlaceholder": "你的邮箱地址",
+    "password": "密码",
+    "passwordPlaceholder": "创建密码",
+    "confirmPassword": "确认密码",
+    "confirmPasswordPlaceholder": "确认你的密码",
+    "passwordHint": "至少8个字符",
+    "termsPrefix": "我同意",
+    "termsOfService": "服务条款",
+    "and": "和",
+    "privacyPolicy": "隐私政策",
+    "signUp": "注册",
+    "signingUp": "正在创建账户...",
+    "orContinueWith": "或使用以下方式继续",
+    "alreadyHaveAccount": "已有账户？",
+    "signIn": "登录",
+    "errors": {
+      "usernameRequired": "用户名不能为空",
+      "usernameMinLength": "用户名至少需要3个字符",
+      "emailRequired": "邮箱不能为空",
+      "emailInvalid": "请输入有效的邮箱地址",
+      "passwordRequired": "密码不能为空",
+      "passwordMinLength": "密码至少需要8个字符",
+      "passwordMismatch": "两次输入的密码不一致",
+      "termsRequired": "您必须同意服务条款和隐私政策",
+      "registrationFailed": "注册失败，请重试。"
+    }
   }
 }

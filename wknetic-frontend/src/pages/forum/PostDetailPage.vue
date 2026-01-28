@@ -103,6 +103,8 @@ Caused by: java.lang.NoSuchMethodError: 'void net.caffeinemc.mods.sodium.api.ver
 
 The game crashes immediately when I try to enable any shader pack.
 
+![Crash Screenshot](https://img.cdn1.vip/i/6979a510b85cc_1769579792.webp)
+
 ---
 
 Has anyone else encountered this issue? Any help would be greatly appreciated!
@@ -611,7 +613,5 @@ onMounted(() => {
         </section>
       </template>
     </main>
-    
-    <TheFooter />
   </div>
 </template>

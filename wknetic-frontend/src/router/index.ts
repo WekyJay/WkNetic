@@ -54,6 +54,12 @@ const routes: RouteRecordRaw[] = [
             name: 'admin-login',
             component: () => import('@/pages/LoginPage.vue'),
         },
+        // 注册页面
+        {
+            path: '/register',
+            name: 'register',
+            component: () => import('@/pages/auth/RegisterPage.vue'),
+        },
         // 404 页面捕获
         {
             path: '/:pathMatch(.*)*',

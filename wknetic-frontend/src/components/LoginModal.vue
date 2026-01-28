@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   isOpen: boolean
@@ -12,6 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
@@ -71,6 +73,11 @@ function handleKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     handleClose()
   }
+}
+
+function goToRegister() {
+  handleClose()
+  router.push('/register')
 }
 </script>
 
@@ -227,9 +234,13 @@ function handleKeydown(e: KeyboardEvent) {
               <!-- Sign up link -->
               <p class="text-center text-sm text-text-muted pt-4">
                 Don't have an account?
-                <a href="#" class="text-brand hover:underline font-medium">
+                <button 
+                  type="button"
+                  class="text-brand hover:underline font-medium"
+                  @click="goToRegister"
+                >
                   Sign up
-                </a>
+                </button>
               </p>
             </form>
           </div>

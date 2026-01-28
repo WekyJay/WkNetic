@@ -85,5 +85,39 @@
     "recent_activities": "Recent Activities",
     "download_chart": "Download Chart",
     "user_growth": "User Growth"
+  },
+  "register": {
+    "title": "Create Account",
+    "subtitle": "Join our community today",
+    "backToHome": "Back to Home",
+    "username": "Username",
+    "usernamePlaceholder": "Choose a username",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "Create a password",
+    "confirmPassword": "Confirm Password",
+    "confirmPasswordPlaceholder": "Confirm your password",
+    "passwordHint": "At least 8 characters",
+    "termsPrefix": "I agree to the",
+    "termsOfService": "Terms of Service",
+    "and": "and",
+    "privacyPolicy": "Privacy Policy",
+    "signUp": "Sign Up",
+    "signingUp": "Creating Account...",
+    "orContinueWith": "Or continue with",
+    "alreadyHaveAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "errors": {
+      "usernameRequired": "Username is required",
+      "usernameMinLength": "Username must be at least 3 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters",
+      "passwordMismatch": "Passwords do not match",
+      "termsRequired": "You must accept the terms and conditions",
+      "registrationFailed": "Registration failed. Please try again."
+    }
   }
 }
