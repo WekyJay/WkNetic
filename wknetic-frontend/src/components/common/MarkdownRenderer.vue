@@ -219,7 +219,6 @@ watch(
   padding: 0.2em 0.4em;
   border-radius: var(--radius-sm);
   font-size: 0.85em;
-  background: var(--color-bg-surface);
   color: var(--color-brand);
   border: 1px solid var(--color-border);
 }
@@ -254,9 +253,7 @@ watch(
 .code-block-copy-btn {
   font-size: 0.75rem;
   padding: 0.25rem 0.75rem;
-  background: var(--bg-surface);
   color: var(--text-secondary);
-  border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s;
