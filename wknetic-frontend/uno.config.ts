@@ -63,17 +63,17 @@ export default defineConfig({
                 DEFAULT: 'var(--border-default)',
                 light: 'var(--border-light)',
                 dark: 'var(--border-dark)',
-            },
+            }
         },
         fontFamily: {
             sans: ['Inter', 'system-ui', 'sans-serif'],
             mono: ['JetBrains Mono', 'monospace'],
         },
         borderRadius: {
-            DEFAULT: '0.5rem',
-            sm: '0.25rem',
-            md: '0.5rem',
-            lg: '0.75rem',
+            DEFAULT: 'var(--radius-md)',
+            sm: 'var(--radius-sm)',
+            md: 'var(--radius-md)',
+            lg: 'var(--radius-lg)',
             xl: '1rem',
             '2xl': '1.5rem',
             full: '9999px',

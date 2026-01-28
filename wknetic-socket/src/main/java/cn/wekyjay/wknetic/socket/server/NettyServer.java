@@ -31,7 +31,7 @@ public class NettyServer {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
              .channel(NioServerSocketChannel.class)
-             .childHandler(nettyServerInitializer);
+             .childHandler(nettyServerInitializer); // 设置初始化器，解决粘包/拆包及业务逻辑
 
             ChannelFuture f = b.bind(port).sync();
             log.info("🚀 WkNetic Socket Server started on port: {}", port);

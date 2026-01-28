@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/components/layout/admin/AdminLayout.vue'
 
+const { t } = useI18n()
+
 // 统计卡片数据
-const stats = ref([
+const getStats = () => [
   { 
-    label: 'Total Projects',
+    label: t('pages.total_projects'),
     value: '12,847',
     change: '+12.5%',
     trend: 'up',
@@ -13,7 +16,7 @@ const stats = ref([
     color: 'brand'
   },
   { 
-    label: 'Active Users',
+    label: t('pages.active_users'),
     value: '845.2K',
     change: '+8.2%',
     trend: 'up',
@@ -21,7 +24,7 @@ const stats = ref([
     color: 'blue'
   },
   { 
-    label: 'Downloads Today',
+    label: t('pages.downloads_today'),
     value: '2.4M',
     change: '+23.1%',
     trend: 'up',
@@ -29,14 +32,16 @@ const stats = ref([
     color: 'purple'
   },
   { 
-    label: 'Pending Reviews',
+    label: t('pages.pending_reviews'),
     value: '156',
     change: '-5.4%',
     trend: 'down',
     icon: 'i-tabler-clock',
     color: 'orange'
   },
-])
+]
+
+const stats = ref(getStats())
 
 // 最近活动数据
 const recentActivities = ref([
@@ -110,11 +115,11 @@ const chartData = ref({
         <div class="flex items-center gap-2">
           <button class="btn-secondary text-sm">
             <span class="i-tabler-download"></span>
-            Export
+            {{ t('pages.export') }}
           </button>
           <button class="btn-primary text-sm">
             <span class="i-tabler-plus"></span>
-            New Project
+            {{ t('pages.new_project') }}
           </button>
         </div>
       </div>
@@ -142,8 +147,8 @@ const chartData = ref({
               :class="[
                 'text-xs font-medium px-2 py-1 rounded-full',
                 stat.trend === 'up' 
-                  ? 'bg-brand/15 text-brand' 
-                  : 'bg-danger/15 text-danger'
+                  ? 'text-brand text-green-600/90 bg-green-600/15' 
+                  : 'text-danger text-red-600/90 bg-red-600/15'
               ]"
             >
               {{ stat.change }}

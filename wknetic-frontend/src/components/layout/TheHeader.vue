@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LoginModal from '@/components/LoginModal.vue'
 
 const isMenuOpen = ref(false)
 const isSearchOpen = ref(false)
+const isLoginModalOpen = ref(false)
 
 const navCategories = [
   { name: 'Mods', icon: 'i-tabler-puzzle', href: '/mods' },
@@ -11,7 +13,13 @@ const navCategories = [
   { name: 'Shaders', icon: 'i-tabler-sun', href: '/shaders' },
   { name: 'Resource Packs', icon: 'i-tabler-photo', href: '/resourcepacks' },
   { name: 'Modpacks', icon: 'i-tabler-package', href: '/modpacks' },
+  { name: 'Forum', icon: 'i-tabler-message-circle', href: '/forum' }
 ]
+
+function handleLogin(credentials: { email: string; password: string }) {
+  console.log('Login with:', credentials)
+  // TODO: 实现实际的登录逻辑
+}
 </script>
 
 <template>
@@ -75,7 +83,7 @@ const navCategories = [
           </button>
 
           <!-- 登录按钮 -->
-          <button class="btn-primary text-sm">
+          <button class="btn-primary text-sm" @click="isLoginModalOpen = true">
             Sign in
           </button>
 
@@ -140,6 +148,13 @@ const navCategories = [
         </nav>
       </div>
     </div>
+
+    <!-- 登录弹窗 -->
+    <LoginModal
+      :is-open="isLoginModalOpen"
+      @close="isLoginModalOpen = false"
+      @login="handleLogin"
+    />
   </header>
 </template>
 

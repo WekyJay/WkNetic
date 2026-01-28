@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 漂浮方块动画
 const blocks = ref<{ id: number; x: number; y: number; size: number; delay: number; duration: number }[]>([])
@@ -73,10 +76,10 @@ onMounted(() => {
       <!-- 错误信息 -->
       <div class="space-y-4 mb-10">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-text">
-          Page not found
+          {{ t('pages.notFound_title') }}
         </h2>
         <p class="text-text-secondary text-lg max-w-md mx-auto">
-          Looks like a Creeper blew up this page. The content you're looking for doesn't exist or has been moved.
+          {{ t('pages.notFound_desc') }}
         </p>
       </div>
 
@@ -84,22 +87,22 @@ onMounted(() => {
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
         <router-link to="/" class="btn-primary text-base px-8 py-3">
           <span class="i-tabler-home text-lg"></span>
-          Back to home
+          {{ t('pages.backToHome') }}
         </router-link>
         <router-link to="/mods" class="btn-secondary text-base px-8 py-3">
           <span class="i-tabler-compass text-lg"></span>
-          Discover mods
+          {{ t('pages.discoverMods') }}
         </router-link>
       </div>
 
       <!-- 搜索建议 -->
       <div class="mt-16 max-w-xl mx-auto">
-        <p class="text-text-muted text-sm mb-4">Or try searching for what you need:</p>
+        <p class="text-text-muted text-sm mb-4">{{ t('pages.or_search') }}</p>
         <div class="relative">
           <span class="absolute left-4 top-1/2 -translate-y-1/2 i-tabler-search text-text-muted"></span>
           <input 
             type="text" 
-            placeholder="Search mods, plugins, resource packs..."
+            :placeholder="t('pages.search_placeholder')"
             class="w-full bg-bg-raised border border-border rounded-xl pl-12 pr-4 py-3 text-text placeholder-text-muted focus:border-brand focus:outline-none transition-colors"
           />
         </div>
@@ -107,7 +110,7 @@ onMounted(() => {
 
       <!-- 快速链接 -->
       <div class="mt-12 flex flex-wrap items-center justify-center gap-3">
-        <span class="text-text-muted text-sm">Quick links:</span>
+        <span class="text-text-muted text-sm">{{ t('pages.quick_links') }}:</span>
         <router-link to="/mods" class="badge-green hover:bg-brand/30 transition-colors">
           Mods
         </router-link>

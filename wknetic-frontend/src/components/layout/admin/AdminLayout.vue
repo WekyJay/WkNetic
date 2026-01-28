@@ -2,53 +2,55 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
 
 const menuItems = [
   { 
-    name: 'Dashboard', 
+    name: 'menu.dashboard', 
     icon: 'i-tabler-dashboard', 
     path: '/admin/dashboard',
     badge: null 
   },
   { 
-    name: 'Projects', 
+    name: 'menu.projects', 
     icon: 'i-tabler-folders', 
     path: '/admin/projects',
     badge: '1.2k' 
   },
   { 
-    name: 'Users', 
+    name: 'menu.users', 
     icon: 'i-tabler-users', 
     path: '/admin/users',
     badge: null 
   },
   { 
-    name: 'Moderation', 
+    name: 'menu.moderation', 
     icon: 'i-tabler-shield-check', 
     path: '/admin/moderation',
     badge: '23' 
   },
   { 
-    name: 'Reports', 
+    name: 'menu.reports', 
     icon: 'i-tabler-flag', 
     path: '/admin/reports',
     badge: '5' 
   },
   { 
-    name: 'Analytics', 
+    name: 'menu.analytics', 
     icon: 'i-tabler-chart-bar', 
     path: '/admin/analytics',
     badge: null 
   },
   { 
-    name: 'Settings', 
+    name: 'menu.settings', 
     icon: 'i-tabler-settings', 
     path: '/admin/settings',
     badge: null 
@@ -89,7 +91,7 @@ function toggleSidebar() {
           </div>
           <div v-if="!isSidebarCollapsed" class="flex flex-col">
             <span class="font-bold text-text">WkNetic</span>
-            <span class="text-xs text-text-muted">Admin Panel</span>
+            <span class="text-xs text-text-muted">{{ t('admin.panel') }}</span>
           </div>
         </router-link>
         <button 
@@ -115,7 +117,7 @@ function toggleSidebar() {
           ]"
         >
           <span :class="item.icon" class="text-xl flex-shrink-0"></span>
-          <span v-if="!isSidebarCollapsed" class="flex-1 font-medium">{{ item.name }}</span>
+          <span v-if="!isSidebarCollapsed" class="flex-1 font-medium">{{ t(item.name) }}</span>
           <span 
             v-if="!isSidebarCollapsed && item.badge" 
             :class="[
@@ -156,7 +158,7 @@ function toggleSidebar() {
             v-if="!isSidebarCollapsed"
             class="btn-ghost p-1.5 text-text-muted hover:text-danger"
             @click="handleLogout"
-            title="Logout"
+            :title="t('admin.logout')"
           >
             <span class="i-tabler-logout text-lg"></span>
           </button>
@@ -190,7 +192,7 @@ function toggleSidebar() {
               <span class="i-tabler-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
               <input 
                 type="text"
-                placeholder="Search anything..."
+                :placeholder="t('admin.searchPlaceholder')"
                 class="w-full input-base pl-10 pr-4 bg-bg-surface"
               />
             </div>
@@ -207,14 +209,14 @@ function toggleSidebar() {
             </button>
             <router-link to="/" class="btn-secondary text-sm">
               <span class="i-tabler-external-link"></span>
-              <span class="hidden sm:inline">View Site</span>
+              <span class="hidden sm:inline">{{ t('admin.viewSite') }}</span>
             </router-link>
           </div>
         </div>
       </header>
 
       <!-- Page content -->
-      <main class="flex-1 p-4 lg:p-6">
+      <main class="flex-1 p-4 lg:p-6 bg-bg-DEFAULT">
         <router-view />
       </main>
     </div>

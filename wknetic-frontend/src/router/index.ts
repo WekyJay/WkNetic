@@ -22,7 +22,17 @@ const routes: RouteRecordRaw[] = [
                     path: '/project/:id',
                     name: 'project',
                     component: () => import('@/pages/ProjectPage.vue'),
-                }
+                },
+                {
+                    path: '/forum',
+                    name: 'forum',
+                    component: () => import('@/pages/forum/ForumPage.vue'),
+                },
+                {
+                    path: '/forum/post/:id',
+                    name: 'forum-post',
+                    component: () => import('@/pages/forum/PostDetailPage.vue'),
+                },
             ]
         },
         // 管理后台路由
@@ -42,7 +52,7 @@ const routes: RouteRecordRaw[] = [
         {
             path: '/admin/login',
             name: 'admin-login',
-            component: () => import('@/pages/admin/LoginPage.vue'),
+            component: () => import('@/pages/LoginPage.vue'),
         },
         // 404 页面捕获
         {

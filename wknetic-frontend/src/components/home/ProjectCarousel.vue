@@ -1,61 +1,61 @@
 <script setup lang="ts">
 import ProjectCard from './ProjectCard.vue'
 
-// 模拟项目数据
+// User testimonials data
 const projectsRow1 = [
-  { id: 1, name: 'Sodium', description: 'A modern rendering engine for Minecraft which greatly improves performance', icon: '🧪', downloads: '15.2M', category: 'Performance' },
-  { id: 2, name: 'Iris Shaders', description: 'A modern shaders mod for Minecraft intended to be compatible with existing OptiFine shaders', icon: '🌈', downloads: '12.8M', category: 'Shaders' },
-  { id: 3, name: 'Fabric API', description: 'Lightweight and modular API providing common hooks and interoperability measures', icon: '🧵', downloads: '18.5M', category: 'Library' },
-  { id: 4, name: 'Lithium', description: 'No-compromises game logic/server optimization mod', icon: '⚡', downloads: '8.3M', category: 'Performance' },
-  { id: 5, name: 'Create', description: 'Aesthetic Technology that empowers the Player', icon: '⚙️', downloads: '9.1M', category: 'Technology' },
-  { id: 6, name: 'JEI', description: 'Just Enough Items - View Items and Recipes', icon: '📦', downloads: '22.4M', category: 'Utility' },
-  { id: 7, name: 'Terralith', description: 'Terralith takes Minecraft terrain generation to the next level', icon: '🏔️', downloads: '5.6M', category: 'Worldgen' },
-  { id: 8, name: 'Complementary', description: 'Complementary Shaders for beautiful visuals', icon: '✨', downloads: '4.2M', category: 'Shaders' },
+  { id: 1, name: 'Alex Chen', description: 'This platform is absolutely amazing! Clean interface, powerful features, and it has significantly boosted my productivity 👍', icon: '😊', downloads: '2 hours ago', category: 'Review' },
+  { id: 2, name: 'James Miller', description: 'Been using it for a while now, overall experience is excellent, especially the auto-sync feature - so convenient!', icon: '🌟', downloads: '5 hours ago', category: 'Recommend' },
+  { id: 3, name: 'Sarah Wang', description: 'Amazing platform! The user interface is intuitive and the features are exactly what I needed.', icon: '💝', downloads: 'Yesterday', category: 'Review' },
+  { id: 4, name: 'Robert Johnson', description: 'Customer support responds very quickly, any issues I had were resolved promptly. Thumbs up!', icon: '👏', downloads: '2 days ago', category: 'Service' },
+  { id: 5, name: 'DevMaster', description: 'As a developer, I really appreciate the technical architecture and code quality of this project. Learned so much!', icon: '💻', downloads: '3 days ago', category: 'Technical' },
+  { id: 6, name: 'Emily Davis', description: 'The interface design is beautiful, the color scheme and animations are so pleasant. Using it makes me happy!', icon: '🎨', downloads: '4 days ago', category: 'Design' },
+  { id: 7, name: 'John Smith', description: 'Great work on the performance optimization! Everything runs smoothly now.', icon: '⚡', downloads: '5 days ago', category: 'Performance' },
+  { id: 8, name: 'Michael Brown', description: 'Very comprehensive features, basically meets all my needs. Keep up the great work!', icon: '🔥', downloads: '1 week ago', category: 'Features' },
 ]
 
 const projectsRow2 = [
-  { id: 9, name: 'ModMenu', description: 'Adds a mod menu to view the list of mods you have installed', icon: '📋', downloads: '14.7M', category: 'Utility' },
-  { id: 10, name: 'Xaeros Minimap', description: 'Displays a map of the nearby world terrain', icon: '🗺️', downloads: '11.2M', category: 'Utility' },
-  { id: 11, name: 'Origins', description: 'Choose an origin at the beginning of your Minecraft journey', icon: '🎭', downloads: '6.8M', category: 'Adventure' },
-  { id: 12, name: 'Better Combat', description: 'Easy, spectacular and fun melee combat system', icon: '⚔️', downloads: '3.9M', category: 'Combat' },
-  { id: 13, name: 'Biomes O Plenty', description: 'Adds over 90 unique biomes to enhance your Minecraft world', icon: '🌿', downloads: '7.5M', category: 'Worldgen' },
-  { id: 14, name: 'Applied Energistics', description: 'A mod about matter, energy and using them to conquer the world', icon: '💎', downloads: '5.1M', category: 'Technology' },
-  { id: 15, name: 'Botania', description: 'A tech mod themed around natural magic', icon: '🌸', downloads: '4.8M', category: 'Magic' },
-  { id: 16, name: 'Farmers Delight', description: 'A mod that gently expands upon farming and cooking', icon: '🍳', downloads: '6.2M', category: 'Food' },
+  { id: 9, name: 'Emma Liu', description: 'Love the new features! Keep up the excellent work, team!', icon: '❤️', downloads: '1 week ago', category: 'Feedback' },
+  { id: 10, name: 'Daniel Martinez', description: 'Mobile adaptation is excellent, runs smoothly on my phone too!', icon: '📱', downloads: '1 week ago', category: 'Experience' },
+  { id: 11, name: 'CodeNinja', description: 'Documentation is very detailed, API design is well thought out. Integration was smooth!', icon: '📚', downloads: '2 weeks ago', category: 'Documentation' },
+  { id: 12, name: 'Ryan Taylor', description: 'Fast, powerful, and beautiful interface. In three words: absolutely perfect!', icon: '🐵', downloads: '2 weeks ago', category: 'Review' },
+  { id: 13, name: 'Lisa Park', description: 'The community here is so helpful and friendly. Thanks everyone!', icon: '🤝', downloads: '2 weeks ago', category: 'Community' },
+  { id: 14, name: 'Kevin Anderson', description: 'Music playback feature is awesome, clear audio quality and fast loading speed!', icon: '🎵', downloads: '3 weeks ago', category: 'Music' },
+  { id: 15, name: 'Chris Wilson', description: 'Been using it for three months now, very stable, never had any issues!', icon: '✅', downloads: '3 weeks ago', category: 'Stability' },
+  { id: 16, name: 'Mike Zhang', description: 'Excellent product! Highly recommend it to all my friends and colleagues.', icon: '🌈', downloads: '3 weeks ago', category: 'Recommend' },
 ]
 
 const projectsRow3 = [
-  { id: 17, name: 'Starlight', description: 'Rewrites the light engine to fix lighting performance and bugs', icon: '⭐', downloads: '7.9M', category: 'Performance' },
-  { id: 18, name: 'Distant Horizons', description: 'See farther without turning your computer into a heater', icon: '🔭', downloads: '3.4M', category: 'Performance' },
-  { id: 19, name: 'Immersive Engineering', description: 'A tech mod with a certain flair', icon: '🔧', downloads: '4.3M', category: 'Technology' },
-  { id: 20, name: 'Alex Mobs', description: 'Adds many new mobs with interesting behaviors', icon: '🦎', downloads: '5.7M', category: 'Mobs' },
-  { id: 21, name: 'Waystones', description: 'Teleport to waypoints you discovered in the world', icon: '🪨', downloads: '8.9M', category: 'Utility' },
-  { id: 22, name: 'Macaws Doors', description: 'A simple mod that adds vanilla doors variants', icon: '🚪', downloads: '2.8M', category: 'Decoration' },
-  { id: 23, name: 'Supplementaries', description: 'Many small vanilla-like additions to make your world feel more alive', icon: '🎪', downloads: '4.1M', category: 'Decoration' },
-  { id: 24, name: 'Curios API', description: 'A flexible and expandable accessory/equipment API for users and developers', icon: '💍', downloads: '9.6M', category: 'Library' },
+  { id: 17, name: 'Brian Thomas', description: 'Team collaboration features are very practical. Using it with colleagues, productivity has improved significantly!', icon: '👥', downloads: '1 month ago', category: 'Collaboration' },
+  { id: 18, name: 'Sophie Chen', description: 'The dark mode is perfect! My eyes are finally happy during late night coding sessions.', icon: '🌙', downloads: '1 month ago', category: 'Feature' },
+  { id: 19, name: 'Jason Garcia', description: 'Data security is well implemented, can use it with complete confidence!', icon: '🔒', downloads: '1 month ago', category: 'Security' },
+  { id: 20, name: 'Matthew Lee', description: 'Simple and easy to use, even beginners can master it quickly!', icon: '🎯', downloads: '1 month ago', category: 'Usability' },
+  { id: 21, name: 'David Kim', description: 'Best decision I made this year! This tool has become essential for my daily workflow.', icon: '⭐', downloads: '1 month ago', category: 'Review' },
+  { id: 22, name: 'Andrew White', description: 'Smart recommendation algorithm is very accurate, always finds exactly what I need!', icon: '🧠', downloads: '2 months ago', category: 'Intelligence' },
+  { id: 23, name: 'Jessica Harris', description: 'The color scheme is gentle and comfortable, every detail is so well thought out!', icon: '🌸', downloads: '2 months ago', category: 'Design' },
+  { id: 24, name: 'Tom Wilson', description: 'Outstanding support team! They solved my issue within minutes. Five stars!', icon: '⭐', downloads: '2 months ago', category: 'Support' },
 ]
 </script>
 
 <template>
   <section class="py-8 overflow-hidden">
     <!-- 第一行 - 向左滚动 -->
-    <div class="relative mb-4">
-      <div class="flex gap-4 animate-scroll" style="--direction: -1; --duration: 60s;">
-        <ProjectCard v-for="project in [...projectsRow1, ...projectsRow1]" :key="project.id + '-1-' + Math.random()" :project="project" />
+    <div class="relative mb-4 overflow-hidden">
+      <div class="flex gap-4 animate-scroll-left" style="--duration: 60s;">
+        <ProjectCard v-for="(project, index) in [...projectsRow1, ...projectsRow1, ...projectsRow1]" :key="`row1-${project.id}-${index}`" :project="project" />
       </div>
     </div>
 
     <!-- 第二行 - 向右滚动 -->
-    <div class="relative mb-4">
-      <div class="flex gap-4 animate-scroll" style="--direction: 1; --duration: 55s;">
-        <ProjectCard v-for="project in [...projectsRow2, ...projectsRow2]" :key="project.id + '-2-' + Math.random()" :project="project" />
+    <div class="relative mb-4 overflow-hidden">
+      <div class="flex gap-4 animate-scroll-right" style="--duration: 55s;">
+        <ProjectCard v-for="(project, index) in [...projectsRow2, ...projectsRow2, ...projectsRow2]" :key="`row2-${project.id}-${index}`" :project="project" />
       </div>
     </div>
 
     <!-- 第三行 - 向左滚动 -->
-    <div class="relative">
-      <div class="flex gap-4 animate-scroll" style="--direction: -1; --duration: 65s;">
-        <ProjectCard v-for="project in [...projectsRow3, ...projectsRow3]" :key="project.id + '-3-' + Math.random()" :project="project" />
+    <div class="relative overflow-hidden">
+      <div class="flex gap-4 animate-scroll-left" style="--duration: 65s;">
+        <ProjectCard v-for="(project, index) in [...projectsRow3, ...projectsRow3, ...projectsRow3]" :key="`row3-${project.id}-${index}`" :project="project" />
       </div>
     </div>
 
@@ -66,21 +66,36 @@ const projectsRow3 = [
 </template>
 
 <style scoped>
-@keyframes scroll {
+@keyframes scroll-left {
   0% {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(calc(var(--direction) * 50%));
+    transform: translateX(-33.333%);
   }
 }
 
-.animate-scroll {
-  animation: scroll var(--duration, 60s) linear infinite;
+@keyframes scroll-right {
+  0% {
+    transform: translateX(-33.333%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-scroll-left {
+  animation: scroll-left var(--duration, 60s) linear infinite;
   width: max-content;
 }
 
-.animate-scroll:hover {
+.animate-scroll-right {
+  animation: scroll-right var(--duration, 60s) linear infinite;
+  width: max-content;
+}
+
+.animate-scroll-left:hover,
+.animate-scroll-right:hover {
   animation-play-state: paused;
 }
 

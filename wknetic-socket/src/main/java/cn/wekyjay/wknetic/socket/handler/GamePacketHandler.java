@@ -1,5 +1,6 @@
 package cn.wekyjay.wknetic.socket.handler;
 
+import cn.wekyjay.wknetic.common.enums.PacketType;
 import cn.wekyjay.wknetic.socket.manager.ChannelManager;
 
 // 引入 Jackson
@@ -46,11 +47,35 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             if (!json.has("type")) return;
             int type = json.get("type").asInt();
 
-            switch (type) {
-                case 1: 
-                    handleLogin(ctx, json);
-                case 3:
+            // 通过枚举解码，优先按协议编号处理
+            PacketType packetType = PacketType.getById(type);
+            if (packetType == null) {
+                // 兼容旧编号，防止误判为聊天
+                if (type == 3) {
                     handleGameChat(json);
+                    return;
+                }
+                log.warn("Unknown packet type: {}", type);
+                return;
+            }
+
+            switch (packetType) {
+                case AUTH_REQUEST:
+                case HANDSHAKE:
+                case RECONNECT_REQUEST:
+                case RECONNECT_SUCCESS:
+                    handleLogin(ctx, json);
+                    break;
+
+                case CHAT_MSG:
+                case PRIVATE_MSG:
+                case GROUP_CHAT:
+                case SYSTEM_BROADCAST:
+                    handleGameChat(json);
+                    break;
+
+                default:
+                    log.warn("Unhandled packet type: {}", packetType);
                     break;
                 // ... 其他 case
             }
@@ -68,6 +93,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
         boolean isValid = true; 
 
         if (isValid) {
+            // 保存用户通道映射，方便后续通信。
             channelManager.addChannel(token, ctx.channel());
             // 发送响应
             sendJson(ctx, 100, "Login Success");
@@ -114,7 +140,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
 
 
     /**
-     * 发送响应消息
+     * 发送响应消息到客户端
      * @param ctx
      * @param code
      * @param msg

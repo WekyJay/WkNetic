@@ -17,6 +17,8 @@
     --bg-hover: #f4f4f5;
     /* input: 输入框通常带个淡灰背景或纯白带框，这里选淡灰 */
     --bg-input: #f4f4f5;
+    /* code: 代码块背景，亮色模式下深色 */
+    --bg-black: #1e1e1e;
 
     /* --- 品牌色 (Brand) --- */
     /* 柿红橙在亮色下依然通用，无需大幅调整，或者微调深浅 */
@@ -36,7 +38,13 @@
     --border-default: #e4e4e7; /* Zinc-200 */
     --border-light: #f4f4f5;   /* Zinc-100 */
     --border-dark: #d4d4d8;    /* Zinc-300 */
+
+    /* --- 圆角 (Radius) --- */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
 }
+
 
 /* ==============================================
    暗黑模式 (Dark Mode)
@@ -49,6 +57,8 @@ html.dark {
     --bg-surface: #303036;
     --bg-hover: #3f3f46;
     --bg-input: #121214;
+    /* code: 代码块背景，暗色模式下更深 */
+    --bg-black: #0d0d0d;
 
     /* --- 品牌色 --- */
     /* 暗黑模式下通常不需要变，或者稍微提亮一点点 */
@@ -67,4 +77,69 @@ html.dark {
     --border-default: #3f3f46;
     --border-light: #52525b;
     --border-dark: #27272a;
+}
+
+
+/* ==============================================
+   全局滚动条样式
+============================================== */
+
+/* 亮色模式滚动条 */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
+}
+
+::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+}
+
+/* 暗色模式滚动条 */
+html.dark ::-webkit-scrollbar {
+    background: #18181b;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #18181b;
+    border-radius: 5px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #52525b;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #71717a;
+}
+
+html.dark ::-webkit-scrollbar-corner {
+    background: #18181b;
+}
+
+/* Firefox 滚动条样式 */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+html.dark * {
+    scrollbar-color: #52525b #18181b;
 }
