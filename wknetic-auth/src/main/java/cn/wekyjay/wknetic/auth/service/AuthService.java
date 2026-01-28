@@ -1,6 +1,6 @@
 package cn.wekyjay.wknetic.auth.service;
 
-import cn.wekyjay.wknetic.auth.model.dto.LoginBody;
+import cn.wekyjay.wknetic.common.model.dto.LoginBody;
 
 public interface AuthService {
     /**

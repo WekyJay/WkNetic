@@ -2,7 +2,7 @@ package cn.wekyjay.wknetic.auth.service.impl;
 
 
 import cn.wekyjay.wknetic.auth.model.LoginUser;
-import cn.wekyjay.wknetic.auth.model.dto.LoginBody;
+import cn.wekyjay.wknetic.common.model.dto.LoginBody;
 import cn.wekyjay.wknetic.auth.service.AuthService;
 import cn.wekyjay.wknetic.common.exception.BusinessException;
 import cn.wekyjay.wknetic.common.util.JwtUtil;
@@ -38,10 +38,11 @@ public class AuthServiceImpl implements AuthService {
             // 3. 认证通过，获取用户信息
             LoginUser loginUser = (LoginUser) authentication.getPrincipal();
 
-            // 4. 生成 JWT Token
-            String token = jwtUtil.createToken(loginUser.getUserId(), loginUser.getUsername());
+            // 4. 生成 JWT Token（根据 rememberMe 设置过期时间）
+            boolean rememberMe = loginBody.getRememberMe() != null && loginBody.getRememberMe();
+            String token = jwtUtil.createToken(loginUser.getUserId(), loginUser.getUsername(), rememberMe);
             
-            log.info("用户 [{}] 登录成功，生成Token", loginBody.getUsername());
+            log.info("用户 [{}] 登录成功，生成Token (记住我: {})", loginBody.getUsername(), rememberMe);
             return token;
 
         } catch (BadCredentialsException e) {

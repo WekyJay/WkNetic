@@ -33,8 +33,9 @@ public class JwtUtil {
      * 生成 Token (登录成功后调用)
      * @param userId 用户ID
      * @param username 用户名 (放入 Payload 方便前端解析展示)
+     * @param rememberMe 是否记住我（true=30天，false=24小时）
      */
-    public String createToken(Long userId, String username) {
+    public String createToken(Long userId, String username, boolean rememberMe) {
         // 1. 构建 Hutool JWT
         Map<String, Object> payload = MapUtil.newHashMap();
         payload.put(JWTPayload.ISSUED_AT, DateUtil.date()); // 签发时间
@@ -46,10 +47,21 @@ public class JwtUtil {
 
         // 2. [关键] 将 Token 存入 Redis，实现有状态管理
         // Key: auth:token:1001  Value: eyJhbGciOi... (Token字符串)
+        // 根据 rememberMe 设置不同的过期时间：记住我=30天，否则=24小时
         String redisKey = LOGIN_USER_KEY + userId;
-        stringRedisTemplate.opsForValue().set(redisKey, token, jwtProperties.getExpiration(), TimeUnit.SECONDS);
+        long expiration = rememberMe ? jwtProperties.getExpiration() : 86400; // 86400秒=24小时
+        stringRedisTemplate.opsForValue().set(redisKey, token, expiration, TimeUnit.SECONDS);
 
         return token;
+    }
+    
+    /**
+     * 生成 Token (兼容旧方法，默认24小时)
+     * @param userId 用户ID
+     * @param username 用户名
+     */
+    public String createToken(Long userId, String username) {
+        return createToken(userId, username, false);
     }
 
     /**

@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import LoginModal from '@/components/LoginModal.vue'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const isMenuOpen = ref(false)
 const isSearchOpen = ref(false)
 const isLoginModalOpen = ref(false)
+const isUserMenuOpen = ref(false)
 
 const navCategories = [
   { name: 'Mods', icon: 'i-tabler-puzzle', href: '/mods' },
@@ -16,9 +22,29 @@ const navCategories = [
   { name: 'Forum', icon: 'i-tabler-message-circle', href: '/forum' }
 ]
 
-function handleLogin(credentials: { email: string; password: string }) {
-  console.log('Login with:', credentials)
-  // TODO: 实现实际的登录逻辑
+const isAuthenticated = computed(() => authStore.isAuthenticated)
+const user = computed(() => authStore.user)
+const isAdmin = computed(() => authStore.isAdmin)
+
+function handleLoginSuccess() {
+  isLoginModalOpen.value = false
+  // 刷新用户状态已经在 authStore.login 中完成
+}
+
+function handleLogout() {
+  authStore.logout()
+  isUserMenuOpen.value = false
+  router.push('/')
+}
+
+function goToProfile() {
+  isUserMenuOpen.value = false
+  router.push('/profile')
+}
+
+function goToAdmin() {
+  isUserMenuOpen.value = false
+  router.push('/admin')
 }
 </script>
 
@@ -82,8 +108,74 @@ function handleLogin(credentials: { email: string; password: string }) {
             <span class="lg:hidden">App</span>
           </button>
 
-          <!-- 登录按钮 -->
-          <button class="btn-primary text-sm" @click="isLoginModalOpen = true">
+          <!-- 登录按钮或用户菜单 -->
+          <div v-if="isAuthenticated && user" class="relative">
+            <button 
+              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-bg-surface transition-colors"
+              @click="isUserMenuOpen = !isUserMenuOpen"
+            >
+              <img 
+                v-if="user.avatar" 
+                :src="user.avatar" 
+                :alt="user.nickname || user.username"
+                class="w-8 h-8 rounded-full object-cover"
+              />
+              <div 
+                v-else 
+                class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center"
+              >
+                <span class="i-tabler-user text-brand"></span>
+              </div>
+              <span class="hidden lg:inline text-sm font-medium text-text">
+                {{ user.nickname || user.username }}
+              </span>
+              <span class="i-tabler-chevron-down text-sm text-text-muted"></span>
+            </button>
+
+            <!-- 用户下拉菜单 -->
+            <div 
+              v-if="isUserMenuOpen"
+              class="absolute right-0 mt-2 w-48 bg-bg border border-border rounded-lg shadow-lg py-2 z-50"
+            >
+              <div class="px-4 py-2 border-b border-border">
+                <p class="text-sm font-medium text-text">{{ user.nickname || user.username }}</p>
+                <p class="text-xs text-text-muted">{{ user.email }}</p>
+              </div>
+              
+              <button 
+                class="w-full px-4 py-2 text-left text-sm hover:bg-bg-surface transition-colors flex items-center gap-2"
+                @click="goToProfile"
+              >
+                <span class="i-tabler-user"></span>
+                个人资料
+              </button>
+              
+              <button 
+                v-if="isAdmin"
+                class="w-full px-4 py-2 text-left text-sm hover:bg-bg-surface transition-colors flex items-center gap-2"
+                @click="goToAdmin"
+              >
+                <span class="i-tabler-dashboard"></span>
+                管理后台
+              </button>
+              
+              <div class="border-t border-border my-2"></div>
+              
+              <button 
+                class="w-full px-4 py-2 text-left text-sm hover:bg-bg-surface transition-colors flex items-center gap-2 text-danger"
+                @click="handleLogout"
+              >
+                <span class="i-tabler-logout"></span>
+                退出登录
+              </button>
+            </div>
+          </div>
+          
+          <button 
+            v-else
+            class="btn-primary text-sm" 
+            @click="isLoginModalOpen = true"
+          >
             Sign in
           </button>
 
@@ -153,7 +245,7 @@ function handleLogin(credentials: { email: string; password: string }) {
     <LoginModal
       :is-open="isLoginModalOpen"
       @close="isLoginModalOpen = false"
-      @login="handleLogin"
+      @success="handleLoginSuccess"
     />
   </header>
 </template>

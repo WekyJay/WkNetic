@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { useCaptcha } from '@/composables/useCaptcha'
 
 const props = defineProps<{
   isOpen: boolean
@@ -9,22 +10,25 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  login: [credentials: { email: string; password: string }]
+  success: []
 }>()
 
-const { t } = useI18n()
 const router = useRouter()
+const authStore = useAuthStore()
 
-const email = ref('')
+const username = ref('')
 const password = ref('')
 const rememberMe = ref(false)
-const isLoading = ref(false)
 const errorMessage = ref('')
+
+// 验证码
+const { captchaImage, captchaCode, isLoading: captchaLoading, getCaptchaToken, resetCaptcha } = useCaptcha('simple')
 
 // 监听弹窗打开/关闭，处理body滚动
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     document.body.style.overflow = 'hidden'
+    resetCaptcha() // 打开弹窗时重新加载验证码
   } else {
     document.body.style.overflow = ''
     resetForm()
@@ -32,8 +36,9 @@ watch(() => props.isOpen, (newVal) => {
 })
 
 function resetForm() {
-  email.value = ''
+  username.value = ''
   password.value = ''
+  captchaCode.value = ''
   rememberMe.value = false
   errorMessage.value = ''
 }
@@ -49,23 +54,39 @@ function handleBackdropClick(e: MouseEvent) {
 }
 
 async function handleSubmit() {
-  if (!email.value || !password.value) {
-    errorMessage.value = 'Please fill in all fields'
+  if (!username.value || !password.value) {
+    errorMessage.value = '请填写用户名和密码'
     return
   }
 
-  isLoading.value = true
+  if (!captchaCode.value) {
+    errorMessage.value = '请输入验证码'
+    return
+  }
+
   errorMessage.value = ''
 
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    emit('login', { email: email.value, password: password.value })
-    handleClose()
-  } catch (error) {
-    errorMessage.value = 'Login failed. Please check your credentials.'
-  } finally {
-    isLoading.value = false
+    const captchaToken = getCaptchaToken()
+    const success = await authStore.login(
+      username.value,
+      password.value,
+      captchaToken,
+      rememberMe.value
+    )
+
+    if (success) {
+      emit('success')
+      handleClose()
+    } else {
+      errorMessage.value = '登录失败，请检查用户名、密码和验证码'
+      resetCaptcha()
+      captchaCode.value = ''
+    }
+  } catch (error: any) {
+    errorMessage.value = error.message || '登录失败，请重试'
+    resetCaptcha()
+    captchaCode.value = ''
   }
 }
 
@@ -78,6 +99,11 @@ function handleKeydown(e: KeyboardEvent) {
 function goToRegister() {
   handleClose()
   router.push('/register')
+}
+
+function goToFullLogin() {
+  handleClose()
+  router.push('/login')
 }
 </script>
 
@@ -134,21 +160,21 @@ function goToRegister() {
                 <span>{{ errorMessage }}</span>
               </div>
 
-              <!-- Email -->
+              <!-- Username -->
               <div class="space-y-2">
-                <label for="email" class="block text-sm font-medium text-text">
-                  Email or Username
+                <label for="username" class="block text-sm font-medium text-text">
+                  用户名
                 </label>
                 <div class="relative">
-                  <span class="i-tabler-mail absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
+                  <span class="i-tabler-user absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
                   <input
-                    id="email"
-                    v-model="email"
+                    id="username"
+                    v-model="username"
                     type="text"
-                    autocomplete="email"
-                    placeholder="Enter your email or username"
+                    autocomplete="username"
+                    placeholder="请输入用户名"
                     class="w-full input-base pl-10 pr-4"
-                    :disabled="isLoading"
+                    :disabled="authStore.isLoading"
                   />
                 </div>
               </div>
@@ -157,11 +183,8 @@ function goToRegister() {
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <label for="password" class="block text-sm font-medium text-text">
-                    Password
+                    密码
                   </label>
-                  <a href="#" class="text-xs text-brand hover:underline">
-                    Forgot password?
-                  </a>
                 </div>
                 <div class="relative">
                   <span class="i-tabler-lock absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
@@ -170,35 +193,76 @@ function goToRegister() {
                     v-model="password"
                     type="password"
                     autocomplete="current-password"
-                    placeholder="Enter your password"
+                    placeholder="请输入密码"
                     class="w-full input-base pl-10 pr-4"
-                    :disabled="isLoading"
+                    :disabled="authStore.isLoading"
                   />
                 </div>
               </div>
 
-              <!-- Remember me -->
-              <div class="flex items-center">
-                <input
-                  id="remember"
-                  v-model="rememberMe"
-                  type="checkbox"
-                  class="w-4 h-4 text-brand bg-bg-surface border-border rounded focus:ring-brand focus:ring-2"
-                  :disabled="isLoading"
-                />
-                <label for="remember" class="ml-2 text-sm text-text-muted">
-                  Remember me for 30 days
+              <!-- Captcha -->
+              <div class="space-y-2">
+                <label for="captcha" class="block text-sm font-medium text-text">
+                  验证码
                 </label>
+                <div class="flex gap-2">
+                  <div class="relative flex-1">
+                    <span class="i-tabler-shield-check absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
+                    <input
+                      id="captcha"
+                      v-model="captchaCode"
+                      type="text"
+                      placeholder="请输入验证码"
+                      class="w-full input-base pl-10"
+                      maxlength="4"
+                      :disabled="authStore.isLoading"
+                    />
+                  </div>
+                  <div
+                    class="w-24 h-10 bg-bg-surface rounded-lg border border-border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                    @click="resetCaptcha"
+                    :class="{ 'opacity-50': captchaLoading }"
+                  >
+                    <img v-if="captchaImage" :src="captchaImage" alt="验证码" class="w-full h-full object-cover" />
+                    <div v-else class="w-full h-full flex items-center justify-center text-xs text-text-muted">
+                      <span class="i-tabler-loader-2 animate-spin"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Remember me -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <input
+                    id="remember"
+                    v-model="rememberMe"
+                    type="checkbox"
+                    class="w-4 h-4 text-brand bg-bg-surface border-border rounded focus:ring-brand focus:ring-2"
+                    :disabled="authStore.isLoading"
+                  />
+                  <label for="remember" class="ml-2 text-sm text-text-muted">
+                    记住我(30天)
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  @click="goToFullLogin"
+                  class="text-xs text-brand hover:underline"
+                  :disabled="authStore.isLoading"
+                >
+                  前往完整登录页
+                </button>
               </div>
 
               <!-- Submit button -->
               <button
                 type="submit"
                 class="w-full btn-primary py-3"
-                :disabled="isLoading"
+                :disabled="authStore.isLoading"
               >
-                <span v-if="isLoading" class="i-tabler-loader-2 animate-spin text-lg"></span>
-                <span v-else>Sign in</span>
+                <span v-if="authStore.isLoading" class="i-tabler-loader-2 animate-spin text-lg"></span>
+                <span v-else>登录</span>
               </button>
 
               <!-- Divider -->
@@ -207,7 +271,7 @@ function goToRegister() {
                   <div class="w-full border-t border-border"></div>
                 </div>
                 <div class="relative flex justify-center text-xs">
-                  <span class="px-2 bg-bg text-text-muted">Or continue with</span>
+                  <span class="px-2 bg-bg text-text-muted">其他登录方式</span>
                 </div>
               </div>
 
@@ -216,7 +280,8 @@ function goToRegister() {
                 <button
                   type="button"
                   class="btn-secondary py-2.5 text-sm"
-                  :disabled="isLoading"
+                  :disabled="true"
+                  title="暂未开放"
                 >
                   <span class="i-tabler-brand-github text-lg"></span>
                   <span>GitHub</span>
@@ -224,7 +289,8 @@ function goToRegister() {
                 <button
                   type="button"
                   class="btn-secondary py-2.5 text-sm"
-                  :disabled="isLoading"
+                  :disabled="true"
+                  title="暂未开放"
                 >
                   <span class="i-tabler-brand-google text-lg"></span>
                   <span>Google</span>
@@ -233,13 +299,13 @@ function goToRegister() {
 
               <!-- Sign up link -->
               <p class="text-center text-sm text-text-muted pt-4">
-                Don't have an account?
+                还没有账号？
                 <button 
                   type="button"
                   class="text-brand hover:underline font-medium"
                   @click="goToRegister"
                 >
-                  Sign up
+                  立即注册
                 </button>
               </p>
             </form>

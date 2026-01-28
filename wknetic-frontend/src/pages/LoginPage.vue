@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useCaptcha } from '@/composables/useCaptcha'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { t } = useI18n()
 
@@ -14,10 +16,32 @@ const showPassword = ref(false)
 const error = ref('')
 const rememberMe = ref(false)
 
-// 如果已登录，重定向到 dashboard
+// 验证码 (默认使用 simple 类型，可根据配置动态切换)
+const { captchaImage, captchaCode, isLoading: captchaLoading, getCaptchaToken, resetCaptcha } = useCaptcha('simple')
+
+// 获取重定向地址
+const redirectPath = computed(() => {
+  const redirect = route.query.redirect as string
+  return redirect || '/'
+})
+
+// 页面标题根据来源调整
+const pageTitle = computed(() => {
+  return redirectPath.value.startsWith('/admin') 
+    ? t('pages.admin_login_title')
+    : '登录到 WkNetic'
+})
+
+const pageSubtitle = computed(() => {
+  return redirectPath.value.startsWith('/admin')
+    ? t('pages.admin_login_subtitle')
+    : '继续探索更多精彩内容'
+})
+
+// 如果已登录，重定向到目标页面
 const checkAuthAndRedirect = () => {
   if (authStore.checkAuth()) {
-    router.push('/admin')
+    router.push(redirectPath.value)
   }
 }
 
@@ -31,14 +55,29 @@ async function handleLogin() {
     return
   }
   
-  const success = await authStore.login(username.value, password.value)
+  if (!captchaCode.value) {
+    error.value = '请输入验证码'
+    return
+  }
+  
+  const captchaToken = getCaptchaToken()
+  const success = await authStore.login(
+    username.value, 
+    password.value, 
+    captchaToken, 
+    rememberMe.value
+  )
   
   if (success) {
-    router.push('/admin')
+    router.push(redirectPath.value)
   } else {
     error.value = t('pages.error_invalid')
+    // 登录失败后刷新验证码
+    resetCaptcha()
+    captchaCode.value = ''
   }
 }
+
 </script>
 
 <template>
@@ -57,8 +96,8 @@ async function handleLogin() {
             <span class="i-tabler-cube text-bg text-3xl"></span>
           </div>
         </router-link>
-        <h1 class="text-2xl font-bold text-text">{{ t('pages.admin_login_title') }}</h1>
-        <p class="text-text-muted mt-1">{{ t('pages.admin_login_subtitle') }}</p>
+        <h1 class="text-2xl font-bold text-text">{{ pageTitle }}</h1>
+        <p class="text-text-muted mt-1">{{ pageSubtitle }}</p>
       </div>
 
       <!-- Login form -->
@@ -116,51 +155,50 @@ async function handleLogin() {
             </div>
           </div>
 
-          <!-- Remember me -->
-          <div class="flex items-center">
-            <input
-              id="remember"
-              v-model="rememberMe"
-              type="checkbox"
-              class="w-4 h-4 text-brand bg-bg-surface border-border rounded focus:ring-brand focus:ring-2"
-            />
-            <label for="remember" class="ml-2 text-sm text-text-muted">
-              {{ t('pages.remember_me') }}
+          <!-- Captcha -->
+          <div class="space-y-2">
+            <label for="captcha" class="block text-sm font-medium text-text">
+              验证码
             </label>
-          </div>
-
-          <!-- Submit button -->
-          <button type="submit" class="w-full btn-primary py-3">
-            {{ t('pages.sign_in') }}
-          </button>
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="Enter your password"
-                class="w-full input-base pl-10 pr-10"
-                autocomplete="current-password"
-              />
-              <button 
-                type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
-                @click="showPassword = !showPassword"
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <span class="i-tabler-shield-check absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
+                <input 
+                  id="captcha"
+                  v-model="captchaCode"
+                  type="text"
+                  placeholder="请输入验证码"
+                  class="w-full input-base pl-10"
+                  maxlength="4"
+                />
+              </div>
+              <div 
+                class="w-28 h-10 bg-bg-surface rounded-lg border border-border overflow-hidden cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                @click="resetCaptcha"
+                :class="{ 'opacity-50': captchaLoading }"
               >
-                <span :class="showPassword ? 'i-tabler-eye-off' : 'i-tabler-eye'" class="text-lg"></span>
-              </button>
+                <img v-if="captchaImage" :src="captchaImage" alt="验证码" class="w-full h-full object-cover" />
+                <div v-else class="w-full h-full flex items-center justify-center text-xs text-text-muted">
+                  <span class="i-tabler-loader-2 animate-spin"></span>
+                </div>
+              </div>
             </div>
+            <p class="text-xs text-text-muted">点击图片刷新验证码</p>
           </div>
 
-          <!-- Remember me & Forgot password -->
+          <!-- Remember me -->
           <div class="flex items-center justify-between">
             <label class="flex items-center gap-2 cursor-pointer">
-              <input 
+              <input
+                id="remember"
                 v-model="rememberMe"
                 type="checkbox"
-                class="w-4 h-4 rounded border-border bg-bg-surface text-brand focus:ring-brand/50"
+                class="w-4 h-4 text-brand bg-bg-surface border-border rounded focus:ring-brand focus:ring-2"
               />
-              <span class="text-sm text-text-muted">Remember me</span>
+              <span class="text-sm text-text-muted">
+                {{ t('pages.remember_me') }} (30天)
+              </span>
             </label>
-            <a href="#" class="text-sm text-brand hover:underline">
-              Forgot password?
-            </a>
           </div>
 
           <!-- Submit button -->
@@ -170,7 +208,7 @@ async function handleLogin() {
             class="w-full btn-primary py-3 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="authStore.isLoading" class="i-tabler-loader-2 animate-spin text-lg"></span>
-            <span v-else>Sign in</span>
+            <span v-else>{{ t('pages.sign_in') }}</span>
           </button>
         </form>
 
@@ -179,7 +217,7 @@ async function handleLogin() {
           <p class="text-sm text-text-muted mb-2">Demo credentials:</p>
           <div class="flex items-center gap-4 text-sm">
             <code class="px-2 py-1 bg-bg rounded text-brand">admin</code>
-            <code class="px-2 py-1 bg-bg rounded text-brand">admin123</code>
+            <code class="px-2 py-1 bg-bg rounded text-brand">123456</code>
           </div>
         </div>
       </div>

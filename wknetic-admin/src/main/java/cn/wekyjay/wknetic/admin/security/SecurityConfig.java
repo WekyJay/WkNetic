@@ -68,7 +68,8 @@ public class SecurityConfig {
                 // 允许匿名访问的接口
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 跨域预检
                 .requestMatchers("/api/auth/**").permitAll()            // 登录注册接口
-                .requestMatchers("/api/open/**").permitAll()            // 开放签名接口
+                .requestMatchers("/api/captcha/**").permitAll()         // 验证码接口
+                .requestMatchers("/api/open/**").permitAll()            // 开放接口（首页数据、站点配置等）
                 .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**").permitAll() // Swagger
                 // 其他所有请求必须认证
                 .anyRequest().authenticated()

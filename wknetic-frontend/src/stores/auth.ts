@@ -1,69 +1,132 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { authApi, type LoginParams, type LoginResult, type UserInfo } from '@/api/auth'
+import { storageManager } from '@/utils/storage'
 
-export interface AdminUser {
-  id: string
-  username: string
-  email: string
-  avatar?: string
-  role: 'admin' | 'moderator' | 'editor'
-}
+export type AdminUser = UserInfo
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AdminUser | null>(null)
   const token = ref<string | null>(null)
   const isLoading = ref(false)
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => {
+    // 检查 token 是否存在且未过期
+    return !!token.value && !!user.value && !storageManager.isTokenExpired()
+  })
   const isAdmin = computed(() => user.value?.role === 'admin')
 
-  // 模拟登录
-  async function login(username: string, password: string): Promise<boolean> {
+  /**
+   * 用户登录
+   */
+  async function login(
+    username: string, 
+    password: string, 
+    captchaToken?: string, 
+    rememberMe: boolean = false
+  ): Promise<boolean> {
     isLoading.value = true
     
-    // 模拟 API 请求延迟
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 模拟验证 (实际应用中应调用后端 API)
-    if (username === 'admin' && password === 'admin123') {
-      user.value = {
-        id: '1',
-        username: 'admin',
-        email: 'admin@modrinth.com',
-        avatar: undefined,
-        role: 'admin'
+    try {
+      const params: LoginParams = {
+        username,
+        password,
+        captchaToken,
+        rememberMe
       }
-      token.value = 'mock-jwt-token-' + Date.now()
       
-      // 持久化到 localStorage
-      localStorage.setItem('admin_token', token.value)
-      localStorage.setItem('admin_user', JSON.stringify(user.value))
+      // 调用后端登录接口
+      const result = await authApi.login(params) as unknown as LoginResult
+      
+      // 存储 token 和过期时间（统一使用 localStorage，由后端控制过期时间）
+      token.value = result.token
+      storageManager.setToken(result.token)
+      storageManager.setTokenExpiration(result.expiresAt)
+      
+      // 获取用户信息
+      const userInfo = await authApi.getUserInfo() as unknown as UserInfo
+      user.value = userInfo
+      storageManager.setUser(userInfo)
       
       isLoading.value = false
       return true
+      
+    } catch (error: any) {
+      console.error('登录失败:', error.message)
+      isLoading.value = false
+      return false
     }
-    
-    isLoading.value = false
-    return false
   }
 
-  // 登出
+  /**
+   * 用户注册
+   */
+  async function register(params: {
+    username: string
+    password: string
+    email?: string
+    nickname?: string
+    captchaToken?: string
+  }): Promise<{ success: boolean; message: string }> {
+    isLoading.value = true
+    
+    try {
+      await authApi.register(params)
+      isLoading.value = false
+      return { success: true, message: '注册成功' }
+    } catch (error: any) {
+      isLoading.value = false
+      return { success: false, message: error.message || '注册失败' }
+    }
+  }
+
+  /**
+   * 重置密码
+   */
+  async function resetPassword(params: {
+    username: string
+    email?: string
+    newPassword: string
+    captchaToken?: string
+  }): Promise<{ success: boolean; message: string }> {
+    isLoading.value = true
+    
+    try {
+      await authApi.resetPassword(params)
+      isLoading.value = false
+      return { success: true, message: '密码重置成功' }
+    } catch (error: any) {
+      isLoading.value = false
+      return { success: false, message: error.message || '密码重置失败' }
+    }
+  }
+
+  /**
+   * 登出
+   */
   function logout() {
     user.value = null
     token.value = null
-    localStorage.removeItem('admin_token')
-    localStorage.removeItem('admin_user')
+    storageManager.clearAll()
   }
 
-  // 检查并恢复登录状态
+  /**
+   * 检查并恢复登录状态
+   */
   function checkAuth(): boolean {
-    const storedToken = localStorage.getItem('admin_token')
-    const storedUser = localStorage.getItem('admin_user')
+    // 检查 token 是否过期
+    if (storageManager.isTokenExpired()) {
+      logout()
+      return false
+    }
+
+    const storedToken = storageManager.getToken()
+    const storedUser = storageManager.getUser()
     
     if (storedToken && storedUser) {
       try {
         token.value = storedToken
-        user.value = JSON.parse(storedUser)
+        user.value = storedUser
         return true
       } catch {
         logout()
@@ -80,6 +143,8 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     isAdmin,
     login,
+    register,
+    resetPassword,
     logout,
     checkAuth
   }
