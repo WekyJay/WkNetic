@@ -1,0 +1,14 @@
+{
+  "id": "wk-checkin",
+  "name": "每日签到",
+  "version": "1.0.0",
+  "type": "source",       
+  "entry": "./index.js",  
+  "description": "一个简单的 Vue 源码版签到插件",
+  "author": "WkNetic Team",
+  "permissions": [
+    "http:api",
+    "storage:local",
+    "ui:notification"
+  ]
+}

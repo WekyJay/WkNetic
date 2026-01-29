@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.admin.controller;
+package cn.wekyjay.wknetic.admin.system.controller;
 
 import cn.wekyjay.wknetic.admin.system.service.ISysUserService;
 import cn.wekyjay.wknetic.common.domain.SysUser;
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/v1/user")
 public class UserController {
 
     @Autowired

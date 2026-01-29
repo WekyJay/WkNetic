@@ -71,10 +71,10 @@ public class Result<T> implements Serializable {
     /**
      * 直接使用枚举返回错误
      */
-    public static <T> Result<T> error(IResultCode resultCode) {
+    public static <T> Result<T> error(String resultCode) {
         // 自动翻译错误信息
         String msg = MessageUtils.get(resultCode.getMessage());
-        return new Result<>(resultCode.getCode(), msg, null);
+        return new Result<>(string.getCode(), msg, null);
     }
 
     /**

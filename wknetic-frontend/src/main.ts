@@ -1,5 +1,9 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+import * as Vue from 'vue'
+
+// ---------- SDK初始化 ---------------
+import { WknieticSDK } from './sdk';
 
 // ---------- Pinia ---------------
 import { createPinia } from 'pinia'
@@ -48,12 +52,11 @@ hljs.registerLanguage('html', xml) // html 使用 xml 高亮
 hljs.registerLanguage('css', css)
 hljs.registerLanguage('sql', sql)
 hljs.registerLanguage('markdown', markdown)
-
-
-
-
+// -------------------------------------
 
 const app = createApp(App)
+
+WknieticSDK.vue = Vue;
 
 app.use(router)         // 注册路由
 app.use(createPinia())  // 注册 Pinia 状态管理

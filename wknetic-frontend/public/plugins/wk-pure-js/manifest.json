@@ -1,0 +1,12 @@
+{
+  "id": "wk-pure-js",
+  "name": "极速计数器",
+  "version": "1.0.0",
+  "entry": "./index.js",
+  "description": "不依赖编译器的纯 JS 插件，加载速度最快",
+  "author": "WkNetic Team",
+  "permissions": [
+    "ui:modal",
+    "storage:session"
+  ]
+}

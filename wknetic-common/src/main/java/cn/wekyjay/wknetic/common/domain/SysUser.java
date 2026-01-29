@@ -40,6 +40,15 @@ public class SysUser implements Serializable {
     /** 状态（0禁用 1启用） */
     private Integer status;
 
+    /** 用户角色 */
+    private String role;
+
+    /** Minecraft账号UUID */
+    private String minecraftUuid;
+
+    /** Minecraft游戏名 */
+    private String minecraftUsername;
+
     /** 创建时间 */
     private Date createTime;
 

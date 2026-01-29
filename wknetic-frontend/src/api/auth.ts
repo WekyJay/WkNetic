@@ -71,42 +71,42 @@ export const authApi = {
    * 用户登录
    */
   login(params: LoginParams) {
-    return api.post<LoginResult>('/api/auth/login', params)
+    return api.post<LoginResult>('/api/v1/auth/login', params)
   },
 
   /**
    * 用户注册
    */
   register(params: RegisterParams) {
-    return api.post<string>('/api/auth/register', params)
+    return api.post<string>('/api/v1/auth/register', params)
   },
 
   /**
    * 重置密码
    */
   resetPassword(params: ResetPasswordParams) {
-    return api.post<string>('/api/auth/reset-password', params)
+    return api.post<string>('/api/v1/auth/reset-password', params)
   },
 
   /**
    * 登出（可选，如果后端有登出接口）
    */
   logout() {
-    return api.post('/api/auth/logout')
+    return api.post('/api/v1/auth/logout')
   },
 
   /**
    * 获取当前用户信息
    */
   getUserInfo() {
-    return api.get<UserInfo>('/api/user/info')
+    return api.get<UserInfo>('/api/v1/user/info')
   },
 
   /**
    * 获取验证码
    */
   getCaptcha() {
-    return api.get<CaptchaResult>('/api/captcha/generate')
+    return api.get<CaptchaResult>('/api/v1/captcha/generate')
   }
 }
 
@@ -118,6 +118,6 @@ export const siteApi = {
    * 获取站点配置（公开接口）
    */
   getSiteConfig() {
-    return api.get<Record<string, string>>('/api/open/site-config')
+    return api.get<Record<string, string>>('/api/v1/open/site-config')
   }
 }

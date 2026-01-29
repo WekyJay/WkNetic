@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.admin.controller;
+package cn.wekyjay.wknetic.admin.system.controller;
 
 import cn.wekyjay.wknetic.admin.system.domain.SysConfig;
 import cn.wekyjay.wknetic.admin.system.service.ISysConfigService;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1")
 public class ConfigController {
 
     @Autowired

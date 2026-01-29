@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.admin.controller;
+package cn.wekyjay.wknetic.admin.system.controller;
 
 import cn.wekyjay.wknetic.admin.system.service.ISysConfigService;
 import cn.wekyjay.wknetic.admin.system.service.ISysUserService;
@@ -25,7 +25,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     @Resource

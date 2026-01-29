@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ExtensionSlot from '@/components/ExtensionSlot.vue'
 
 const { t } = useI18n()
 
@@ -94,6 +95,10 @@ const forumStats = getForumStats()
 
 <template>
   <div class="space-y-4">
+    <ExtensionSlot 
+          name="user-profile-header" 
+          :context="{ userId: 1001, name: 'WekyJay' }" 
+        />
     <!-- 签到卡片 -->
     <div class="card">
       <div class="flex-between mb-4">

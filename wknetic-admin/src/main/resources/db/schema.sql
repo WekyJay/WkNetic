@@ -66,15 +66,37 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像地址',
   `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
+  `role` varchar(20) NOT NULL DEFAULT 'USER' COMMENT '用户角色：ADMIN/MODERATOR/USER/VIP/BANNED',
+  `minecraft_uuid` varchar(36) DEFAULT NULL COMMENT 'Minecraft账号UUID',
+  `minecraft_username` varchar(16) DEFAULT NULL COMMENT 'Minecraft游戏用户名',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `uk_username` (`username`),
-  UNIQUE KEY `uk_email` (`email`)
+  UNIQUE KEY `uk_email` (`email`),
+  UNIQUE KEY `uk_minecraft_uuid` (`minecraft_uuid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
   
 -- 初始化管理员账号（密码：123456）
-INSERT IGNORE INTO `sys_user` (`username`, `password`, `nickname`, `email`, `status`) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '管理员', 'admin@wknetic.com', 1);
+INSERT IGNORE INTO `sys_user` (`username`, `password`, `nickname`, `email`, `role`, `status`) VALUES
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '管理员', 'admin@wknetic.com', 'ADMIN', 1);
+
+-- ----------------------------
+-- Table structure for user_plugins
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `user_plugins` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `plugin_id` varchar(100) NOT NULL COMMENT '插件ID',
+  `plugin_name` varchar(200) NOT NULL COMMENT '插件名称',
+  `plugin_version` varchar(50) NOT NULL COMMENT '插件版本',
+  `enabled` tinyint(1) NOT NULL DEFAULT 1 COMMENT '是否启用（0禁用 1启用）',
+  `granted_permissions` text COMMENT '已授予的权限（JSON数组）',
+  `installed_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '安装时间',
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_plugin` (`user_id`, `plugin_id`),
+  KEY `idx_user_enabled` (`user_id`, `enabled`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户插件表';
 
 -- 你可以在这里继续添加其他表的 CREATE 语句
