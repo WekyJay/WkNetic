@@ -2,10 +2,12 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePermission } from '@/composables/usePermission'
 import LoginModal from '@/components/LoginModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { userRoleLabel, userRoleColor } = usePermission()
 
 const isMenuOpen = ref(false)
 const isSearchOpen = ref(false)
@@ -135,11 +137,15 @@ function goToAdmin() {
             <!-- 用户下拉菜单 -->
             <div 
               v-if="isUserMenuOpen"
-              class="absolute right-0 mt-2 w-48 bg-bg border border-border rounded-lg shadow-lg py-2 z-50"
+              class="absolute right-0 mt-2 w-56 bg-bg border border-border rounded-lg shadow-lg py-2 z-50"
             >
               <div class="px-4 py-2 border-b border-border">
                 <p class="text-sm font-medium text-text">{{ user.nickname || user.username }}</p>
                 <p class="text-xs text-text-muted">{{ user.email }}</p>
+                <div class="mt-1.5 flex items-center gap-1.5">
+                  <span class="i-tabler-shield text-xs" :class="userRoleColor"></span>
+                  <span class="text-xs font-medium" :class="userRoleColor">{{ userRoleLabel }}</span>
+                </div>
               </div>
               
               <button 

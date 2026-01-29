@@ -32,6 +32,18 @@ const menuItems = [
     badge: null 
   },
   { 
+    name: 'menu.plugins', 
+    icon: 'i-tabler-puzzle', 
+    path: '/admin/plugins',
+    badge: null 
+  },
+  { 
+    name: 'menu.roles', 
+    icon: 'i-tabler-shield', 
+    path: '/admin/roles',
+    badge: null 
+  },
+  { 
     name: 'menu.moderation', 
     icon: 'i-tabler-shield-check', 
     path: '/admin/moderation',

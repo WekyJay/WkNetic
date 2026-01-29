@@ -21,13 +21,22 @@ export function useCaptcha(type: CaptchaType = 'simple') {
   async function fetchSimpleCaptcha() {
     isLoading.value = true
     try {
-      const result = await authApi.getCaptcha() as unknown as CaptchaResult
+      console.log('正在获取验证码...')
+      const result = await authApi.getCaptcha()
+      console.log('验证码获取成功:', result)
+      
+      // 直接使用返回的数据，axios 拦截器已经解包
       captchaImage.value = result.image
       captchaSessionId.value = result.sessionId
       captchaCode.value = '' // 清空输入
-      isLoading.value = false
-    } catch (error) {
+    } catch (error: any) {
       console.error('获取验证码失败:', error)
+      console.error('错误详情:', {
+        message: error.message,
+        response: error.response,
+        stack: error.stack
+      })
+    } finally {
       isLoading.value = false
     }
   }

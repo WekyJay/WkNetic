@@ -3,6 +3,8 @@ package cn.wekyjay.wknetic.admin.system.service.impl;
 import cn.wekyjay.wknetic.common.domain.SysUser;
 import cn.wekyjay.wknetic.common.enums.UserRole;
 import cn.wekyjay.wknetic.common.mapper.SysUserMapper;
+import cn.wekyjay.wknetic.admin.system.domain.SysRole;
+import cn.wekyjay.wknetic.admin.system.service.ISysRoleService;
 import cn.wekyjay.wknetic.admin.system.service.ISysUserService;
 import cn.wekyjay.wknetic.common.model.dto.RegisterBody;
 import cn.wekyjay.wknetic.common.model.dto.ResetPasswordBody;
@@ -14,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -26,6 +29,9 @@ import org.springframework.util.StringUtils;
 public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> implements ISysUserService {
 
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    
+    @Autowired
+    private ISysRoleService roleService;
 
     @Override
     public boolean register(RegisterBody registerBody) {
@@ -54,6 +60,12 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
                 : registerBody.getUsername());
         user.setEmail(registerBody.getEmail());
         user.setStatus(1); // 默认启用
+        
+        // 自动分配默认角色ID
+        SysRole defaultRole = roleService.getDefaultRole();
+        if (defaultRole != null) {
+            user.setRoleId(defaultRole.getRoleId());
+        }
         
         boolean success = this.save(user);
         
@@ -98,6 +110,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUser::getUsername, username);
         return this.getOne(wrapper);
+    }
+
+    @Override
+    public SysUser getUserWithRole(Long userId) {
+        return this.baseMapper.getUserWithRoleById(userId);
     }
 
     @Override
@@ -168,8 +185,11 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         if (user.getStatus() == null) {
             user.setStatus(1);
         }
-        if (!StringUtils.hasText(user.getRole())) {
-            user.setRole(UserRole.USER.getCode());
+        if (user.getRoleId() == null) {
+            SysRole defaultRole = roleService.getDefaultRole();
+            if (defaultRole != null) {
+                user.setRoleId(defaultRole.getRoleId());
+            }
         }
         
         boolean success = this.save(user);

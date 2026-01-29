@@ -52,7 +52,9 @@ export interface UserInfo {
   phone?: string
   avatar?: string
   status: number
-  role: 'admin' | 'moderator' | 'editor'
+  role: 'ADMIN' | 'MODERATOR' | 'USER' | 'VIP' | 'BANNED'
+  minecraftUuid?: string
+  minecraftUsername?: string
 }
 
 /**

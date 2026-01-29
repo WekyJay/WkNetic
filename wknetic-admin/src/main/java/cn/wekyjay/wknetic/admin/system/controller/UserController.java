@@ -47,14 +47,14 @@ public class UserController {
                 return Result.error(40102, "Token 无效");
             }
 
-            // 查询用户信息
-            SysUser user = userService.getById(userId);
+            // 查询用户信息（关联角色表获取role_code）
+            SysUser user = userService.getUserWithRole(userId);
             
             if (user == null) {
                 return Result.error(40401, "用户不存在");
             }
 
-            // 转换为 VO
+            // 转换为 VO（user.getRole() 已通过JOIN查询得到role_code）
             UserInfoVO userInfo = new UserInfoVO();
             BeanUtils.copyProperties(user, userInfo);
             

@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/captcha")
+@RequestMapping("/api/v1/captcha")
 public class CaptchaController {
 
     @Autowired

@@ -3,6 +3,8 @@ package cn.wekyjay.wknetic.auth.security;
 import cn.hutool.core.util.StrUtil;
 import cn.wekyjay.wknetic.common.config.JwtProperties;
 import cn.wekyjay.wknetic.common.util.JwtUtil;
+import cn.wekyjay.wknetic.common.domain.SysUser;
+import cn.wekyjay.wknetic.common.mapper.SysUserMapper;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -17,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -35,6 +39,9 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
     @Resource
     private JwtProperties jwtProperties;
+    
+    @Resource
+    private SysUserMapper userMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
@@ -57,15 +64,23 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             Long userId = jwtUtil.getUserId(authToken);
             log.debug("JWT 过滤器通过，用户ID: {}", userId);
 
-            // 3. 构建 Authentication 对象
-            // TODO: 后续在这里注入 UserDetailsService 获取用户具体的 Role 权限
-            // 目前先给一个空权限列表，保证能登录即可
+            // 3. 从数据库加载用户角色信息
+            SysUser user = userMapper.getUserWithRoleById(userId);
+            
+            // 构建权限列表 (将 role_code 转为 ROLE_ 前缀的权限)
+            List<SimpleGrantedAuthority> authorities = Collections.emptyList();
+            if (user != null && user.getRole() != null && !user.getRole().isEmpty()) {
+                authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+                log.debug("用户 {} 的角色: {}, 权限: ROLE_{}", userId, user.getRole(), user.getRole());
+            }
+            
+            // 4. 构建 Authentication 对象
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userId, null, Collections.emptyList());
+                    userId, null, authorities);
 
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            // 4. 将用户信息存入 Security 上下文
+            // 5. 将用户信息存入 Security 上下文
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

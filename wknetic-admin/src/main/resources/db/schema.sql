@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像地址',
   `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
-  `role` varchar(20) NOT NULL DEFAULT 'USER' COMMENT '用户角色：ADMIN/MODERATOR/USER/VIP/BANNED',
+  `role` varchar(20) DEFAULT 'USER' COMMENT '用户角色：ADMIN/MODERATOR/USER/VIP/BANNED（兼容字段，逐步废弃）',
   `minecraft_uuid` varchar(36) DEFAULT NULL COMMENT 'Minecraft账号UUID',
   `minecraft_username` varchar(16) DEFAULT NULL COMMENT 'Minecraft游戏用户名',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -80,6 +80,75 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
 -- 初始化管理员账号（密码：123456）
 INSERT IGNORE INTO `sys_user` (`username`, `password`, `nickname`, `email`, `role`, `status`) VALUES
 ('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '管理员', 'admin@wknetic.com', 'ADMIN', 1);
+
+-- ----------------------------
+-- Table structure for sys_role
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `sys_role` (
+  `role_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '角色ID',
+  `role_code` varchar(50) NOT NULL COMMENT '角色编码（如：ADMIN, MODERATOR, USER, VIP）',
+  `role_name` varchar(100) NOT NULL COMMENT '角色名称',
+  `role_desc` varchar(500) DEFAULT NULL COMMENT '角色描述',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `is_default` tinyint(1) DEFAULT 0 COMMENT '是否默认角色（0否 1是，新用户注册时自动分配）',
+  `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`role_id`),
+  UNIQUE KEY `uk_role_code` (`role_code`),
+  KEY `idx_status` (`status`),
+  KEY `idx_is_default` (`is_default`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统角色表';
+
+-- 初始化默认角色
+INSERT IGNORE INTO `sys_role` (`role_code`, `role_name`, `role_desc`, `sort_order`, `is_default`, `status`) VALUES
+('ADMIN', '管理员', '拥有系统最高权限，可以管理所有功能', 100, 0, 1),
+('MODERATOR', '审核员', '可以审核和管理用户内容', 50, 0, 1),
+('VIP', 'VIP会员', 'VIP用户，享有特殊权限', 20, 0, 1),
+('USER', '普通用户', '普通注册用户', 10, 1, 1),
+('BANNED', '已封禁', '被封禁的用户，无法使用系统功能', 0, 0, 1);
+
+-- 数据库表结构升级：为 sys_user 表添加 role_id 列（如果不存在）
+-- 注意：需要在数据迁移之前执行
+SET @dbname = DATABASE();
+SET @tablename = 'sys_user';
+SET @columnname = 'role_id';
+SET @preparedStatement = (SELECT IF(
+  (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE 
+      (TABLE_SCHEMA = @dbname)
+      AND (TABLE_NAME = @tablename)
+      AND (COLUMN_NAME = @columnname)
+  ) > 0,
+  'SELECT 1',
+  CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN `role_id` bigint(20) DEFAULT NULL COMMENT ''角色ID（外键关联sys_role.role_id）'' AFTER `status`, ADD KEY `idx_role_id` (`role_id`)')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- 添加外键约束（如果不存在）
+SET @preparedStatement = (SELECT IF(
+  (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+    WHERE 
+      TABLE_SCHEMA = @dbname
+      AND TABLE_NAME = @tablename
+      AND CONSTRAINT_NAME = 'fk_user_role'
+  ) > 0,
+  'SELECT 1',
+  CONCAT('ALTER TABLE ', @tablename, ' ADD CONSTRAINT `fk_user_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`role_id`) ON DELETE SET NULL ON UPDATE CASCADE')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- 数据迁移：将 sys_user 表中的 role 字符串映射到 role_id
+UPDATE `sys_user` u 
+INNER JOIN `sys_role` r ON u.role = r.role_code
+SET u.role_id = r.role_id
+WHERE u.role_id IS NULL AND u.role IS NOT NULL;
 
 -- ----------------------------
 -- Table structure for user_plugins

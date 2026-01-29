@@ -31,6 +31,12 @@ public class UserInfoVO implements Serializable {
     /** 状态（0禁用 1启用） */
     private Integer status;
 
-    /** 用户角色（这里简化处理，后续可扩展） */
-    private String role = "admin";
+    /** 用户角色：ADMIN/MODERATOR/USER/VIP/BANNED */
+    private String role;
+
+    /** Minecraft账号UUID */
+    private String minecraftUuid;
+
+    /** Minecraft游戏用户名 */
+    private String minecraftUsername;
 }

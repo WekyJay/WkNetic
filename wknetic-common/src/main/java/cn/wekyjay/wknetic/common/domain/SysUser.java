@@ -40,7 +40,10 @@ public class SysUser implements Serializable {
     /** 状态（0禁用 1启用） */
     private Integer status;
 
-    /** 用户角色 */
+    /** 角色ID（外键关联sys_role.role_id） */
+    private Long roleId;
+
+    /** 用户角色（兼容字段，逐步废弃） */
     private String role;
 
     /** Minecraft账号UUID */

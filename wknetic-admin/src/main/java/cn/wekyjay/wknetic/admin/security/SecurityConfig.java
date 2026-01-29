@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -33,6 +34,7 @@ import java.util.Collections;
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true) // 启用方法级别的权限控制 @PreAuthorize
 public class SecurityConfig {
 
     @Resource
@@ -67,9 +69,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(registry -> registry
                 // 允许匿名访问的接口
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 跨域预检
-                .requestMatchers("/api/auth/**").permitAll()            // 登录注册接口
-                .requestMatchers("/api/captcha/**").permitAll()         // 验证码接口
-                .requestMatchers("/api/open/**").permitAll()            // 开放接口（首页数据、站点配置等）
+                .requestMatchers("/api/v1/auth/**").permitAll()            // 登录注册接口
+                .requestMatchers("/api/v1/captcha/**").permitAll()         // 验证码接口
+                .requestMatchers("/api/v1/open/**").permitAll()            // 开放接口（首页数据、站点配置等）
                 .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**").permitAll() // Swagger
                 // 其他所有请求必须认证
                 .anyRequest().authenticated()

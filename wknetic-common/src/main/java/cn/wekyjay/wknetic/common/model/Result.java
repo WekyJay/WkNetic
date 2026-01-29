@@ -51,15 +51,14 @@ public class Result<T> implements Serializable {
         return success(null);
     }
 
-
-
-
-
-
     public static <T> Result<T> success(T data) {
         // 自动去翻译工具类拿文字
         String msg = MessageUtils.get(ResultCode.SUCCESS.getMessage());
         return new Result<>(ResultCode.SUCCESS.getCode(), msg, data);
+    }
+    
+    public static <T> Result<T> success(String message) {
+        return new Result<>(ResultCode.SUCCESS.getCode(), message, null);
     }
     
     public static <T> Result<T> success(String message, T data) {
@@ -71,10 +70,10 @@ public class Result<T> implements Serializable {
     /**
      * 直接使用枚举返回错误
      */
-    public static <T> Result<T> error(String resultCode) {
+    public static <T> Result<T> error(IResultCode resultCode) {
         // 自动翻译错误信息
         String msg = MessageUtils.get(resultCode.getMessage());
-        return new Result<>(string.getCode(), msg, null);
+        return new Result<>(resultCode.getCode(), msg, null);
     }
 
     /**

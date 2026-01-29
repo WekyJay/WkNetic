@@ -37,7 +37,10 @@ public class UserDTO {
     /** 状态 */
     private Integer status;
     
-    /** 用户角色 */
+    /** 角色ID（推荐使用） */
+    private Long roleId;
+    
+    /** 用户角色（兼容字段） */
     private String role;
     
     /** Minecraft UUID */

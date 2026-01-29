@@ -14,7 +14,9 @@ export const useAuthStore = defineStore('auth', () => {
     // 检查 token 是否存在且未过期
     return !!token.value && !!user.value && !storageManager.isTokenExpired()
   })
-  const isAdmin = computed(() => user.value?.role === 'admin')
+  const isAdmin = computed(() => user.value?.role === 'ADMIN')
+  const isModerator = computed(() => user.value?.role === 'MODERATOR' || user.value?.role === 'ADMIN')
+  const userRole = computed(() => user.value?.role || 'USER')
 
   /**
    * 用户登录
@@ -142,6 +144,8 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading,
     isAuthenticated,
     isAdmin,
+    isModerator,
+    userRole,
     login,
     register,
     resetPassword,

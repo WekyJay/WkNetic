@@ -38,6 +38,14 @@ public interface ISysUserService extends IService<SysUser> {
     SysUser getUserByUsername(String username);
     
     /**
+     * 根据用户ID查询用户（关联角色表获取role_code）
+     * 
+     * @param userId 用户ID
+     * @return 用户信息（包含role_code）
+     */
+    SysUser getUserWithRole(Long userId);
+    
+    /**
      * 管理员分页查询用户列表
      * 
      * @param queryDTO 查询参数

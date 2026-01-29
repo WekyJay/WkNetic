@@ -62,16 +62,17 @@ api.interceptors.request.use(
  */
 api.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
+    console.log('API 响应:', response.data)
     const { code, message, data } = response.data
     
     // 成功响应
-    if (code === 20000) {
+    if (code === 20000 || code === 200) {
       // 返回解包后的数据，TypeScript 会正确推断类型
       return data as any
     }
     
     // 业务错误
-    console.error('API 错误:', message)
+    console.error('API 业务错误:', { code, message })
     return Promise.reject(new Error(message || '请求失败'))
   },
   (error) => {
