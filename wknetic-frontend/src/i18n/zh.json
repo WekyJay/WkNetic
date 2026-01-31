@@ -142,7 +142,9 @@
     "roleDescPlaceholder": "对角色权限的简要说明",
     "sortOrderHint": "数值越大权限越高（0-100）",
     "setAsDefault": "设为默认角色",
-    "isDefaultHint": "新用户注册时自动分配此角色"
+    "isDefaultHint": "新用户注册时自动分配此角色",
+    "searchPlaceholder": "搜索角色名称或编码...",
+    "filterByStatus": "按状态过滤"
   },
   "common": {
     "create": "创建",
@@ -151,8 +153,10 @@
     "loading": "加载中...",
     "cancel": "取消",
     "delete": "删除",
+    "confirmDelete": "确认删除",
     "edit": "编辑",
     "actions": "操作",
+    "operations": "操作",
     "yes": "是",
     "no": "否",
     "enabled": "启用",
@@ -161,6 +165,10 @@
     "updateSuccess": "更新成功",
     "deleteSuccess": "删除成功",
     "saveFailed": "保存失败",
-    "deleteFailed": "删除失败"
+    "deleteFailed": "删除失败",
+    "refresh": "刷新"
+  },
+  "table": {
+    "showing": "显示 {start}-{end} 项，共 {total} 项"
   }
 }

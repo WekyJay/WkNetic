@@ -57,29 +57,36 @@ graph TD
 
 我要打造一个长期维护的开源项目。目前的开发周期计划如下（2026 Q1）：
 
-### Phase 1: 基础设施 (Infrastructure) (✅DONE)
+### Phase 1: 基础设施 (Infrastructure) ✅
 
-- [x] **Project Init**: Maven 多模块架构搭建 (Common, Auth, Admin) `Doing`
+- [x] **Project Init**: Maven 多模块架构搭建 (Common, Auth, Admin)
 - [x] **Core Utils**: 封装 `ThreadUtil` (Java 21 虚拟线程支持)
 - [x] **Response**: 定义统一响应体 `Result<T>` 与全局异常拦截
-- [ ] **Docs**: 完成架构设计文档 `DESIGN.md`
+- [x] **Database**: 完成数据库表结构设计 (User, Role, Config, Log)
 
-### Phase 2: 安全与认证 (Security) (✅DONE)
+### Phase 2: 安全与认证 (Security) ✅
 
 - [x] **Auth**: 集成 Spring Security，实现 JWT 登录与续签
+- [x] **RBAC**: 完成基于角色的权限控制系统 (Role-Based Access Control)
+- [x] **Config**: 实现动态系统配置管理 (站点设置、验证码配置等)
 - [x] **Log**: 基于 AOP + 虚拟线程的异步日志记录
 - [x] **UI**: Vue3 + UnoCSS 登录页实现
 
-### Phase 3: 动能同步核心 (The Kinetic Core)
+### Phase 3: 动能同步核心 (The Kinetic Core) 🚧
 
 - [x] **Netty Server**: 实现 WebSocket 服务端与心跳检测
 - [x] **Spigot Client**: 编写 Minecraft 插件端的 Netty Client
-- [ ] **Chat Sync**: 实现【网页 <-> 游戏】双向聊天互通
-- [ ] **Data Stream**: 玩家在线状态与元数据同步 (Redis)
+- [x] **Protocol**: 定义消息协议与序列化规范
+- [ ] **Chat Sync**: 实现【网页 <-> 游戏】双向聊天互通 `In Progress`
+- [ ] **Player Sync**: 玩家登录/登出状态同步
+- [ ] **Data Stream**: 实时数据流与元数据同步 (Redis Pub/Sub)
 
-### Phase 4: 社区与体验 (Community & SPI)
+### Phase 4: 社区与体验 (Community & Extension)
 
-- [ ] **SPI Loader**: Vue3 插件动态加载器实现
+- [x] **Plugin System**: 用户插件管理系统基础架构
+- [ ] **Extension Slot**: Vue3 插件扩展点与动态组件加载
+- [ ] **Admin Panel**: 后台管理面板 (用户/角色/配置/日志管理)
+- [ ] **SPI Loader**: 完整的插件生命周期管理
 - [ ] **Theming**: `tokens.css` 设计系统与像素风主题适配
 
 ### Phase 5: 交付 (Delivery)

@@ -142,7 +142,9 @@
     "roleDescPlaceholder": "Brief description of role permissions",
     "sortOrderHint": "Higher value = higher authority (0-100)",
     "setAsDefault": "Set as default role",
-    "isDefaultHint": "Automatically assign this role to new users"
+    "isDefaultHint": "Automatically assign this role to new users",
+    "searchPlaceholder": "Search role name or code...",
+    "filterByStatus": "Filter by status"
   },
   "common": {
     "create": "Create",
@@ -151,8 +153,10 @@
     "loading": "Loading...",
     "cancel": "Cancel",
     "delete": "Delete",
+    "confirmDelete": "Confirm Delete",
     "edit": "Edit",
     "actions": "Actions",
+    "operations": "Operations",
     "yes": "Yes",
     "no": "No",
     "enabled": "Enabled",
@@ -161,6 +165,10 @@
     "updateSuccess": "Updated successfully",
     "deleteSuccess": "Deleted successfully",
     "saveFailed": "Failed to save",
-    "deleteFailed": "Failed to delete"
+    "deleteFailed": "Failed to delete",
+    "refresh": "Refresh"
+  },
+  "table": {
+    "showing": "Showing {start}-{end} of {total} items"
   }
 }

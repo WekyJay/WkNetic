@@ -52,8 +52,8 @@ const setTopic = (id: string) => {
           class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200"
           :class="[
             activeTopic === topic.id 
-              ? 'bg-brand/10 text-brand' 
-              : 'text-text-secondary hover:bg-bg-hover hover:text-text'
+              ? 'bg-brand/10' 
+              : 'text-text-secondary hover:text-text'
           ]"
           @click="setTopic(topic.id)"
         >

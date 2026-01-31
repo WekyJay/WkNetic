@@ -3,8 +3,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TheHeader from '@/components/layout/TheHeader.vue'
 import TheFooter from '@/components/layout/TheFooter.vue'
-import MarkdownRenderer from '@/components/common/MarkdownRenderer.vue'
-import MarkdownEditor from '@/components/common/MarkdownEditor.vue'
+import WkMarkdownRenderer from '@/components/common/WkMarkdownRenderer.vue'
+import WkMarkdownEditor from '@/components/common/WkMarkdownEditor.vue'
 
 interface Author {
   id: number
@@ -344,7 +344,7 @@ onMounted(() => {
           
           <!-- 帖子内容 (Markdown 渲染) -->
           <div class="border-t border-border pt-6 mb-6">
-            <MarkdownRenderer :content="post.content" />
+            <WkMarkdownRenderer :content="post.content" />
           </div>
           
           <!-- 标签 -->
@@ -465,7 +465,7 @@ onMounted(() => {
           <!-- 发表评论 -->
           <div class="card">
             <h3 class="text-sm font-medium text-text-secondary mb-3">Write a comment</h3>
-            <MarkdownEditor 
+            <WkMarkdownEditor 
               v-model="newComment" 
               placeholder="Share your thoughts... Markdown is supported!"
               min-height="150px"
@@ -515,7 +515,7 @@ onMounted(() => {
                   </div>
                   
                   <!-- 评论内容 -->
-                  <MarkdownRenderer :content="comment.content" class="text-sm" />
+                  <WkMarkdownRenderer :content="comment.content" class="text-sm" />
                   
                   <!-- 评论操作 -->
                   <div class="flex items-center gap-4 mt-3">
@@ -550,7 +550,7 @@ onMounted(() => {
                     leave-to-class="opacity-0 -translate-y-2"
                   >
                     <div v-if="replyingTo === comment.id" class="mt-4">
-                      <MarkdownEditor 
+                      <WkMarkdownEditor 
                         v-model="replyContent" 
                         placeholder="Write a reply..."
                         min-height="100px"
@@ -596,7 +596,7 @@ onMounted(() => {
                           <span class="text-text-muted">·</span>
                           <span class="text-xs text-text-muted">{{ reply.createdAt }}</span>
                         </div>
-                        <MarkdownRenderer :content="reply.content" class="text-sm" />
+                        <WkMarkdownRenderer :content="reply.content" class="text-sm" />
                         <button 
                           class="flex items-center gap-1 text-xs text-text-muted hover:text-text mt-2 transition-colors"
                         >

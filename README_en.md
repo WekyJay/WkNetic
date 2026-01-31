@@ -58,29 +58,36 @@ graph TD
 
 My goal is to build a long-term maintained open-source project. The current development cycle for 2026 Q1 is planned as follows:
 
-### Phase 1: Infrastructure (✅DONE)
+### Phase 1: Infrastructure ✅
 
-* [x] **Project Init**: Setup Maven multi-module architecture (Common, Auth, Admin) `Doing`
+* [x] **Project Init**: Setup Maven multi-module architecture (Common, Auth, Admin)
 * [x] **Core Utils**: Encapsulate `ThreadUtil` (Java 21 Virtual Thread support)
 * [x] **Response**: Define unified response body `Result<T>` and global exception handling
-* [x] **Docs**: Complete architecture design document `DESIGN.md`
+* [x] **Database**: Complete database schema design (User, Role, Config, Log)
 
-### Phase 2: Security & Authentication (✅DONE)
+### Phase 2: Security & Authentication ✅
 
 * [x] **Auth**: Integrate Spring Security for JWT login and renewal
+* [x] **RBAC**: Role-Based Access Control system implementation
+* [x] **Config**: Dynamic system configuration management (site settings, captcha config, etc.)
 * [x] **Log**: Asynchronous logging based on AOP + Virtual Threads
 * [x] **UI**: Login page implementation with Vue3 + UnoCSS
 
-### Phase 3: The Kinetic Core
+### Phase 3: The Kinetic Core 🚧
 
 * [x] **Netty Server**: Implement WebSocket server and heartbeat detection
 * [x] **Spigot Client**: Develop the Netty Client for the Minecraft plugin side
-* [ ] **Chat Sync**: Bidirectional chat synchronization between Web and Game
-* [ ] **Data Stream**: Real-time player status and metadata synchronization (Redis)
+* [x] **Protocol**: Define message protocol and serialization standards
+* [ ] **Chat Sync**: Bidirectional chat synchronization between Web and Game `In Progress`
+* [ ] **Player Sync**: Player login/logout status synchronization
+* [ ] **Data Stream**: Real-time data streaming and metadata sync (Redis Pub/Sub)
 
-### Phase 4: Community & Experience
+### Phase 4: Community & Extension
 
-* [ ] **SPI Loader**: Implement Vue3 plugin dynamic loader
+* [x] **Plugin System**: User plugin management infrastructure
+* [ ] **Extension Slot**: Vue3 plugin extension points and dynamic component loading
+* [ ] **Admin Panel**: Backend admin panel (User/Role/Config/Log management)
+* [ ] **SPI Loader**: Complete plugin lifecycle management
 * [ ] **Theming**: `tokens.css` design system and pixel art theme adaptation
 
 ### Phase 5: Delivery

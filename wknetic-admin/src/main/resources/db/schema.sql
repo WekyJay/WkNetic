@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像地址',
   `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
+  `role_id` bigint(20) DEFAULT NULL COMMENT '角色ID（外键关联sys_role.role_id）',
   `role` varchar(20) DEFAULT 'USER' COMMENT '用户角色：ADMIN/MODERATOR/USER/VIP/BANNED（兼容字段，逐步废弃）',
   `minecraft_uuid` varchar(36) DEFAULT NULL COMMENT 'Minecraft账号UUID',
   `minecraft_username` varchar(16) DEFAULT NULL COMMENT 'Minecraft游戏用户名',
@@ -74,12 +75,12 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `uk_username` (`username`),
   UNIQUE KEY `uk_email` (`email`),
-  UNIQUE KEY `uk_minecraft_uuid` (`minecraft_uuid`)
+  UNIQUE KEY `uk_minecraft_uuid` (`minecraft_uuid`),
+  KEY `idx_role_id` (`role_id`),
+  CONSTRAINT `fk_user_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`role_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
   
--- 初始化管理员账号（密码：123456）
-INSERT IGNORE INTO `sys_user` (`username`, `password`, `nickname`, `email`, `role`, `status`) VALUES
-('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '管理员', 'admin@wknetic.com', 'ADMIN', 1);
+-- 注意：由于外键约束，需要先创建sys_role表，再初始化管理员账号
 
 -- ----------------------------
 -- Table structure for sys_role
@@ -108,47 +109,11 @@ INSERT IGNORE INTO `sys_role` (`role_code`, `role_name`, `role_desc`, `sort_orde
 ('USER', '普通用户', '普通注册用户', 10, 1, 1),
 ('BANNED', '已封禁', '被封禁的用户，无法使用系统功能', 0, 0, 1);
 
--- 数据库表结构升级：为 sys_user 表添加 role_id 列（如果不存在）
--- 注意：需要在数据迁移之前执行
-SET @dbname = DATABASE();
-SET @tablename = 'sys_user';
-SET @columnname = 'role_id';
-SET @preparedStatement = (SELECT IF(
-  (
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE 
-      (TABLE_SCHEMA = @dbname)
-      AND (TABLE_NAME = @tablename)
-      AND (COLUMN_NAME = @columnname)
-  ) > 0,
-  'SELECT 1',
-  CONCAT('ALTER TABLE ', @tablename, ' ADD COLUMN `role_id` bigint(20) DEFAULT NULL COMMENT ''角色ID（外键关联sys_role.role_id）'' AFTER `status`, ADD KEY `idx_role_id` (`role_id`)')
-));
-PREPARE alterIfNotExists FROM @preparedStatement;
-EXECUTE alterIfNotExists;
-DEALLOCATE PREPARE alterIfNotExists;
-
--- 添加外键约束（如果不存在）
-SET @preparedStatement = (SELECT IF(
-  (
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-    WHERE 
-      TABLE_SCHEMA = @dbname
-      AND TABLE_NAME = @tablename
-      AND CONSTRAINT_NAME = 'fk_user_role'
-  ) > 0,
-  'SELECT 1',
-  CONCAT('ALTER TABLE ', @tablename, ' ADD CONSTRAINT `fk_user_role` FOREIGN KEY (`role_id`) REFERENCES `sys_role` (`role_id`) ON DELETE SET NULL ON UPDATE CASCADE')
-));
-PREPARE alterIfNotExists FROM @preparedStatement;
-EXECUTE alterIfNotExists;
-DEALLOCATE PREPARE alterIfNotExists;
-
--- 数据迁移：将 sys_user 表中的 role 字符串映射到 role_id
-UPDATE `sys_user` u 
-INNER JOIN `sys_role` r ON u.role = r.role_code
-SET u.role_id = r.role_id
-WHERE u.role_id IS NULL AND u.role IS NOT NULL;
+-- 初始化管理员账号（密码：123456）
+-- 使用子查询获取ADMIN角色ID
+INSERT IGNORE INTO `sys_user` (`username`, `password`, `nickname`, `email`, `role`, `role_id`, `status`) 
+SELECT 'admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVKIUi', '管理员', 'admin@wknetic.com', 'ADMIN', role_id, 1
+FROM `sys_role` WHERE role_code = 'ADMIN';
 
 -- ----------------------------
 -- Table structure for user_plugins

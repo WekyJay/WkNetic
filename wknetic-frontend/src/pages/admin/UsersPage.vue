@@ -3,11 +3,14 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { userApi, type User, type UserRole, type UserStatus, USER_ROLE_MAP, USER_STATUS_MAP } from '@/api/user'
 import { getMinecraftAvatarUrl } from '@/utils/minecraft'
 import UserFormModal from '@/components/admin/UserFormModal.vue'
-import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import { WkButton, WkInput, WkBadge, WkAlert, WkLoading, WkDialog } from '@/components/common'
+
 
 const loading = ref(false)
 const users = ref<User[]>([])
 const total = ref(0)
+const errorMessage = ref('')
+const successMessage = ref('')
 
 // 确认框状态
 const confirmModal = reactive({
@@ -31,6 +34,7 @@ const queryParams = reactive({
 const modalVisible = ref(false)
 const modalMode = ref<'create' | 'edit'>('create')
 const currentUser = ref<User | null>(null)
+const userFormRef = ref<any>(null)
 
 const pageCount = computed(() => Math.ceil(total.value / queryParams.size))
 
@@ -40,12 +44,23 @@ onMounted(() => {
 
 async function loadUsers() {
   loading.value = true
+  errorMessage.value = ''
   try {
     const result = await userApi.getUserList(queryParams)
-    users.value = result.records
-    total.value = result.total
+    // 安全地访问数据结构
+    if (result) {
+      users.value = result.records
+      total.value = result.total
+    } else {
+      users.value = []
+      total.value = 0
+    }
+    console.log('API Response:', result) // 调试日志
   } catch (error: any) {
-    alert('加载用户列表失败: ' + error.message)
+    console.error('Load users error:', error)
+    errorMessage.value = '加载用户列表失败: ' + error.message
+    users.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
@@ -144,44 +159,31 @@ function handleModalSuccess() {
 
 // 显示成功消息
 function showSuccessMessage(message: string) {
-  confirmModal.visible = true
-  confirmModal.title = '操作成功'
-  confirmModal.content = message
-  confirmModal.type = 'success'
-  confirmModal.buttonType = 'confirm-only'
-  confirmModal.onConfirm = () => {
-    confirmModal.visible = false
-  }
+  successMessage.value = message
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
 }
 
 // 显示错误消息
 function showErrorMessage(message: string) {
-  confirmModal.visible = true
-  confirmModal.title = '操作失败'
-  confirmModal.content = message
-  confirmModal.type = 'danger'
-  confirmModal.buttonType = 'confirm-only'
-  confirmModal.onConfirm = () => {
-    confirmModal.visible = false
-  }
+  errorMessage.value = message
+  setTimeout(() => {
+    errorMessage.value = ''
+  }, 5000)
 }
 
-function getRoleBadgeColor(role: UserRole): string {
-  const colors = {
-    ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    MODERATOR: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    USER: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    VIP: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    BANNED: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+function getRoleBadgeVariant(role: UserRole): 'danger' | 'warning' | 'success' | '' {
+  const variants = {
+    ADMIN: 'danger' as const,
+    MODERATOR: 'warning' as const,
+    USER: '' as const,
+    VIP: 'success' as const,
+    BANNED: 'danger' as const
   }
-  return colors[role] || colors.USER
+  return variants[role] || ''
 }
 
-function getStatusBadgeColor(status: UserStatus): string {
-  return status === 1
-    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-    : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString('zh-CN')
@@ -193,222 +195,240 @@ function formatDate(dateStr: string): string {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">用户管理</h1>
-        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <h1 class="text-2xl font-bold text-[var(--text-default)]">用户管理</h1>
+        <p class="mt-1 text-sm text-[var(--text-secondary)]">
           管理系统用户及其权限
         </p>
       </div>
-      <button
+      <WkButton
+        variant="primary"
+        icon="i-tabler-user-plus"
         @click="handleCreate"
-        class="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
       >
-        <i class="i-tabler-user-plus w-5 h-5" />
         新建用户
-      </button>
+      </WkButton>
     </div>
 
+    <!-- Success/Error Messages -->
+    <WkAlert 
+      v-if="successMessage"
+      type="success" 
+      :message="successMessage"
+      :closable="true"
+      @close="successMessage = ''"
+    />
+    
+    <WkAlert 
+      v-if="errorMessage"
+      type="error" 
+      :message="errorMessage"
+      :closable="true"
+      @close="errorMessage = ''"
+    />
+
+    <!-- Loading -->
+    <WkLoading :loading="loading" fullscreen text="加载中..." />
+
     <!-- Filters -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+    <div class="bg-[var(--bg-raised)] rounded-lg border border-[var(--border-default)] p-4">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="md:col-span-2">
-          <input
+          <WkInput
             v-model="queryParams.keyword"
-            type="text"
             placeholder="搜索用户名、邮箱、MC账号..."
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            prefix-icon="i-tabler-search"
+            clearable
             @keyup.enter="handleSearch"
           />
         </div>
         <div>
-          <select
+          <ElSelect
             v-model="queryParams.status"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="全部状态"
+            clearable
+            style="width: 100%"
           >
-            <option :value="undefined">全部状态</option>
-            <option :value="1">启用</option>
-            <option :value="0">禁用</option>
-          </select>
+            <ElOption label="启用" :value="1" />
+            <ElOption label="禁用" :value="0" />
+          </ElSelect>
         </div>
         <div>
-          <select
+          <ElSelect
             v-model="queryParams.role"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            placeholder="全部角色"
+            clearable
+            style="width: 100%"
           >
-            <option :value="undefined">全部角色</option>
-            <option value="ADMIN">管理员</option>
-            <option value="MODERATOR">版主</option>
-            <option value="USER">普通用户</option>
-            <option value="VIP">VIP会员</option>
-            <option value="BANNED">封禁</option>
-          </select>
+            <ElOption label="管理员" value="ADMIN" />
+            <ElOption label="版主" value="MODERATOR" />
+            <ElOption label="普通用户" value="USER" />
+            <ElOption label="VIP会员" value="VIP" />
+            <ElOption label="封禁" value="BANNED" />
+          </ElSelect>
         </div>
       </div>
       <div class="flex gap-2 mt-4">
-        <button
+        <WkButton
+          variant="primary"
+          icon="i-tabler-search"
           @click="handleSearch"
-          class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
         >
-          <i class="i-tabler-search w-4 h-4" />
           搜索
-        </button>
-        <button
+        </WkButton>
+        <WkButton
+          variant="secondary"
+          icon="i-tabler-refresh"
           @click="handleReset"
-          class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600"
         >
-          <i class="i-tabler-refresh w-4 h-4" />
           重置
-        </button>
+        </WkButton>
       </div>
     </div>
 
     <!-- Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">用户</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">邮箱</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">角色</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">状态</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">MC账号</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">创建时间</th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">操作</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-if="loading" class="animate-pulse">
-              <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">加载中...</td>
-            </tr>
-            <tr v-else-if="users.length === 0">
-              <td colspan="7" class="px-6 py-4 text-center text-gray-500 dark:text-gray-400">暂无数据</td>
-            </tr>
-            <tr v-else v-for="user in users" :key="user.userId" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center gap-3">
-                  <img
-                    :src="user.avatar || `https://ui-avatars.com/api/?name=${user.username}`"
-                    :alt="user.username"
-                    class="w-10 h-10 rounded-full"
-                  />
-                  <div>
-                    <div class="font-medium text-gray-900 dark:text-white">{{ user.username }}</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.nickname }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {{ user.email || '-' }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getRoleBadgeColor(user.role)" class="px-2 py-1 text-xs font-semibold rounded-full">
-                  {{ USER_ROLE_MAP[user.role] }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span :class="getStatusBadgeColor(user.status)" class="px-2 py-1 text-xs font-semibold rounded-full">
-                  {{ USER_STATUS_MAP[user.status] }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div v-if="user.minecraftUuid" class="flex items-center gap-2">
-                  <img
-                    :src="getMinecraftAvatarUrl(user.minecraftUuid, 32)"
-                    :alt="user.minecraftUsername"
-                    class="w-6 h-6 rounded"
-                  />
-                  <span class="text-sm text-gray-900 dark:text-white">{{ user.minecraftUsername }}</span>
-                </div>
-                <span v-else class="text-sm text-gray-500 dark:text-gray-400">-</span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {{ formatDate(user.createTime) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex items-center justify-end gap-2">
-                  <button
-                    @click="handleEdit(user)"
-                    class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                    title="编辑"
-                  >
-                    <i class="i-tabler-edit w-5 h-5" />
-                  </button>
-                  <button
-                    @click="handleToggleStatus(user)"
-                    :class="user.status === 1 ? 'text-yellow-600 hover:text-yellow-800' : 'text-green-600 hover:text-green-800'"
-                    :title="user.status === 1 ? '禁用' : '启用'"
-                  >
-                    <i :class="user.status === 1 ? 'i-tabler-ban' : 'i-tabler-check'" class="w-5 h-5" />
-                  </button>
-                  <button
-                    @click="handleDelete(user)"
-                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                    title="删除"
-                  >
-                    <i class="i-tabler-trash w-5 h-5" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+    <div class="bg-[var(--bg-raised)] rounded-lg border border-[var(--border-default)] overflow-hidden">
+      <el-table
+        :data="users"
+        style="width: 100%"
+        :empty-text="'暂无数据'"
+        row-key="userId"
+        class="!border-none"
+      >
+        <el-table-column label="用户" min-width="150">
+          <template #default="scope">
+            <div class="flex items-center gap-3">
+              <img
+                :src="scope.row.avatar || `https://ui-avatars.com/api/?name=${scope.row.username}`"
+                :alt="scope.row.username"
+                class="w-10 h-10 rounded-full"
+              />
+              <div>
+                <div class="font-medium text-[var(--text-default)]">{{ scope.row.username }}</div>
+                <div class="text-sm text-[var(--text-secondary)]">{{ scope.row.nickname }}</div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column prop="email" label="邮箱" min-width="150">
+          <template #default="scope">
+            <span class="text-[var(--text-default)]">{{ scope.row.email || '-' }}</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="角色" width="100">
+          <template #default="scope">
+            <ElTag
+              :type="getRoleBadgeVariant(scope.row.role)"
+              size="small"
+            >
+              {{ USER_ROLE_MAP[scope.row.role] }}
+            </ElTag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="状态" width="100">
+          <template #default="scope">
+            <ElTag
+              :type="scope.row.status === 1 ? 'success' : 'info'"
+              size="small"
+            >
+              {{ USER_STATUS_MAP[scope.row.status] }}
+            </ElTag>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="MC账号" min-width="120">
+          <template #default="scope">
+            <div v-if="scope.row.minecraftUuid" class="flex items-center gap-2">
+              <img
+                :src="getMinecraftAvatarUrl(scope.row.minecraftUuid, 32)"
+                :alt="scope.row.minecraftUsername"
+                class="w-6 h-6 rounded"
+              />
+              <span class="text-sm text-[var(--text-default)]">{{ scope.row.minecraftUsername }}</span>
+            </div>
+            <span v-else class="text-sm text-[var(--text-secondary)]">-</span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="创建时间" width="200">
+          <template #default="scope">
+            <span class="text-sm text-[var(--text-secondary)]">
+              {{ formatDate(scope.row.createTime) }}
+            </span>
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" align="center" width="200" fixed="right">
+          <template #default="scope">
+            <div class="flex items-center gap-1">
+              <WkButton
+                variant="ghost"
+                size="sm"
+                icon="i-tabler-edit"
+                @click="handleEdit(scope.row)"
+              />
+              <WkButton
+                variant="ghost"
+                size="sm"
+                :icon="scope.row.status === 1 ? 'i-tabler-ban' : 'i-tabler-check'"
+                @click="handleToggleStatus(scope.row)"
+              />
+              <WkButton
+                variant="danger"
+                size="sm"
+                icon="i-tabler-trash"
+                @click="handleDelete(scope.row)"
+              />
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
 
       <!-- Pagination -->
-      <div v-if="total > 0" class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-        <div class="text-sm text-gray-700 dark:text-gray-300">
-          显示 {{ (queryParams.page - 1) * queryParams.size + 1 }} - {{ Math.min(queryParams.page * queryParams.size, total) }} 
-          / 共 {{ total }} 条
-        </div>
-        <div class="flex items-center gap-2">
-          <select
-            v-model="queryParams.size"
-            @change="handleSizeChange(queryParams.size)"
-            class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-          >
-            <option :value="10">10 / 页</option>
-            <option :value="20">20 / 页</option>
-            <option :value="50">50 / 页</option>
-            <option :value="100">100 / 页</option>
-          </select>
-          <button
-            @click="handlePageChange(queryParams.page - 1)"
-            :disabled="queryParams.page === 1"
-            class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-          >
-            <i class="i-tabler-chevron-left w-4 h-4" />
-          </button>
-          <span class="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
-            {{ queryParams.page }} / {{ pageCount }}
-          </span>
-          <button
-            @click="handlePageChange(queryParams.page + 1)"
-            :disabled="queryParams.page >= pageCount"
-            class="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-          >
-            <i class="i-tabler-chevron-right w-4 h-4" />
-          </button>
-        </div>
+      <div v-if="total > 0" class="px-6 py-4 border-t border-[var(--border-default)] flex justify-end">
+        <el-pagination
+          v-model:current-page="queryParams.page"
+          v-model:page-size="queryParams.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+          class="!bg-transparent"
+        />
       </div>
     </div>
 
-    <!-- User Form Modal -->
-    <UserFormModal
-      v-model:visible="modalVisible"
-      :mode="modalMode"
-      :user="currentUser"
-      @success="handleModalSuccess"
-    />
+    <!-- User Form (inside WkDialog) -->
+    <WkDialog v-model="modalVisible" :title="modalMode === 'create' ? '创建用户' : '编辑用户'" size="lg">
+      <UserFormModal
+        ref="userFormRef"
+        :visible="modalVisible"
+        :mode="modalMode"
+        :user="currentUser"
+        :asDialog="true"
+        @update:visible="(v) => (modalVisible = v)"
+        @success="handleModalSuccess"
+      />
 
-    <!-- Confirm Modal -->
-    <ConfirmModal
-      v-model:visible="confirmModal.visible"
-      :title="confirmModal.title"
-      :content="confirmModal.content"
-      :type="confirmModal.type"
-      :button-type="confirmModal.buttonType"
-      :loading="confirmModal.loading"
-      @confirm="confirmModal.onConfirm"
-    />
+      <template #footer>
+        <WkButton variant="ghost" @click="modalVisible = false">取消</WkButton>
+        <WkButton variant="primary" @click="userFormRef?.submit()">保存</WkButton>
+      </template>
+    </WkDialog>
+
+    <!-- Confirm Dialog (WkDialog) -->
+    <WkDialog v-model="confirmModal.visible" :title="confirmModal.title" size="sm">
+      <p class="text-[var(--text-secondary)]">{{ confirmModal.content }}</p>
+
+      <template #footer>
+        <WkButton variant="ghost" @click="confirmModal.visible = false">取消</WkButton>
+        <WkButton :variant="confirmModal.type === 'danger' ? 'danger' : 'primary'" :loading="confirmModal.loading" @click="confirmModal.onConfirm">确定</WkButton>
+      </template>
+    </WkDialog>
   </div>
 </template>
+<style scoped>
+</style>

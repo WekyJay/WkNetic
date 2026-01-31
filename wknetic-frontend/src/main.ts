@@ -2,19 +2,25 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import * as Vue from 'vue'
 
+// ---------- 样式导入（确保优先级正确） ---------------
+
+import 'element-plus/dist/index.css'
+import './styles/element-plus.css'
+
+
+// 2. UnoCSS 重置样式
+import '@unocss/reset/tailwind-compat.css'
+// 3. UnoCSS 核心样式
+import 'virtual:uno.css'
+// 4. 自定义主题样式
+import './styles/theme.css'
+
+
 // ---------- SDK初始化 ---------------
-import { WknieticSDK } from './sdk';
+import { WknieticSDK } from './sdk'
 
 // ---------- Pinia ---------------
 import { createPinia } from 'pinia'
-
-// ---------- UnoCSS ---------------
-// 1. 引入 UnoCSS 重置样式
-import '@unocss/reset/tailwind.css'
-// 2. 引入 UnoCSS 核心样式
-import 'virtual:uno.css'
-// 3. 引入我们自定义的 CSS 变量
-import './styles/theme.css'
 
 // ---------- Router ---------------
 import router from './router' // 引入路由实例

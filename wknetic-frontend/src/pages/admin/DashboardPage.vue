@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import AdminLayout from '@/components/layout/admin/AdminLayout.vue'
+import { WkCard, WkButton, WkBadge } from '@/components/common'
 
 const { t } = useI18n()
 
@@ -109,33 +109,31 @@ const chartData = ref({
       <!-- Page header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-text">{{ $t('dashboard') }}</h1>
-          <p class="text-text-muted mt-1">{{ $t('welcome') }}</p>
+          <h1 class="text-2xl font-bold text-[var(--text-default)]">{{ $t('dashboard') }}</h1>
+          <p class="text-[var(--text-secondary)] mt-1">{{ $t('welcome') }}</p>
         </div>
         <div class="flex items-center gap-2">
-          <button class="btn-secondary text-sm">
-            <span class="i-tabler-download"></span>
+          <WkButton variant="secondary" size="sm" icon="i-tabler-download">
             {{ t('pages.export') }}
-          </button>
-          <button class="btn-primary text-sm">
-            <span class="i-tabler-plus"></span>
+          </WkButton>
+          <WkButton variant="primary" size="sm" icon="i-tabler-plus">
             {{ t('pages.new_project') }}
-          </button>
+          </WkButton>
         </div>
       </div>
 
       <!-- Stats cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div 
+        <WkCard 
           v-for="stat in stats"
           :key="stat.label"
-          class="bg-bg rounded-xl border border-border p-5 hover:border-brand/30 transition-colors"
+          :hoverable="true"
         >
           <div class="flex items-start justify-between">
             <div 
               :class="[
-                'w-11 h-11 rounded-xl flex-center',
-                stat.color === 'brand' ? 'bg-brand/15 text-brand' :
+                'w-11 h-11 rounded-xl flex items-center justify-center',
+                stat.color === 'brand' ? 'bg-[var(--brand-default)]/15 text-[var(--brand-default)]' :
                 stat.color === 'blue' ? 'bg-blue-500/15 text-blue-500' :
                 stat.color === 'purple' ? 'bg-purple-500/15 text-purple-500' :
                 'bg-orange-500/15 text-orange-500'
@@ -143,34 +141,30 @@ const chartData = ref({
             >
               <span :class="stat.icon" class="text-xl"></span>
             </div>
-            <span 
-              :class="[
-                'text-xs font-medium px-2 py-1 rounded-full',
-                stat.trend === 'up' 
-                  ? 'text-brand text-green-600/90 bg-green-600/15' 
-                  : 'text-danger text-red-600/90 bg-red-600/15'
-              ]"
+            <WkBadge 
+              :variant="stat.trend === 'up' ? 'success' : 'danger'"
+              size="sm"
             >
               {{ stat.change }}
-            </span>
+            </WkBadge>
           </div>
           <div class="mt-4">
-            <p class="text-2xl font-bold text-text">{{ stat.value }}</p>
-            <p class="text-sm text-text-muted mt-1">{{ stat.label }}</p>
+            <p class="text-2xl font-bold text-[var(--text-default)]">{{ stat.value }}</p>
+            <p class="text-sm text-[var(--text-secondary)] mt-1">{{ stat.label }}</p>
           </div>
-        </div>
+        </WkCard>
       </div>
 
       <!-- Charts and Activity row -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Downloads chart -->
-        <div class="lg:col-span-2 bg-bg rounded-xl border border-border p-5">
+        <WkCard class="lg:col-span-2">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-semibold text-text">Downloads Overview</h2>
+            <h2 class="text-lg font-semibold text-[var(--text-default)]">Downloads Overview</h2>
             <div class="flex items-center gap-2">
-              <button class="px-3 py-1.5 text-sm rounded-lg bg-brand/15 text-brand">7 Days</button>
-              <button class="px-3 py-1.5 text-sm rounded-lg text-text-muted hover:bg-bg-surface">30 Days</button>
-              <button class="px-3 py-1.5 text-sm rounded-lg text-text-muted hover:bg-bg-surface">90 Days</button>
+              <WkButton variant="primary" size="sm">7 Days</WkButton>
+              <WkButton variant="ghost" size="sm">30 Days</WkButton>
+              <WkButton variant="ghost" size="sm">90 Days</WkButton>
             </div>
           </div>
           <!-- Simple bar chart visualization -->
@@ -181,23 +175,23 @@ const chartData = ref({
               class="flex-1 flex flex-col items-center gap-2"
             >
               <div 
-                class="w-full bg-brand/80 rounded-t-lg transition-all hover:bg-brand"
+                class="w-full bg-[var(--brand-default)]/80 rounded-t-lg transition-all hover:bg-[var(--brand-default)]"
                 :style="{ height: `${(value / 3.5) * 100}%` }"
               ></div>
-              <span class="text-xs text-text-muted">{{ chartData.labels[index] }}</span>
+              <span class="text-xs text-[var(--text-muted)]">{{ chartData.labels[index] }}</span>
             </div>
           </div>
-          <div class="mt-4 pt-4 border-t border-border flex items-center justify-between text-sm">
-            <span class="text-text-muted">Total this week: <span class="text-text font-medium">17.9M downloads</span></span>
-            <span class="text-brand">+15.3% vs last week</span>
+          <div class="mt-4 pt-4 border-t border-[var(--border-default)] flex items-center justify-between text-sm">
+            <span class="text-[var(--text-secondary)]">Total this week: <span class="text-[var(--text-default)] font-medium">17.9M downloads</span></span>
+            <WkBadge variant="success">+15.3% vs last week</WkBadge>
           </div>
-        </div>
+        </WkCard>
 
         <!-- Recent activity -->
-        <div class="bg-bg rounded-xl border border-border p-5">
+        <WkCard>
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-text">Recent Activity</h2>
-            <button class="text-sm text-brand hover:underline">View all</button>
+            <h2 class="text-lg font-semibold text-[var(--text-default)]">Recent Activity</h2>
+            <WkButton variant="text" size="sm">View all</WkButton>
           </div>
           <div class="space-y-4">
             <div 
@@ -207,38 +201,38 @@ const chartData = ref({
             >
               <div 
                 :class="[
-                  'w-9 h-9 rounded-lg flex-center flex-shrink-0',
-                  activity.type === 'project' ? 'bg-brand/15 text-brand' :
+                  'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                  activity.type === 'project' ? 'bg-[var(--brand-default)]/15 text-[var(--brand-default)]' :
                   activity.type === 'user' ? 'bg-blue-500/15 text-blue-500' :
-                  activity.type === 'report' ? 'bg-danger/15 text-danger' :
-                  activity.type === 'verified' ? 'bg-brand/15 text-brand' :
+                  activity.type === 'report' ? 'bg-red-500/15 text-red-500' :
+                  activity.type === 'verified' ? 'bg-[var(--brand-default)]/15 text-[var(--brand-default)]' :
                   'bg-purple-500/15 text-purple-500'
                 ]"
               >
                 <span :class="activity.icon" class="text-lg"></span>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-text truncate">{{ activity.title }}</p>
-                <p class="text-xs text-text-muted truncate">{{ activity.description }}</p>
-                <p class="text-xs text-text-muted mt-1">{{ activity.time }}</p>
+                <p class="text-sm font-medium text-[var(--text-default)] truncate">{{ activity.title }}</p>
+                <p class="text-xs text-[var(--text-secondary)] truncate">{{ activity.description }}</p>
+                <p class="text-xs text-[var(--text-muted)] mt-1">{{ activity.time }}</p>
               </div>
             </div>
           </div>
-        </div>
+        </WkCard>
       </div>
 
       <!-- Bottom row -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Top projects table -->
-        <div class="bg-bg rounded-xl border border-border p-5">
+        <WkCard>
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-text">Top Projects</h2>
-            <button class="text-sm text-brand hover:underline">View all</button>
+            <h2 class="text-lg font-semibold text-[var(--text-default)]">Top Projects</h2>
+            <WkButton variant="text" size="sm">View all</WkButton>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead>
-                <tr class="text-left text-sm text-text-muted border-b border-border">
+                <tr class="text-left text-sm text-[var(--text-secondary)] border-b border-[var(--border-default)]">
                   <th class="pb-3 font-medium">Project</th>
                   <th class="pb-3 font-medium">Category</th>
                   <th class="pb-3 font-medium text-right">Downloads</th>
@@ -249,63 +243,92 @@ const chartData = ref({
                 <tr 
                   v-for="project in topProjects"
                   :key="project.name"
-                  class="border-b border-border last:border-0 hover:bg-bg-surface/50"
+                  class="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-surface)]/50"
                 >
                   <td class="py-3">
                     <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-lg bg-bg-surface flex-center">
-                        <span class="i-tabler-package text-text-muted"></span>
+                      <div class="w-8 h-8 rounded-lg bg-[var(--bg-surface)] flex items-center justify-center">
+                        <span class="i-tabler-package text-[var(--text-muted)]"></span>
                       </div>
-                      <span class="font-medium text-text">{{ project.name }}</span>
+                      <span class="font-medium text-[var(--text-default)]">{{ project.name }}</span>
                     </div>
                   </td>
                   <td class="py-3">
-                    <span class="px-2 py-1 text-xs rounded-full bg-bg-surface text-text-muted">
+                    <WkBadge variant="default" size="sm">
                       {{ project.category }}
-                    </span>
+                    </WkBadge>
                   </td>
-                  <td class="py-3 text-right text-text">{{ project.downloads }}</td>
-                  <td class="py-3 text-right text-brand">{{ project.growth }}</td>
+                  <td class="py-3 text-right text-[var(--text-default)]">{{ project.downloads }}</td>
+                  <td class="py-3 text-right">
+                    <WkBadge variant="success" size="sm">{{ project.growth }}</WkBadge>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
+        </WkCard>
 
         <!-- Quick actions -->
-        <div class="bg-bg rounded-xl border border-border p-5">
-          <h2 class="text-lg font-semibold text-text mb-4">Quick Actions</h2>
+        <WkCard>
+          <h2 class="text-lg font-semibold text-[var(--text-default)] mb-4">Quick Actions</h2>
           <div class="grid grid-cols-2 gap-3">
-            <button class="p-4 rounded-xl bg-bg-surface border border-border hover:border-brand/30 transition-colors text-left group">
-              <div class="w-10 h-10 rounded-lg bg-brand/15 text-brand flex-center mb-3 group-hover:bg-brand group-hover:text-bg transition-colors">
+            <WkCard 
+              :hoverable="true"
+              :padding="'md'"
+              class="cursor-pointer"
+            >
+              <div class="w-10 h-10 rounded-lg bg-[var(--brand-default)]/15 text-[var(--brand-default)] flex items-center justify-center mb-3">
                 <span class="i-tabler-shield-check text-xl"></span>
               </div>
-              <p class="font-medium text-text">Review Queue</p>
-              <p class="text-sm text-text-muted mt-1">23 pending</p>
-            </button>
-            <button class="p-4 rounded-xl bg-bg-surface border border-border hover:border-brand/30 transition-colors text-left group">
-              <div class="w-10 h-10 rounded-lg bg-danger/15 text-danger flex-center mb-3 group-hover:bg-danger group-hover:text-white transition-colors">
+              <p class="font-medium text-[var(--text-default)]">Review Queue</p>
+              <div class="flex items-center gap-2 mt-1">
+                <p class="text-sm text-[var(--text-secondary)]">23 pending</p>
+              </div>
+            </WkCard>
+            
+            <WkCard 
+              :hoverable="true"
+              :padding="'md'"
+              class="cursor-pointer"
+            >
+              <div class="w-10 h-10 rounded-lg bg-red-500/15 text-red-500 flex items-center justify-center mb-3">
                 <span class="i-tabler-flag text-xl"></span>
               </div>
-              <p class="font-medium text-text">Reports</p>
-              <p class="text-sm text-text-muted mt-1">5 new</p>
-            </button>
-            <button class="p-4 rounded-xl bg-bg-surface border border-border hover:border-brand/30 transition-colors text-left group">
-              <div class="w-10 h-10 rounded-lg bg-blue-500/15 text-blue-500 flex-center mb-3 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+              <p class="font-medium text-[var(--text-default)]">Reports</p>
+              <div class="flex items-center gap-2 mt-1">
+                <p class="text-sm text-[var(--text-secondary)]">5 new</p>
+              </div>
+            </WkCard>
+            
+            <WkCard 
+              :hoverable="true"
+              :padding="'md'"
+              class="cursor-pointer"
+            >
+              <div class="w-10 h-10 rounded-lg bg-blue-500/15 text-blue-500 flex items-center justify-center mb-3">
                 <span class="i-tabler-users text-xl"></span>
               </div>
-              <p class="font-medium text-text">User Management</p>
-              <p class="text-sm text-text-muted mt-1">845K users</p>
-            </button>
-            <button class="p-4 rounded-xl bg-bg-surface border border-border hover:border-brand/30 transition-colors text-left group">
-              <div class="w-10 h-10 rounded-lg bg-purple-500/15 text-purple-500 flex-center mb-3 group-hover:bg-purple-500 group-hover:text-white transition-colors">
+              <p class="font-medium text-[var(--text-default)]">User Management</p>
+              <div class="flex items-center gap-2 mt-1">
+                <p class="text-sm text-[var(--text-secondary)]">845K users</p>
+              </div>
+            </WkCard>
+            
+            <WkCard 
+              :hoverable="true"
+              :padding="'md'"
+              class="cursor-pointer"
+            >
+              <div class="w-10 h-10 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center mb-3">
                 <span class="i-tabler-settings text-xl"></span>
               </div>
-              <p class="font-medium text-text">Settings</p>
-              <p class="text-sm text-text-muted mt-1">Configure</p>
-            </button>
+              <p class="font-medium text-[var(--text-default)]">Settings</p>
+              <div class="flex items-center gap-2 mt-1">
+                <p class="text-sm text-[var(--text-secondary)]">Configure</p>
+              </div>
+            </WkCard>
           </div>
-        </div>
+        </WkCard>
       </div>
     </div>
 </template>

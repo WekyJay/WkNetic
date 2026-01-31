@@ -113,7 +113,7 @@ function goToAdmin() {
           <!-- 登录按钮或用户菜单 -->
           <div v-if="isAuthenticated && user" class="relative">
             <button 
-              class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-bg-surface transition-colors"
+              class="flex items-center gap-2 px-4 py-1 rounded-lg bg-transparent hover:bg-bg-surface transition-colors"
               @click="isUserMenuOpen = !isUserMenuOpen"
             >
               <img 
@@ -139,7 +139,7 @@ function goToAdmin() {
               v-if="isUserMenuOpen"
               class="absolute right-0 mt-2 w-56 bg-bg border border-border rounded-lg shadow-lg py-2 z-50"
             >
-              <div class="px-4 py-2 border-b border-border">
+              <div class="px-4 py-2  border-border">
                 <p class="text-sm font-medium text-text">{{ user.nickname || user.username }}</p>
                 <p class="text-xs text-text-muted">{{ user.email }}</p>
                 <div class="mt-1.5 flex items-center gap-1.5">
@@ -148,8 +148,10 @@ function goToAdmin() {
                 </div>
               </div>
               
+              <div class="border-t border-border my-2"></div>
+
               <button 
-                class="w-full px-4 py-2 text-left text-sm hover:bg-bg-surface transition-colors flex items-center gap-2"
+                class="w-full px-4 py-2 text-left text-sm bg-transparent hover:bg-bg-surface transition-colors flex items-center gap-2"
                 @click="goToProfile"
               >
                 <span class="i-tabler-user"></span>
@@ -158,7 +160,7 @@ function goToAdmin() {
               
               <button 
                 v-if="isAdmin"
-                class="w-full px-4 py-2 text-left text-sm hover:bg-bg-surface transition-colors flex items-center gap-2"
+                class="w-full px-4 py-2 text-left text-sm bg-transparent hover:bg-bg-surface transition-colors flex items-center gap-2"
                 @click="goToAdmin"
               >
                 <span class="i-tabler-dashboard"></span>
@@ -168,7 +170,7 @@ function goToAdmin() {
               <div class="border-t border-border my-2"></div>
               
               <button 
-                class="w-full px-4 py-2 text-left text-sm hover:bg-bg-surface transition-colors flex items-center gap-2 text-danger"
+                class="w-full px-4 py-2 text-left text-sm bg-transparent hover:bg-bg-surface transition-colors flex items-center gap-2 text-danger"
                 @click="handleLogout"
               >
                 <span class="i-tabler-logout"></span>

@@ -3,11 +3,15 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
+import { usePermission } from '@/composables/usePermission'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { t } = useI18n()
+const { userRoleLabel, userRoleColor } = usePermission()
+const user = computed(() => authStore.user)
+
 
 const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
@@ -124,7 +128,7 @@ function toggleSidebar() {
           :class="[
             'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group',
             isActive(item.path) 
-              ? 'bg-brand/15 text-brand' 
+              ? 'bg-brand/15' 
               : 'text-text-muted hover:bg-bg-surface hover:text-text'
           ]"
         >
@@ -160,11 +164,24 @@ function toggleSidebar() {
           ]"
         >
           <div class="w-9 h-9 rounded-full bg-brand/20 flex-center flex-shrink-0">
-            <span class="i-tabler-user text-brand"></span>
+            <img 
+                v-if="user.avatar" 
+                :src="user.avatar" 
+                :alt="user.nickname || user.username"
+                class="w-8 h-8 rounded-full object-cover"
+              />
+              <div 
+                v-else 
+                class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center"
+              >
+                <span class="i-tabler-user"></span>
+              </div>
           </div>
           <div v-if="!isSidebarCollapsed" class="flex-1 min-w-0">
             <p class="font-medium text-text text-sm truncate">{{ authStore.user?.username }}</p>
-            <p class="text-xs text-text-muted truncate">{{ authStore.user?.role }}</p>
+            <el-tag size="small" effect="plain" :class="userRoleColor">
+              {{ userRoleLabel }}
+            </el-tag>
           </div>
           <button 
             v-if="!isSidebarCollapsed"
@@ -236,7 +253,5 @@ function toggleSidebar() {
 </template>
 
 <style scoped>
-.admin-layout {
-  /* Admin 样式 */
-}
+/* Admin layout styles are handled by UnoCSS utilities */
 </style>

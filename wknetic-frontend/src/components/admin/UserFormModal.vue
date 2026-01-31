@@ -7,12 +7,14 @@ interface Props {
   visible: boolean
   user?: User | null
   mode: 'create' | 'edit'
+  asDialog?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   visible: false,
   user: null,
-  mode: 'create'
+  mode: 'create',
+  asDialog: false
 })
 
 const emit = defineEmits<{
@@ -228,13 +230,16 @@ async function handleSubmit() {
 function handleClose() {
   emit('update:visible', false)
 }
+
+// expose methods for parent dialog to control the form
+defineExpose({ submit: handleSubmit, close: handleClose })
 </script>
 
 <template>
-  <div v-if="visible" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="handleClose">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-      <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+
+    <div class=" rounded-lgmax-w-2xl mx-4">
+      <!-- Header (only when not used inside WkDialog) -->
+      <div v-if="!props.asDialog" class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ title }}</h2>
         <button
           @click="handleClose"
@@ -259,7 +264,7 @@ function handleClose() {
                 v-model="formData.username"
                 :disabled="mode === 'edit'"
                 type="text"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
                 placeholder="3-20位字母数字下划线"
               />
               <p v-if="errors.username" class="mt-1 text-sm text-red-500">{{ errors.username }}</p>
@@ -401,8 +406,8 @@ function handleClose() {
           </div>
         </div>
 
-        <!-- Footer -->
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <!-- Footer (only when not used inside WkDialog) -->
+        <div v-if="!props.asDialog" class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             type="button"
             @click="handleClose"
@@ -420,5 +425,4 @@ function handleClose() {
         </div>
       </form>
     </div>
-  </div>
 </template>

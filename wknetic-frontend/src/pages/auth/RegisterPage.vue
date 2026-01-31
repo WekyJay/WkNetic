@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import LegalModal from '@/components/common/LegalModal.vue'
+import WkLegalModal from '@/components/common/WkLegalModal.vue'
 import { termsOfService, privacyPolicy } from '@/data/legal'
 
 const router = useRouter()
@@ -302,14 +302,14 @@ const openPrivacyModal = (e: Event) => {
     </div>
 
     <!-- 服务条款弹窗 -->
-    <LegalModal
+    <WkLegalModal
       :is-open="showTermsModal"
       :content="termsOfService"
       @close="showTermsModal = false"
     />
 
     <!-- 隐私政策弹窗 -->
-    <LegalModal
+    <WkLegalModal
       :is-open="showPrivacyModal"
       :content="privacyPolicy"
       @close="showPrivacyModal = false"

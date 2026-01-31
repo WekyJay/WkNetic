@@ -22,10 +22,22 @@ export interface RoleFormData {
   status: number
 }
 
+export interface RoleListParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  status?: number
+}
+
+export interface RoleListResponse {
+  list: Role[]
+  total: number
+}
+
 // 注意：axios 拦截器已经解包了响应，所以这里返回的是解包后的数据类型
 export const roleApi = {
-  getAllRoles: (): Promise<Role[]> => {
-    return request.get('/api/v1/admin/roles/list')
+  getAllRoles: (params?: RoleListParams): Promise<Role[] | RoleListResponse> => {
+    return request.get('/api/v1/admin/roles/list', { params })
   },
 
   getRoleById: (roleId: number): Promise<Role> => {

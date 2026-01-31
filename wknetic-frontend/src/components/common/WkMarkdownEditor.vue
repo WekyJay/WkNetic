@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import MarkdownRenderer from './MarkdownRenderer.vue'
+import WkMarkdownRenderer from './WkMarkdownRenderer.vue'
 
 const props = withDefaults(defineProps<{
   modelValue: string
@@ -225,7 +225,7 @@ const wordCount = computed(() => {
       class="p-4 overflow-auto"
       :style="{ minHeight: minHeight, maxHeight: maxHeight }"
     >
-      <MarkdownRenderer 
+      <WkMarkdownRenderer 
         v-if="content.trim()" 
         :content="content" 
       />

@@ -1,16 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import * as pluginApi from '@/api/plugin'
-import type { PluginStatusVO } from '@/api/plugin'
-import { installPlugin, uninstallPlugin, togglePluginStatus } from '@/utils/plugin-install'
-
-const { t } = useI18n()
+import { ref, reactive, onMounted } from 'vue'
+import { pluginApi, type PluginStatus } from '@/api/plugin'
+import { 
+  WkButton, 
+  WkCard, 
+  WkBadge, 
+  WkAlert, 
+  WkDialog,
+  WkLoading
+} from '@/components/common'
 
 // 已安装的插件列表
-const installedPlugins = ref<PluginStatusVO[]>([])
+const installedPlugins = ref<PluginStatus[]>([])
 const loading = ref(false)
 const error = ref('')
+const successMessage = ref('')
+
+// 确认对话框状态
+const confirmDialog = reactive({
+  visible: false,
+  title: '',
+  message: '',
+  onConfirm: () => {}
+})
 
 // 可用插件列表（从 public/plugins 扫描）
 const availablePlugins = ref([
@@ -44,7 +56,7 @@ async function loadInstalledPlugins() {
     
     // 更新可用插件的安装状态
     availablePlugins.value.forEach(plugin => {
-      plugin.installed = installedPlugins.value.some(p => p.pluginId === plugin.id)
+      plugin.installed = installedPlugins.value.some((p: PluginStatus) => p.pluginId === plugin.id)
     })
   } catch (err: any) {
     error.value = err.message || '加载插件列表失败'
@@ -57,51 +69,58 @@ async function loadInstalledPlugins() {
 // 安装插件
 async function handleInstall(plugin: any) {
   try {
-    await installPlugin({
+    loading.value = true
+    await pluginApi.installPlugin({
       pluginId: plugin.id,
       pluginName: plugin.name,
       pluginVersion: plugin.version,
-      permissions: plugin.permissions
+      grantedPermissions: plugin.permissions
     })
     await loadInstalledPlugins()
+    successMessage.value = '插件安装成功'
+    setTimeout(() => successMessage.value = '', 3000)
   } catch (err: any) {
     console.error('安装插件失败:', err)
-    alert(err.message || '安装失败')
+    error.value = err.message || '安装失败'
+  } finally {
+    loading.value = false
   }
 }
 
 // 卸载插件
-async function handleUninstall(pluginId: string) {
-  if (!confirm('确定要卸载此插件吗？')) return
-  
-  try {
-    await uninstallPlugin(pluginId)
-    await loadInstalledPlugins()
-  } catch (err: any) {
-    console.error('卸载插件失败:', err)
-    alert(err.message || '卸载失败')
+function handleUninstall(pluginId: string, pluginName: string) {
+  confirmDialog.visible = true
+  confirmDialog.title = '卸载插件'
+  confirmDialog.message = `确定要卸载插件"${pluginName}"吗？此操作无法撤销。`
+  confirmDialog.onConfirm = async () => {
+    try {
+      await pluginApi.uninstallPlugin(pluginId)
+      await loadInstalledPlugins()
+      successMessage.value = '插件卸载成功'
+      setTimeout(() => successMessage.value = '', 3000)
+    } catch (err: any) {
+      console.error('卸载插件失败:', err)
+      error.value = err.message || '卸载失败'
+    } finally {
+      confirmDialog.visible = false
+    }
   }
 }
 
 // 切换插件状态
-async function handleToggleStatus(plugin: PluginStatusVO) {
+async function handleToggleStatus(plugin: PluginStatus) {
   try {
-    await togglePluginStatus(plugin.pluginId, !plugin.enabled)
+    await pluginApi.updatePluginStatus({
+      pluginId: plugin.pluginId,
+      enabled: !plugin.enabled
+    })
     await loadInstalledPlugins()
+    successMessage.value = `插件已${!plugin.enabled ? '启用' : '禁用'}`
+    setTimeout(() => successMessage.value = '', 3000)
   } catch (err: any) {
     console.error('切换插件状态失败:', err)
-    alert(err.message || '操作失败')
+    error.value = err.message || '操作失败'
   }
-}
-
-// 获取权限风险等级颜色
-function getPermissionRiskColor(permission: string): string {
-  const highRisk = ['http:external', 'user:modify', 'file:download']
-  const mediumRisk = ['http:api', 'storage:local', 'router:guard', 'websocket:connect']
-  
-  if (highRisk.some(p => permission.includes(p))) return 'text-red-500'
-  if (mediumRisk.some(p => permission.includes(p))) return 'text-orange-500'
-  return 'text-green-500'
 }
 
 onMounted(() => {
@@ -110,188 +129,221 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="plugins-page">
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-text mb-2">插件中心</h1>
-      <p class="text-text-muted">管理和配置系统插件，扩展平台功能</p>
+  <div class="plugins-page p-6 space-y-6">
+    <!-- 页面头部 -->
+    <div>
+      <h1 class="text-2xl font-bold text-[var(--text-default)] mb-2">插件中心</h1>
+      <p class="text-[var(--text-secondary)]">管理和配置系统插件，扩展平台功能</p>
     </div>
+
+    <!-- 成功提示 -->
+    <WkAlert 
+      v-if="successMessage"
+      type="success" 
+      :message="successMessage"
+      :closable="true"
+      @close="successMessage = ''"
+    />
 
     <!-- 错误提示 -->
-    <div v-if="error" class="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-      <div class="flex items-center gap-2 text-red-500">
-        <span class="i-tabler-alert-circle text-lg"></span>
-        <span>{{ error }}</span>
-      </div>
-    </div>
+    <WkAlert 
+      v-if="error"
+      type="error" 
+      title="错误"
+      :message="error"
+      :closable="true"
+      @close="error = ''"
+    />
+
+    <!-- 全局加载 -->
+    <WkLoading :loading="loading" fullscreen text="处理中..." />
 
     <!-- 已安装插件 -->
-    <div class="mb-8">
+    <section>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-text">已安装插件</h2>
-        <button class="btn-ghost text-sm" @click="loadInstalledPlugins">
-          <span class="i-tabler-refresh" :class="{ 'animate-spin': loading }"></span>
+        <h2 class="text-xl font-semibold text-[var(--text-default)]">已安装插件</h2>
+        <WkButton
+          variant="ghost"
+          size="sm"
+          icon="i-tabler-refresh"
+          @click="loadInstalledPlugins"
+        >
           刷新
-        </button>
+        </WkButton>
       </div>
 
-      <div v-if="loading" class="text-center py-12 text-text-muted">
-        <span class="i-tabler-loader-2 text-2xl animate-spin"></span>
-        <p class="mt-2">加载中...</p>
-      </div>
+      <WkCard v-if="installedPlugins.length === 0" :padding="'lg'">
+        <div class="text-center py-8">
+          <span class="i-tabler-package-off text-5xl text-[var(--text-muted)] mb-3 block"></span>
+          <p class="text-[var(--text-secondary)]">暂无已安装的插件</p>
+        </div>
+      </WkCard>
 
-      <div v-else-if="installedPlugins.length === 0" class="text-center py-12 bg-bg border border-border rounded-lg">
-        <span class="i-tabler-package-off text-4xl text-text-muted mb-2"></span>
-        <p class="text-text-muted">暂无已安装的插件</p>
-      </div>
-
-      <div v-else class="grid gap-4">
-        <div 
+      <div v-else class="space-y-4">
+        <WkCard
           v-for="plugin in installedPlugins" 
           :key="plugin.pluginId"
-          class="bg-bg border border-border rounded-lg p-6 hover:border-brand/50 transition-colors"
+          :hoverable="true"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-12 h-12 bg-brand/10 rounded-lg flex-center">
-                  <span class="i-tabler-puzzle text-brand text-xl"></span>
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-12 h-12 bg-[var(--brand-default)]/10 rounded-lg flex items-center justify-center">
+                  <span class="i-tabler-puzzle text-[var(--brand-default)] text-xl"></span>
                 </div>
-                <div>
-                  <h3 class="text-lg font-semibold text-text">{{ plugin.pluginName }}</h3>
-                  <p class="text-sm text-text-muted">v{{ plugin.pluginVersion }} · ID: {{ plugin.pluginId }}</p>
-                </div>
-                <div 
-                  :class="[
-                    'px-2 py-1 rounded text-xs font-medium',
-                    plugin.enabled 
-                      ? 'bg-green-500/10 text-green-500' 
-                      : 'bg-gray-500/10 text-gray-500'
-                  ]"
-                >
-                  {{ plugin.enabled ? '已启用' : '已禁用' }}
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-semibold text-[var(--text-default)]">
+                      {{ plugin.pluginName }}
+                    </h3>
+                    <WkBadge 
+                      :variant="plugin.enabled ? 'success' : 'default'"
+                      size="sm"
+                    >
+                      {{ plugin.enabled ? '已启用' : '已禁用' }}
+                    </WkBadge>
+                  </div>
+                  <p class="text-sm text-[var(--text-secondary)]">
+                    v{{ plugin.pluginVersion }} · ID: {{ plugin.pluginId }}
+                  </p>
                 </div>
               </div>
 
               <div class="mb-3">
-                <p class="text-sm text-text-muted mb-2">权限：</p>
+                <p class="text-sm text-[var(--text-secondary)] mb-2">权限：</p>
                 <div class="flex flex-wrap gap-2">
-                  <span 
+                  <WkBadge 
                     v-for="permission in plugin.grantedPermissions" 
                     :key="permission"
-                    :class="[
-                      'px-2 py-1 rounded text-xs font-mono',
-                      getPermissionRiskColor(permission)
-                    ]"
-                    class="bg-bg-darker"
+                    :variant="
+                      permission.includes('http:external') || permission.includes('user:modify') ? 'danger' :
+                      permission.includes('http:api') || permission.includes('storage') ? 'warning' :
+                      'info'
+                    "
+                    size="sm"
                   >
                     {{ permission }}
-                  </span>
+                  </WkBadge>
                 </div>
               </div>
 
-              <div class="text-xs text-text-muted">
+              <div class="text-xs text-[var(--text-muted)]">
                 安装时间: {{ new Date(plugin.installedAt).toLocaleString('zh-CN') }}
               </div>
             </div>
 
             <div class="flex gap-2 ml-4">
-              <button 
-                class="btn-ghost text-sm"
+              <WkButton
+                variant="ghost"
+                size="sm"
+                :icon="plugin.enabled ? 'i-tabler-player-pause' : 'i-tabler-player-play'"
                 @click="handleToggleStatus(plugin)"
-                :title="plugin.enabled ? '禁用插件' : '启用插件'"
               >
-                <span :class="plugin.enabled ? 'i-tabler-player-pause' : 'i-tabler-player-play'"></span>
                 {{ plugin.enabled ? '禁用' : '启用' }}
-              </button>
-              <button 
-                class="btn-ghost text-sm text-red-500 hover:bg-red-500/10"
-                @click="handleUninstall(plugin.pluginId)"
+              </WkButton>
+              <WkButton
+                variant="danger"
+                size="sm"
+                icon="i-tabler-trash"
+                @click="handleUninstall(plugin.pluginId, plugin.pluginName)"
               >
-                <span class="i-tabler-trash"></span>
                 卸载
-              </button>
+              </WkButton>
             </div>
           </div>
-        </div>
+        </WkCard>
       </div>
-    </div>
+    </section>
 
     <!-- 可用插件市场 -->
-    <div>
+    <section>
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-text">可用插件</h2>
-        <span class="text-sm text-text-muted">{{ availablePlugins.length }} 个插件</span>
+        <h2 class="text-xl font-semibold text-[var(--text-default)]">可用插件</h2>
+        <WkBadge variant="info">{{ availablePlugins.length }} 个插件</WkBadge>
       </div>
 
-      <div class="grid gap-4">
-        <div 
+      <div class="space-y-4">
+        <WkCard
           v-for="plugin in availablePlugins" 
           :key="plugin.id"
-          class="bg-bg border border-border rounded-lg p-6 hover:border-brand/50 transition-colors"
+          :hoverable="true"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-3">
-                <div class="w-12 h-12 bg-brand/10 rounded-lg flex-center">
-                  <span class="i-tabler-puzzle text-brand text-xl"></span>
+                <div class="w-12 h-12 bg-[var(--brand-default)]/10 rounded-lg flex items-center justify-center">
+                  <span class="i-tabler-puzzle text-[var(--brand-default)] text-xl"></span>
                 </div>
                 <div>
-                  <h3 class="text-lg font-semibold text-text">{{ plugin.name }}</h3>
-                  <p class="text-sm text-text-muted">v{{ plugin.version }} · by {{ plugin.author }}</p>
+                  <h3 class="text-lg font-semibold text-[var(--text-default)]">{{ plugin.name }}</h3>
+                  <p class="text-sm text-[var(--text-secondary)]">
+                    v{{ plugin.version }} · by {{ plugin.author }}
+                  </p>
                 </div>
               </div>
 
-              <p class="text-text-muted mb-3">{{ plugin.description }}</p>
+              <p class="text-[var(--text-secondary)] mb-3">{{ plugin.description }}</p>
 
-              <div class="mb-2">
-                <p class="text-sm text-text-muted mb-2">需要权限：</p>
+              <div>
+                <p class="text-sm text-[var(--text-secondary)] mb-2">需要权限：</p>
                 <div class="flex flex-wrap gap-2">
-                  <span 
+                  <WkBadge 
                     v-for="permission in plugin.permissions" 
                     :key="permission"
-                    :class="[
-                      'px-2 py-1 rounded text-xs font-mono',
-                      getPermissionRiskColor(permission)
-                    ]"
-                    class="bg-bg-darker"
+                    :variant="
+                      permission.includes('http:external') || permission.includes('user:modify') ? 'danger' :
+                      permission.includes('http:api') || permission.includes('storage') ? 'warning' :
+                      'success'
+                    "
+                    size="sm"
                   >
                     {{ permission }}
-                  </span>
+                  </WkBadge>
                 </div>
               </div>
             </div>
 
             <div class="ml-4">
-              <button 
+              <WkButton
                 v-if="!plugin.installed"
-                class="btn-brand"
+                variant="primary"
+                icon="i-tabler-download"
                 @click="handleInstall(plugin)"
               >
-                <span class="i-tabler-download"></span>
                 安装
-              </button>
-              <div v-else class="px-4 py-2 bg-green-500/10 text-green-500 rounded text-sm font-medium">
-                <span class="i-tabler-check"></span>
+              </WkButton>
+              <WkBadge v-else variant="success" size="md">
+                <span class="i-tabler-check mr-1"></span>
                 已安装
-              </div>
+              </WkBadge>
             </div>
           </div>
-        </div>
+        </WkCard>
       </div>
-    </div>
+    </section>
+
+    <!-- 确认对话框 -->
+    <WkDialog
+      v-model="confirmDialog.visible"
+      :title="confirmDialog.title"
+      size="sm"
+    >
+      <p class="text-[var(--text-secondary)]">{{ confirmDialog.message }}</p>
+
+      <template #footer>
+        <WkButton variant="ghost" @click="confirmDialog.visible = false">
+          取消
+        </WkButton>
+        <WkButton variant="danger" @click="confirmDialog.onConfirm">
+          确认
+        </WkButton>
+      </template>
+    </WkDialog>
   </div>
 </template>
 
 <style scoped>
 .plugins-page {
-  @apply p-6;
-}
-
-.btn-brand {
-  @apply px-4 py-2 bg-brand text-bg rounded-lg hover:bg-brand-hover transition-colors flex items-center gap-2 text-sm font-medium;
-}
-
-.btn-ghost {
-  @apply px-3 py-1.5 text-text-muted hover:text-text hover:bg-bg-darker rounded-lg transition-colors flex items-center gap-1.5;
+  min-height: 100vh;
 }
 </style>

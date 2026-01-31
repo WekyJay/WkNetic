@@ -10,7 +10,7 @@
     /* DEFAULT: 纯白或极淡的锌灰，保持干净 */
     --bg-default: #ffffff;
     /* raised: 略微带点灰，用于区分层级 */
-    --bg-raised: #f4f4f5;
+    --bg-raised: #fafafb;
     /* surface: 卡片背景，纯白 */
     --bg-surface: #ffffff;
     /* hover: 极淡的灰色悬停 */
@@ -43,6 +43,11 @@
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
+
+    /* --- 交互组件高度 (Height) --- */
+    --component-height-sm: 32px;
+    --component-height-md: 42px;
+    --component-height-lg: 52px;
 }
 
 
@@ -88,11 +93,11 @@ html.dark {
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
-    background: #f1f1f1;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: transparent;
     border-radius: 5px;
 }
 
@@ -107,7 +112,7 @@ html.dark {
 }
 
 ::-webkit-scrollbar-corner {
-    background: #f1f1f1;
+    background: transparent;
 }
 
 /* 暗色模式滚动条 */
@@ -137,7 +142,7 @@ html.dark ::-webkit-scrollbar-corner {
 /* Firefox 滚动条样式 */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 #f1f1f1;
+    scrollbar-color: var(--text-secondary) transparent;
 }
 
 html.dark * {
