@@ -38,7 +38,8 @@ export const useAuthStore = defineStore('auth', () => {
       }
       
       // 调用后端登录接口
-      const result = await authApi.login(params) as unknown as LoginResult
+      const loginResponse = await authApi.login(params)
+      const result = loginResponse.data as LoginResult
       
       // 存储 token 和过期时间（统一使用 localStorage，由后端控制过期时间）
       token.value = result.token
@@ -46,7 +47,8 @@ export const useAuthStore = defineStore('auth', () => {
       storageManager.setTokenExpiration(result.expiresAt)
       
       // 获取用户信息
-      const userInfo = await authApi.getUserInfo() as unknown as UserInfo
+      const userInfoResponse = await authApi.getUserInfo()
+      const userInfo = userInfoResponse.data as UserInfo
       user.value = userInfo
       storageManager.setUser(userInfo)
       

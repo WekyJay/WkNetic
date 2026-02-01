@@ -167,7 +167,8 @@ async function validateMinecraftUuid() {
   
   try {
     const formatted = formatUuid(formData.minecraftUuid)
-    const result = await userApi.validateMinecraftUuid(formatted)
+    const response = await userApi.validateMinecraftUuid(formatted)
+    const result = response.data
     
     if (result.valid) {
       formData.minecraftUuid = result.id

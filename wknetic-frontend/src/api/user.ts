@@ -1,4 +1,6 @@
+import type { E } from 'vue-router/dist/router-CWoNjPRp.mjs'
 import api from './axios'
+import type { ExtendedUserProfile, UpdateProfileRequest, FollowStatus, UserStats } from '@/types/user'
 
 /**
  * 用户角色类型
@@ -133,5 +135,58 @@ export const userApi = {
    */
   validateMinecraftUuid(uuid: string) {
     return api.get<MinecraftProfile>(`/api/v1/admin/users/validate-mc-uuid/${uuid}`)
+  },
+
+  /**
+   * 获取用户公开资料（任何人可访问）
+   */
+  getUserProfile(userId: number) {
+    return api.get<ExtendedUserProfile>(`/api/v1/user/profile/${userId}`)
+  },
+
+  /**
+   * 更新当前用户的个人资料
+   */
+  updateMyProfile(data: UpdateProfileRequest) {
+    return api.put<string>('/api/v1/user/profile', data)
+  },
+
+  /**
+   * 关注用户
+   */
+  followUser(userId: number) {
+    return api.post<FollowStatus>(`/api/v1/user/${userId}/follow`)
+  },
+
+  /**
+   * 取消关注用户
+   */
+  unfollowUser(userId: number) {
+    return api.delete<FollowStatus>(`/api/v1/user/${userId}/follow`)
+  },
+
+  /**
+   * 获取用户统计信息
+   */
+  getUserStats(userId: number) {
+    return api.get<UserStats>(`/api/v1/user/profile/${userId}/stats`)
+  },
+
+  /**
+   * 获取用户的关注列表
+   */
+  getUserFollowing(userId: number, page = 1, size = 20) {
+    return api.get<PageResult<ExtendedUserProfile>>(`/api/v1/user/${userId}/following`, {
+      params: { page, size }
+    })
+  },
+
+  /**
+   * 获取用户的粉丝列表
+   */
+  getUserFollowers(userId: number, page = 1, size = 20) {
+    return api.get<PageResult<ExtendedUserProfile>>(`/api/v1/user/${userId}/followers`, {
+      params: { page, size }
+    })
   }
 }

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ExtensionSlot from '@/components/ExtensionSlot.vue'
+import UserAvatar from '@/components/user/UserAvatar.vue'
 
 const { t } = useI18n()
 
@@ -248,17 +249,15 @@ const forumStats = getForumStats()
           class="flex items-center gap-3"
         >
           <div class="relative">
-            <div 
-              class="w-10 h-10 rounded-full flex-center text-sm font-bold"
+            <UserAvatar
+              :nickname="user.name"
+              size="md"
               :class="[
-                index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white' :
-                index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500 text-white' :
-                index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600 text-white' :
-                'bg-bg-surface text-text-secondary'
+                index === 0 ? 'ring-2 ring-amber-400' :
+                index === 1 ? 'ring-2 ring-gray-400' :
+                index === 2 ? 'ring-2 ring-orange-400' : ''
               ]"
-            >
-              {{ user.avatar }}
-            </div>
+            />
             <div 
               v-if="user.online"
               class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-brand rounded-full border-2 border-bg-raised"

@@ -64,6 +64,7 @@
     "login": "登录",
     "register": "创建账户",
     "userProfile": "用户资料",
+    "userSettings": "用户设置",
     "notFound": "页面未找到"
   },
   "pages": {
@@ -186,12 +187,30 @@
   },
   "table": {
     "showing": "显示 {start}-{end} 项，共 {total} 项"
-  }
-  ,
+  },
   "settings": {
     "title": "设置",
     "subtitle": "管理您的站点偏好设置",
     "saveAll": "保存",
     "noChanges": "没有检测到更改"
+  },
+  "user": {
+    "profile": "个人资料",
+    "editProfile": "编辑资料",
+    "follow": "关注",
+    "following": "已关注",
+    "followers": "粉丝",
+    "posts": "帖子",
+    "bio": "个性签名",
+    "location": "所在地",
+    "website": "个人网站",
+    "gender": "性别",
+    "male": "男",
+    "female": "女",
+    "other": "其他",
+    "unspecified": "未设置",
+    "joinedAt": "加入于",
+    "loading": "加载中...",
+    "notFound": "用户不存在"
   }
 }

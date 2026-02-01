@@ -22,7 +22,8 @@ export function useCaptcha(type: CaptchaType = 'simple') {
     isLoading.value = true
     try {
       console.log('正在获取验证码...')
-      const result = await authApi.getCaptcha()
+      const response = await authApi.getCaptcha()
+      const result = response.data
       console.log('验证码获取成功:', result)
       
       // 直接使用返回的数据，axios 拦截器已经解包

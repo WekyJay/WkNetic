@@ -65,6 +65,10 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像地址',
+  `bio` varchar(500) DEFAULT NULL COMMENT '个人简介',
+  `location` varchar(100) DEFAULT NULL COMMENT '所在地',
+  `website` varchar(255) DEFAULT NULL COMMENT '个人网站',
+  `gender` tinyint(1) DEFAULT 0 COMMENT '性别（0未知 1男 2女）',
   `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
   `role_id` bigint(20) DEFAULT NULL COMMENT '角色ID（外键关联sys_role.role_id）',
   `role` varchar(20) DEFAULT 'USER' COMMENT '用户角色：ADMIN/MODERATOR/USER/VIP/BANNED（兼容字段，逐步废弃）',
@@ -134,3 +138,22 @@ CREATE TABLE IF NOT EXISTS `user_plugins` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户插件表';
 
 -- 你可以在这里继续添加其他表的 CREATE 语句
+
+-- ----------------------------
+-- Table structure for user_follow
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `user_follow` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `follower_id` bigint(20) NOT NULL COMMENT '关注者用户ID',
+  `following_id` bigint(20) NOT NULL COMMENT '被关注者用户ID',
+  `status` tinyint(1) DEFAULT 1 COMMENT '关注状态（1关注 0已取消）',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '关注时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_follower_following` (`follower_id`, `following_id`),
+  KEY `idx_follower_id` (`follower_id`),
+  KEY `idx_following_id` (`following_id`),
+  KEY `idx_status` (`status`),
+  CONSTRAINT `fk_follow_follower` FOREIGN KEY (`follower_id`) REFERENCES `sys_user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_follow_following` FOREIGN KEY (`following_id`) REFERENCES `sys_user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户关注表';

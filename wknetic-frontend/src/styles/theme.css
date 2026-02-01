@@ -44,6 +44,16 @@
     --radius-md: 8px;
     --radius-lg: 12px;
 
+    /* --- 性别标识颜色 (Gender) --- */
+    --gender-male: #3b82f6;      /* blue-500 */
+    --gender-male-bg: rgba(59, 130, 246, 0.1);
+    --gender-female: #ec4899;    /* pink-500 */
+    --gender-female-bg: rgba(236, 72, 153, 0.1);
+    --gender-other: #a855f7;     /* purple-500 */
+    --gender-other-bg: rgba(168, 85, 247, 0.1);
+    --gender-unspecified: #6b7280; /* gray-500 */
+    --gender-unspecified-bg: rgba(107, 114, 128, 0.1);
+
     /* --- 交互组件高度 (Height) --- */
     --component-height-sm: 32px;
     --component-height-md: 42px;
@@ -82,6 +92,16 @@ html.dark {
     --border-default: #3f3f46;
     --border-light: #52525b;
     --border-dark: #27272a;
+
+    /* --- 性别标识颜色 (暗黑模式下相同或微调) --- */
+    --gender-male: #60a5fa;      /* blue-400 - 稍亮 */
+    --gender-male-bg: rgba(96, 165, 250, 0.15);
+    --gender-female: #f472b6;    /* pink-400 - 稍亮 */
+    --gender-female-bg: rgba(244, 114, 182, 0.15);
+    --gender-other: #c084fc;     /* purple-400 - 稍亮 */
+    --gender-other-bg: rgba(192, 132, 252, 0.15);
+    --gender-unspecified: #9ca3af; /* gray-400 */
+    --gender-unspecified-bg: rgba(156, 163, 175, 0.15);
 }
 
 

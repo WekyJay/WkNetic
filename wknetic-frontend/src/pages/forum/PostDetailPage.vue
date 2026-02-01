@@ -5,6 +5,7 @@ import TheHeader from '@/components/layout/TheHeader.vue'
 import TheFooter from '@/components/layout/TheFooter.vue'
 import WkMarkdownRenderer from '@/components/common/WkMarkdownRenderer.vue'
 import WkMarkdownEditor from '@/components/common/WkMarkdownEditor.vue'
+import UserAvatar from '@/components/user/UserAvatar.vue'
 
 interface Author {
   id: number
@@ -318,9 +319,10 @@ onMounted(() => {
             
             <!-- 作者信息 -->
             <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-brand to-brand-dark flex-center text-bg font-bold">
-                {{ post.author.avatar }}
-              </div>
+              <UserAvatar
+                :nickname="post.author.name"
+                size="lg"
+              />
               <div>
                 <div class="flex items-center gap-2">
                   <span class="font-medium text-text">{{ post.author.name }}</span>
@@ -493,9 +495,10 @@ onMounted(() => {
               <div class="flex gap-4">
                 <!-- 作者头像 -->
                 <div class="flex-shrink-0">
-                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand to-brand-dark flex-center text-bg font-bold text-sm">
-                    {{ comment.author.avatar }}
-                  </div>
+                  <UserAvatar
+                    :nickname="comment.author.name"
+                    size="md"
+                  />
                 </div>
                 
                 <!-- 评论主体 -->
@@ -580,9 +583,10 @@ onMounted(() => {
                       :key="reply.id"
                       class="flex gap-3"
                     >
-                      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand-dark flex-center text-bg font-bold text-xs flex-shrink-0">
-                        {{ reply.author.avatar }}
-                      </div>
+                      <UserAvatar
+                        :nickname="reply.author.name"
+                        size="sm"
+                      />
                       <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
                           <span class="font-medium text-text text-sm">{{ reply.author.name }}</span>

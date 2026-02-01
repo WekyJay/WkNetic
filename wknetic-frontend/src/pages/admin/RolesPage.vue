@@ -407,7 +407,8 @@ const loadRoles = async () => {
       status: statusFilter.value
     }
     
-    const data = await roleApi.getAllRoles(params)
+    const response = await roleApi.getAllRoles(params)
+    const data = response.data
     
     // 处理不同的数据格式：直接数组或分页对象
     if (Array.isArray(data)) {

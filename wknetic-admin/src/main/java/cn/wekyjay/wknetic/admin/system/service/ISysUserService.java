@@ -5,6 +5,8 @@ import cn.wekyjay.wknetic.common.model.dto.RegisterBody;
 import cn.wekyjay.wknetic.common.model.dto.ResetPasswordBody;
 import cn.wekyjay.wknetic.common.model.dto.UserDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserQueryDTO;
+import cn.wekyjay.wknetic.common.model.dto.UserProfileUpdateDTO;
+import cn.wekyjay.wknetic.common.model.vo.UserProfileVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
@@ -112,5 +114,23 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 是否已被绑定
      */
     boolean isMinecraftUuidBound(String minecraftUuid, Long excludeUserId);
+
+    /**
+     * 获取用户公开资料（含粉丝/关注/帖子统计）
+     * 
+     * @param userId 用户ID
+     * @param currentUserId 当前用户ID（用于判断是否已关注）
+     * @return 用户公开资料
+     */
+    UserProfileVO getUserProfile(Long userId, Long currentUserId);
+
+    /**
+     * 更新用户个人资料
+     * 
+     * @param userId 用户ID
+     * @param profileUpdateDTO 资料更新信息
+     * @return 是否成功
+     */
+    boolean updateUserProfile(Long userId, UserProfileUpdateDTO profileUpdateDTO);
 }
 

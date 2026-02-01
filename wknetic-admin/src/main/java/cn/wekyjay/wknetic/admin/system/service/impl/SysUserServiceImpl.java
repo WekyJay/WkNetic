@@ -6,10 +6,13 @@ import cn.wekyjay.wknetic.common.mapper.SysUserMapper;
 import cn.wekyjay.wknetic.admin.system.domain.SysRole;
 import cn.wekyjay.wknetic.admin.system.service.ISysRoleService;
 import cn.wekyjay.wknetic.admin.system.service.ISysUserService;
+import cn.wekyjay.wknetic.admin.system.service.IUserFollowService;
 import cn.wekyjay.wknetic.common.model.dto.RegisterBody;
 import cn.wekyjay.wknetic.common.model.dto.ResetPasswordBody;
 import cn.wekyjay.wknetic.common.model.dto.UserDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserQueryDTO;
+import cn.wekyjay.wknetic.common.model.dto.UserProfileUpdateDTO;
+import cn.wekyjay.wknetic.common.model.vo.UserProfileVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -32,6 +35,9 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
     
     @Autowired
     private ISysRoleService roleService;
+
+    @Autowired
+    private IUserFollowService userFollowService;
 
     @Override
     public boolean register(RegisterBody registerBody) {
@@ -327,5 +333,70 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
         
         return this.count(wrapper) > 0;
+    }
+
+    @Override
+    public UserProfileVO getUserProfile(Long userId, Long currentUserId) {
+        // 获取用户基本信息
+        SysUser user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        // 构建响应对象
+        UserProfileVO profileVO = UserProfileVO.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .nickname(user.getNickname())
+                .avatar(user.getAvatar())
+                .bio(user.getBio())
+                .location(user.getLocation())
+                .website(user.getWebsite())
+                .gender(user.getGender())
+                .createTime(user.getCreateTime())
+                .build();
+
+        // 获取统计信息
+        profileVO.setFollowerCount(userFollowService.getFollowerCount(userId));
+        profileVO.setFollowingCount(userFollowService.getFollowingCount(userId));
+        // TODO: 从 forum_post 表获取帖子数
+        profileVO.setPostCount(0L);
+
+        // 检查当前用户是否已关注
+        if (currentUserId != null && !currentUserId.equals(userId)) {
+            profileVO.setIsFollowing(userFollowService.isFollowing(currentUserId, userId));
+        } else {
+            profileVO.setIsFollowing(false);
+        }
+
+        return profileVO;
+    }
+
+    @Override
+    public boolean updateUserProfile(Long userId, UserProfileUpdateDTO profileUpdateDTO) {
+        SysUser user = new SysUser();
+        user.setUserId(userId);
+        
+        // 只更新非空字段
+        if (StringUtils.hasText(profileUpdateDTO.getNickname())) {
+            user.setNickname(profileUpdateDTO.getNickname());
+        }
+        if (StringUtils.hasText(profileUpdateDTO.getAvatar())) {
+            user.setAvatar(profileUpdateDTO.getAvatar());
+        }
+        if (StringUtils.hasText(profileUpdateDTO.getBio())) {
+            user.setBio(profileUpdateDTO.getBio());
+        }
+        if (StringUtils.hasText(profileUpdateDTO.getLocation())) {
+            user.setLocation(profileUpdateDTO.getLocation());
+        }
+        if (StringUtils.hasText(profileUpdateDTO.getWebsite())) {
+            user.setWebsite(profileUpdateDTO.getWebsite());
+        }
+        if (profileUpdateDTO.getGender() != null) {
+            user.setGender(profileUpdateDTO.getGender());
+        }
+
+        return this.updateById(user);
     }
 }

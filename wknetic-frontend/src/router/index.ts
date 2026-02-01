@@ -64,6 +64,14 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
+                    path: '/settings',
+                    name: 'user-settings',
+                    component: () => import('@/pages/user/UserSettingsPage.vue'),
+                    meta: {
+                        title: 'routes.userSettings'
+                    }
+                },
+                {
                     path: '/profile',
                     redirect: (to) => {
                         const auth = useAuthStore()

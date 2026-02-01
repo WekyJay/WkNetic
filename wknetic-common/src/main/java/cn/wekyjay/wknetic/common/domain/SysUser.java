@@ -37,6 +37,18 @@ public class SysUser implements Serializable {
     /** 头像地址 */
     private String avatar;
 
+    /** 个人简介 */
+    private String bio;
+
+    /** 所在地 */
+    private String location;
+
+    /** 个人网站 */
+    private String website;
+
+    /** 性别（0未知 1男 2女） */
+    private Integer gender;
+
     /** 状态（0禁用 1启用） */
     private Integer status;
 

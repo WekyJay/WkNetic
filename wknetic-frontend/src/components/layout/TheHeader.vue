@@ -55,6 +55,11 @@ function goToAdmin() {
   isUserMenuOpen.value = false
   router.push('/admin')
 }
+
+function goToSettings() {
+  isUserMenuOpen.value = false
+  router.push('/settings')
+}
 </script>
 
 <template>
@@ -179,6 +184,14 @@ function goToAdmin() {
               >
                 <span class="i-tabler-user"></span>
                 个人资料
+              </button>
+              
+              <button 
+                class="w-full px-4 py-2 text-left text-sm bg-transparent hover:bg-bg-surface transition-colors flex items-center gap-2"
+                @click="goToSettings"
+              >
+                <span class="i-tabler-settings"></span>
+                设置
               </button>
               
               <button 

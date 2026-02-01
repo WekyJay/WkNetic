@@ -67,8 +67,9 @@ api.interceptors.response.use(
     
     // 成功响应
     if (code === 20000 || code === 200) {
-      // 返回解包后的数据，TypeScript 会正确推断类型
-      return data as any
+      // 修改 response.data 为解包后的数据，这样 axios 会自动传递给调用者
+      response.data = data
+      return response
     }
     
     // 业务错误

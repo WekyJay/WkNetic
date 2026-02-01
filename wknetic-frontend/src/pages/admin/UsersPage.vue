@@ -46,7 +46,8 @@ async function loadUsers() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const result = await userApi.getUserList(queryParams)
+    const response = await userApi.getUserList(queryParams)
+    const result = response.data
     // 安全地访问数据结构
     if (result) {
       users.value = result.records

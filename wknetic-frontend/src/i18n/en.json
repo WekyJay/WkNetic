@@ -64,6 +64,7 @@
     "login": "Login",
     "register": "Create Account",
     "userProfile": "User Profile",
+    "userSettings": "User Settings",
     "notFound": "Page Not Found"
   },
   "pages": {
@@ -192,5 +193,24 @@
     "subtitle": "Manage your site preferences",
     "saveAll": "Save",
     "noChanges": "No changes detected"
+  },
+  "user": {
+    "profile": "Profile",
+    "editProfile": "Edit Profile",
+    "follow": "Follow",
+    "following": "Following",
+    "followers": "Followers",
+    "posts": "Posts",
+    "bio": "Bio",
+    "location": "Location",
+    "website": "Website",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "unspecified": "Unspecified",
+    "joinedAt": "Joined",
+    "loading": "Loading...",
+    "notFound": "User not found"
   }
 }

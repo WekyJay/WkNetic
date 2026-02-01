@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import UserAvatar from '@/components/user/UserAvatar.vue'
+import UserPopover from '@/components/user/UserPopover.vue'
 
 const { t } = useI18n()
 
@@ -8,6 +10,7 @@ interface Post {
   id: number
   title: string
   author: {
+    id: number
     name: string
     avatar: string
     badge?: string
@@ -42,7 +45,7 @@ const posts: Post[] = [
   {
     id: 1,
     title: '[1.20.4] Sodium + Iris Compatibility Issue - Need Help!',
-    author: { name: 'MinecraftFan2024', avatar: 'MF', badge: 'Helper' },
+    author: { id: 1, name: 'MinecraftFan2024', avatar: 'MF', badge: 'Helper' },
     topic: 'Help & Support',
     topicColor: 'bg-blue-500/20 text-blue-400',
     content: 'I\'ve been trying to get Sodium and Iris working together on 1.20.4 but keep getting crashes. Has anyone found a solution?',
@@ -56,7 +59,7 @@ const posts: Post[] = [
   {
     id: 2,
     title: 'Modrinth App 1.0 Released! - Download Now',
-    author: { name: 'Modrinth Team', avatar: 'MT', badge: 'Official' },
+    author: { id: 2, name: 'Modrinth Team', avatar: 'MT', badge: 'Official' },
     topic: 'Announcements',
     topicColor: 'bg-brand/20 text-text',
     content: 'We\'re excited to announce the official release of the Modrinth App! Download it now and enjoy a seamless modding experience.',
@@ -70,7 +73,7 @@ const posts: Post[] = [
   {
     id: 3,
     title: 'Showcase: My Medieval Castle Build with Conquest Reforged',
-    author: { name: 'BuildMaster_X', avatar: 'BX' },
+    author: { id: 3, name: 'BuildMaster_X', avatar: 'BX' },
     topic: 'Showcase',
     topicColor: 'bg-purple-500/20 text-purple-400',
     content: 'Check out my latest build! Spent 3 weeks on this medieval castle using Conquest Reforged textures. What do you think?',
@@ -83,7 +86,7 @@ const posts: Post[] = [
   {
     id: 4,
     title: 'Best Performance Mods for Low-End PCs in 2024?',
-    author: { name: 'PixelGamer99', avatar: 'PG' },
+    author: { id: 4, name: 'PixelGamer99', avatar: 'PG' },
     topic: 'Mod Discussion',
     topicColor: 'bg-amber-500/20 text-amber-400',
     content: 'Looking for recommendations on performance mods that work well on older hardware. Currently getting 20-30 FPS on vanilla.',
@@ -96,7 +99,7 @@ const posts: Post[] = [
   {
     id: 5,
     title: 'Suggestion: Add "Collections" feature for organizing modpacks',
-    author: { name: 'ModpackCreator', avatar: 'MC', badge: 'Creator' },
+    author: { id: 5, name: 'ModpackCreator', avatar: 'MC', badge: 'Creator' },
     topic: 'Suggestions',
     topicColor: 'bg-cyan-500/20 text-cyan-400',
     content: 'It would be great if we could create collections to organize our favorite mods by theme or purpose. Anyone else want this?',
@@ -109,7 +112,7 @@ const posts: Post[] = [
   {
     id: 6,
     title: 'Weekly Off-Topic: What games are you playing besides Minecraft?',
-    author: { name: 'CommunityMod', avatar: 'CM', badge: 'Moderator' },
+    author: { id: 6, name: 'CommunityMod', avatar: 'CM', badge: 'Moderator' },
     topic: 'Off-Topic',
     topicColor: 'bg-gray-500/20 text-gray-400',
     content: 'Let\'s take a break from Minecraft talk! What other games have you been enjoying lately?',
@@ -234,12 +237,19 @@ const submitPost = () => {
       >
         <div class="flex gap-4">
           <!-- 作者头像 -->
-          <div class="flex-shrink-0">
-            <div 
-              class="w-12 h-12 rounded-full bg-gradient-to-br from-brand to-brand-dark flex-center text-bg font-bold text-sm"
+          <div class="flex-shrink-0" @click.stop>
+            <UserPopover
+              :user-id="post.author.id"
+              trigger="hover"
+              :delay="500"
+              placement="bottom"
             >
-              {{ post.author.avatar }}
-            </div>
+              <UserAvatar
+                :nickname="post.author.name"
+                size="lg"
+                clickable
+              />
+            </UserPopover>
           </div>
 
           <!-- 帖子内容 -->
