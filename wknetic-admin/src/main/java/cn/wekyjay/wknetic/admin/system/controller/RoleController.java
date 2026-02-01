@@ -9,10 +9,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
 @Slf4j
+@Tag(name = "Role Management", description = "System role management (ADMIN role required)")
 @RestController
 @RequestMapping("/api/v1/admin/roles")
 @PreAuthorize("hasRole('ADMIN')")
@@ -21,6 +26,7 @@ public class RoleController {
     @Autowired
     private ISysRoleService roleService;
 
+    @Operation(summary = "Get All Roles", description = "Retrieve list of all system roles")
     @GetMapping("/list")
     public Result<List<RoleVO>> getAllRoles() {
         try {
@@ -32,6 +38,10 @@ public class RoleController {
         }
     }
 
+    @Operation(summary = "Get Role By ID", description = "Retrieve specific role details")
+    @Parameters({
+            @Parameter(name = "roleId", description = "Role ID", required = true, example = "1")
+    })
     @GetMapping("/{roleId}")
     public Result<RoleVO> getRoleById(@PathVariable Long roleId) {
         try {
@@ -46,6 +56,7 @@ public class RoleController {
         }
     }
 
+    @Operation(summary = "Create Role", description = "Create a new system role")
     @PostMapping("/create")
     public Result<Void> createRole(@Valid @RequestBody RoleDTO dto) {
         try {
@@ -60,6 +71,7 @@ public class RoleController {
         }
     }
 
+    @Operation(summary = "Update Role", description = "Update existing system role")
     @PutMapping("/update")
     public Result<Void> updateRole(@Valid @RequestBody RoleDTO dto) {
         try {
@@ -74,6 +86,10 @@ public class RoleController {
         }
     }
 
+    @Operation(summary = "Delete Role", description = "Delete a system role")
+    @Parameters({
+            @Parameter(name = "roleId", description = "Role ID to delete", required = true, example = "1")
+    })
     @DeleteMapping("/{roleId}")
     public Result<Void> deleteRole(@PathVariable Long roleId) {
         try {
@@ -88,6 +104,7 @@ public class RoleController {
         }
     }
 
+    @Operation(summary = "Get Default Role", description = "Get the default role code assigned to new users")
     @GetMapping("/default")
     public Result<String> getDefaultRoleCode() {
         try {

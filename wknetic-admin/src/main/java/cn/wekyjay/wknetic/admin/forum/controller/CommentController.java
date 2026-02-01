@@ -5,6 +5,8 @@ import cn.wekyjay.wknetic.common.model.dto.CreateCommentDTO;
 import cn.wekyjay.wknetic.common.model.vo.CommentVO;
 import cn.wekyjay.wknetic.common.model.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,9 +30,9 @@ public class CommentController {
     private final CommentService commentService;
     
     /**
-     * 创建评论
+     * 创建评论 - 为帖子下新增评论或回复
      */
-    @Operation(summary = "创建评论")
+    @Operation(summary = "创建评论", description = "为帖子或子评论新增一个评论。支持回复功能。")
     @PostMapping
     @PreAuthorize("hasRole('USER')")
     public Result<Long> createComment(@Valid @RequestBody CreateCommentDTO dto) {
@@ -39,9 +41,12 @@ public class CommentController {
     }
     
     /**
-     * 删除评论
+     * 删除评论 - 软删除评论（标记为已删除）
      */
-    @Operation(summary = "删除评论")
+    @Operation(summary = "删除评论", description = "删除指定的评论。只有评论作者或管理员可以删除。")
+    @Parameters({
+            @Parameter(name = "commentId", description = "评论会idId", required = true, example = "1")
+    })
     @DeleteMapping("/{commentId}")
     @PreAuthorize("hasRole('USER')")
     public Result<Void> deleteComment(@PathVariable Long commentId) {
@@ -50,9 +55,12 @@ public class CommentController {
     }
     
     /**
-     * 获取帖子评论列表（树形结构）
+     * 获取帖子评论列表 - 以树形结构返回
      */
-    @Operation(summary = "获取帖子评论列表")
+    @Operation(summary = "获取帖子评论列表", description = "获取指定帖子的所有评论，树形结构显示回复关系。")
+    @Parameters({
+            @Parameter(name = "postId", description = "帖子ID", required = true, example = "1")
+    })
     @GetMapping("/post/{postId}")
     public Result<List<CommentVO>> getPostComments(@PathVariable Long postId) {
         List<CommentVO> comments = commentService.getPostComments(postId);
@@ -60,9 +68,12 @@ public class CommentController {
     }
     
     /**
-     * 点赞/取消点赞评论
+     * 点赞/取消点赞评论 - 切换评论的点赞状态
      */
-    @Operation(summary = "点赞/取消点赞评论")
+    @Operation(summary = "点赞/取消点赞评论", description = "对评论进行点赞或取消点赞。")
+    @Parameters({
+            @Parameter(name = "commentId", description = "评论会idId", required = true, example = "1")
+    })
     @PostMapping("/{commentId}/like")
     @PreAuthorize("hasRole('USER')")
     public Result<Boolean> toggleLike(@PathVariable Long commentId) {

@@ -18,11 +18,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 用户相关接口
  */
 @Slf4j
+@Tag(name = "User Management", description = "User profile and follow operations")
 @RestController
 @RequestMapping("/api/v1/user")
 public class UserController {
@@ -39,6 +44,7 @@ public class UserController {
     /**
      * 获取当前登录用户信息
      */
+    @Operation(summary = "Get Current User Info", description = "Retrieve current login user information including username and roles")
     @GetMapping("/info")
     public Result<UserInfoVO> getUserInfo(HttpServletRequest request) {
         try {
@@ -94,6 +100,10 @@ public class UserController {
      * @param userId 用户ID
      * @return 用户公开资料
      */
+    @Operation(summary = "Get User Profile", description = "Retrieve user public profile information including bio and avatar")
+    @Parameters({
+            @Parameter(name = "userId", description = "User ID", required = true, example = "1")
+    })
     @GetMapping("/profile/{userId}")
     public Result<UserProfileVO> getUserProfile(@PathVariable Long userId) {
         try {
@@ -112,6 +122,7 @@ public class UserController {
      * @param profileUpdateDTO 资料更新信息
      * @return 操作结果
      */
+    @Operation(summary = "Update User Profile", description = "Update current user profile information")
     @PutMapping("/profile")
     public Result<Void> updateProfile(@Valid @RequestBody UserProfileUpdateDTO profileUpdateDTO) {
         try {
@@ -134,6 +145,10 @@ public class UserController {
      * @param userId 被关注者ID
      * @return 操作结果
      */
+    @Operation(summary = "Follow User", description = "Current user follows another user to see their activities")
+    @Parameters({
+            @Parameter(name = "userId", description = "User ID to follow", required = true, example = "2")
+    })
     @PostMapping("/{userId}/follow")
     public Result<Void> followUser(@PathVariable Long userId) {
         try {
@@ -156,6 +171,10 @@ public class UserController {
      * @param userId 被取消关注者ID
      * @return 操作结果
      */
+    @Operation(summary = "Unfollow User", description = "Current user unfollows another user to stop seeing their activities")
+    @Parameters({
+            @Parameter(name = "userId", description = "User ID to unfollow", required = true, example = "2")
+    })
     @DeleteMapping("/{userId}/follow")
     public Result<Void> unfollowUser(@PathVariable Long userId) {
         try {

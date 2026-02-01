@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 验证码 Controller
+ * Captcha Controller
  */
 @Slf4j
 @RestController

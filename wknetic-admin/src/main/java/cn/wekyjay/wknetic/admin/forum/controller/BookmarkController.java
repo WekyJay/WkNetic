@@ -7,6 +7,8 @@ import cn.wekyjay.wknetic.common.model.vo.PostVO;
 import cn.wekyjay.wknetic.common.model.Result;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +32,13 @@ public class BookmarkController {
     private final BookmarkService bookmarkService;
     
     /**
-     * 收藏/取消收藏帖子
+     * 收藏/取消收藏帖子 - 切换帖子收藏状态
      */
-    @Operation(summary = "收藏/取消收藏帖子")
+    @Operation(summary = "收藏/取消收藏帖子", description = "收藏或取消收藏指定帖子。可指定收藏到指定类或默认收藏夹。")
+    @Parameters({
+            @Parameter(name = "postId", description = "帖子ID", required = true, example = "1"),
+            @Parameter(name = "categoryId", description = "收藏夹ID（可选）", example = "1")
+    })
     @PostMapping("/post/{postId}")
     @PreAuthorize("hasRole('USER')")
     public Result<Boolean> toggleBookmark(
@@ -43,9 +49,13 @@ public class BookmarkController {
     }
     
     /**
-     * 移动收藏到指定收藏夹
+     * 移动收藏到指定收藏夹 - 转移已收藏的帖子
      */
-    @Operation(summary = "移动收藏到指定收藏夹")
+    @Operation(summary = "移动收藏到指定收藏夹", description = "将已收藏的帖子移到其他收藏夹。")
+    @Parameters({
+            @Parameter(name = "postId", description = "帖子ID", required = true, example = "1"),
+            @Parameter(name = "categoryId", description = "收藏夹ID", required = true, example = "2")
+    })
     @PutMapping("/post/{postId}/move")
     @PreAuthorize("hasRole('USER')")
     public Result<Void> moveBookmark(
@@ -56,9 +66,14 @@ public class BookmarkController {
     }
     
     /**
-     * 获取用户的收藏列表
+     * 获取用户的收藏列表 - 收藏列表分页查询
      */
-    @Operation(summary = "获取用户的收藏列表")
+    @Operation(summary = "获取用户的收藏列表", description = "获取当前用户的收藏列表，可按收藏夹筛选。")
+    @Parameters({
+            @Parameter(name = "page", description = "页码", example = "1"),
+            @Parameter(name = "size", description = "每页条数", example = "20"),
+            @Parameter(name = "categoryId", description = "收藏夹ID（可选）", example = "1")
+    })
     @GetMapping("/list")
     @PreAuthorize("hasRole('USER')")
     public Result<IPage<PostVO>> getUserBookmarks(
@@ -70,9 +85,9 @@ public class BookmarkController {
     }
     
     /**
-     * 创建收藏夹
+     * 创建收藏夹 - 新建收藏分类
      */
-    @Operation(summary = "创建收藏夹")
+    @Operation(summary = "创建收藏夹", description = "创建一个新的收藏夹或收藏分类。")
     @PostMapping("/category")
     @PreAuthorize("hasRole('USER')")
     public Result<Long> createCategory(@Valid @RequestBody BookmarkCategoryDTO dto) {
@@ -81,9 +96,12 @@ public class BookmarkController {
     }
     
     /**
-     * 更新收藏夹
+     * 更新收藏夹 - 修改收藏夹信息
      */
-    @Operation(summary = "更新收藏夹")
+    @Operation(summary = "更新收藏夹", description = "修改收藏夹的名称和简介。")
+    @Parameters({
+            @Parameter(name = "categoryId", description = "收藏夹ID", required = true, example = "1")
+    })
     @PutMapping("/category/{categoryId}")
     @PreAuthorize("hasRole('USER')")
     public Result<Void> updateCategory(
@@ -94,9 +112,12 @@ public class BookmarkController {
     }
     
     /**
-     * 删除收藏夹
+     * 删除收藏夹 - 软删除收藏夹
      */
-    @Operation(summary = "删除收藏夹")
+    @Operation(summary = "删除收藏夹", description = "删除指定的收藏夹。删除收藏夹時，其下收藏的帖子将移到默认收藏夹。")
+    @Parameters({
+            @Parameter(name = "categoryId", description = "收藏夹ID", required = true, example = "1")
+    })
     @DeleteMapping("/category/{categoryId}")
     @PreAuthorize("hasRole('USER')")
     public Result<Void> deleteCategory(@PathVariable Long categoryId) {
@@ -105,9 +126,9 @@ public class BookmarkController {
     }
     
     /**
-     * 获取用户的收藏夹列表
+     * 获取用户的收藏夹列表 - 查询收藏夹
      */
-    @Operation(summary = "获取用户的收藏夹列表")
+    @Operation(summary = "获取用户的收藏夹列表", description = "获取当前用户的所有收藏夹。")
     @GetMapping("/category/list")
     @PreAuthorize("hasRole('USER')")
     public Result<List<BookmarkCategory>> getUserCategories() {
