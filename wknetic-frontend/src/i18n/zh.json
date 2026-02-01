@@ -185,7 +185,8 @@
     "deleteSuccess": "删除成功",
     "saveFailed": "保存失败",
     "deleteFailed": "删除失败",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "noData": "暂无数据"
   },
   "table": {
     "showing": "显示 {start}-{end} 项，共 {total} 项"

@@ -185,7 +185,8 @@
     "deleteSuccess": "Deleted successfully",
     "saveFailed": "Failed to save",
     "deleteFailed": "Failed to delete",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "noData": "No data available"
   },
   "table": {
     "showing": "Showing {start}-{end} of {total} items"

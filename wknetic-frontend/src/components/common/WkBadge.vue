@@ -43,8 +43,16 @@ const badgeClasses = computed(() => {
     'font-medium rounded-full transition-all duration-200'
   ]
 
-  // 尺寸（仅文本徽章）
-  if (!props.dot && !props.count) {
+  // 圆点徽章样式
+  if (props.dot) {
+    classes.push('w-2 h-2 p-0')
+  }
+  // 数字徽章样式
+  else if (props.count !== undefined) {
+    classes.push('min-w-5 h-5 px-1.5 text-xs')
+  }
+  // 文本徽章尺寸
+  else {
     switch (props.size) {
       case 'sm':
         classes.push('text-xs px-2 py-0.5')
@@ -57,35 +65,25 @@ const badgeClasses = computed(() => {
     }
   }
 
-  // 圆点徽章样式
-  if (props.dot) {
-    classes.push('w-2 h-2 p-0')
-  }
-
-  // 数字徽章样式
-  if (props.count !== undefined) {
-    classes.push('min-w-[20px] h-5 px-1.5 text-xs')
-  }
-
   // 变体颜色
   switch (props.variant) {
     case 'default':
-      classes.push('bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-default)]')
+      classes.push('bg-bg-surface text-text-secondary border border-border')
       break
     case 'primary':
-      classes.push('bg-[var(--brand-default)] text-white')
+      classes.push('bg-brand text-white')
       break
     case 'success':
-      classes.push('bg-green-500 text-white')
+      classes.push('bg-green-500/15 text-green-600 dark:text-green-400')
       break
     case 'warning':
-      classes.push('bg-yellow-500 text-white')
+      classes.push('bg-yellow-500/15 text-yellow-600 dark:text-yellow-400')
       break
     case 'danger':
-      classes.push('bg-red-500 text-white')
+      classes.push('bg-red-500/15 text-red-600 dark:text-red-400')
       break
     case 'info':
-      classes.push('bg-blue-500 text-white')
+      classes.push('bg-blue-500/15 text-blue-600 dark:text-blue-400')
       break
   }
 
@@ -107,24 +105,14 @@ const displayCount = computed(() => {
   return numCount
 })
 
-// 是否有包裹内容
+// 是否是带数字角标的包裹徽章模式（有 slot 且有 count）
 const slots = useSlots()
-const hasWrapper = computed(() => !!slots.default)
+const isWrapperMode = computed(() => !!slots.default && props.count !== undefined)
 </script>
 
 <template>
-  <!-- 独立徽章（无包裹内容） -->
-  <span v-if="!hasWrapper && show" :class="badgeClasses">
-    <span v-if="!dot && count === undefined">
-      <slot />
-    </span>
-    <span v-else-if="count !== undefined">
-      {{ displayCount }}
-    </span>
-  </span>
-
-  <!-- 带包裹内容的徽章 -->
-  <div v-else-if="hasWrapper" class="wk-badge-wrapper relative inline-flex">
+  <!-- 带数字角标的包裹徽章 -->
+  <div v-if="isWrapperMode" class="wk-badge-wrapper relative inline-flex">
     <slot />
     
     <span 
@@ -132,9 +120,19 @@ const hasWrapper = computed(() => !!slots.default)
       :class="badgeClasses"
       class="absolute -top-1 -right-1 transform translate-x-1/2 -translate-y-1/2"
     >
-      <span v-if="count !== undefined">{{ displayCount }}</span>
+      {{ displayCount }}
     </span>
   </div>
+
+  <!-- 独立徽章 -->
+  <span v-else-if="show" :class="badgeClasses">
+    <!-- 圆点徽章 -->
+    <template v-if="dot"></template>
+    <!-- 数字徽章 -->
+    <span v-else-if="count !== undefined">{{ displayCount }}</span>
+    <!-- 文本徽章 -->
+    <slot v-else />
+  </span>
 </template>
 
 <style scoped>
