@@ -24,10 +24,10 @@ const menuItems = [
     badge: null 
   },
   { 
-    name: 'menu.projects', 
-    icon: 'i-tabler-folders', 
-    path: '/admin/projects',
-    badge: '1.2k' 
+    name: 'menu.serverToken', 
+    icon: 'i-tabler-key', 
+    path: '/admin/server-tokens',
+    badge: null 
   },
   { 
     name: 'menu.users', 

@@ -106,6 +106,14 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
+                    path: 'server-tokens',
+                    name: 'admin-server-tokens',
+                    component: () => import('@/pages/admin/ServerTokenPage.vue'),
+                    meta: {
+                        title: 'routes.adminServerTokens'
+                    }
+                },
+                {
                     path: 'plugins',
                     name: 'admin-plugins',
                     component: () => import('@/pages/admin/PluginsPage.vue'),
