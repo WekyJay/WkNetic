@@ -271,8 +271,8 @@ async function loadConfigs() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const result = await configApi.getAllConfigs()
-    configs.value = result || []
+    const response = await configApi.getAllConfigs()
+    configs.value = response.data || []
     
     // 初始化配置值
     configs.value.forEach(config => {

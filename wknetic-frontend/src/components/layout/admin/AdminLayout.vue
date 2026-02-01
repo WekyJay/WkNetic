@@ -20,7 +20,7 @@ const menuItems = [
   { 
     name: 'menu.dashboard', 
     icon: 'i-tabler-dashboard', 
-    path: '/admin/dashboard',
+    path: '/admin/',
     badge: null 
   },
   { 
