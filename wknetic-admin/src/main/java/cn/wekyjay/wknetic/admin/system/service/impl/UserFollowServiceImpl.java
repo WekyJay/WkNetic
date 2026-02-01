@@ -57,7 +57,7 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, UserFol
         LambdaUpdateWrapper<UserFollow> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(UserFollow::getFollowerId, followerId)
                 .eq(UserFollow::getFollowingId, followingId)
-                .set(UserFollow::setStatus, 0);
+                .set(UserFollow::getStatus, 0);
 
         return this.update(updateWrapper);
     }

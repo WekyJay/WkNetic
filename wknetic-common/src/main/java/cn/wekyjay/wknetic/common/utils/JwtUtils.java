@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.common.util;
+package cn.wekyjay.wknetic.common.utils;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
-public class JwtUtil {
+public class JwtUtils {
 
     @Resource
     private JwtProperties jwtProperties;
@@ -112,7 +112,7 @@ public class JwtUtil {
         // 如果剩余时间 < 阈值 (比如剩30分钟)，且用户在操作，则重置为最大过期时间 (30天)
         if (expire != null && expire < jwtProperties.getRefreshTime()) {
             stringRedisTemplate.expire(redisKey, jwtProperties.getExpiration(), TimeUnit.SECONDS);
-            log.debug("用户 {} Token 自动续期成功", userId);
+            // log.debug("用户 {} Token 自动续期成功", userId);
         }
 
         return true;

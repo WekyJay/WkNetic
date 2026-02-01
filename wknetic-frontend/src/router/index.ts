@@ -48,11 +48,37 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
+                    path: '/forum/post/create',
+                    name: 'post-create',
+                    component: () => import('@/pages/PostCreatePage.vue'),
+                    meta: {
+                        title: 'routes.postCreate',
+                        requiresAuth: true
+                    }
+                },
+                {
+                    path: '/forum/post/edit/:id',
+                    name: 'post-edit',
+                    component: () => import('@/pages/PostCreatePage.vue'),
+                    meta: {
+                        title: 'routes.postEdit',
+                        requiresAuth: true
+                    }
+                },
+                {
                     path: '/forum/post/:id',
                     name: 'forum-post',
                     component: () => import('@/pages/forum/PostDetailPage.vue'),
                     meta: {
                         title: 'routes.forumPost'
+                    }
+                },
+                {
+                    path: '/forum/topic/:id',
+                    name: 'forum-topic',
+                    component: () => import('@/pages/forum/TopicPage.vue'),
+                    meta: {
+                        title: 'routes.forumTopic'
                     }
                 },
                 {
@@ -127,6 +153,15 @@ const routes: RouteRecordRaw[] = [
                     component: () => import('@/pages/admin/RolesPage.vue'),
                     meta: {
                         title: 'routes.adminRoles'
+                    }
+                },
+                {
+                    path: 'audit',
+                    name: 'admin-audit',
+                    component: () => import('@/pages/admin/AuditPage.vue'),
+                    meta: {
+                        title: 'routes.adminAudit',
+                        requiresRole: ['MODERATOR', 'ADMIN']
                     }
                 },
                 {

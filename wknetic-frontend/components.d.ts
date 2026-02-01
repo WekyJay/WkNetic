@@ -13,6 +13,8 @@ declare module 'vue' {
   export interface GlobalComponents {
     AdminLayout: typeof import('./src/components/layout/admin/AdminLayout.vue')['default']
     AppLayout: typeof import('./src/components/layout/AppLayout.vue')['default']
+    BookmarkDialog: typeof import('./src/components/forum/BookmarkDialog.vue')['default']
+    CommentTree: typeof import('./src/components/forum/CommentTree.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElOption: typeof import('element-plus/es')['ElOption']
@@ -37,6 +39,7 @@ declare module 'vue' {
     NewsSection: typeof import('./src/components/home/NewsSection.vue')['default']
     ProjectCard: typeof import('./src/components/home/ProjectCard.vue')['default']
     ProjectCarousel: typeof import('./src/components/home/ProjectCarousel.vue')['default']
+    ReportDialog: typeof import('./src/components/forum/ReportDialog.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TheFooter: typeof import('./src/components/layout/TheFooter.vue')['default']

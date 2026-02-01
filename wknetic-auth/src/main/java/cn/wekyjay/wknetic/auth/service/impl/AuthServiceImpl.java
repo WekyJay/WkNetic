@@ -5,7 +5,7 @@ import cn.wekyjay.wknetic.auth.model.LoginUser;
 import cn.wekyjay.wknetic.common.model.dto.LoginBody;
 import cn.wekyjay.wknetic.auth.service.AuthService;
 import cn.wekyjay.wknetic.common.exception.BusinessException;
-import cn.wekyjay.wknetic.common.util.JwtUtil;
+import cn.wekyjay.wknetic.common.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +22,7 @@ public class AuthServiceImpl implements AuthService {
     private AuthenticationManager authenticationManager;
 
     @Resource
-    private JwtUtil jwtUtil;
+    private JwtUtils jwtUtil;
 
     @Override
     public String login(LoginBody loginBody) {

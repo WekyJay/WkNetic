@@ -9,7 +9,7 @@ import cn.wekyjay.wknetic.common.model.Result;
 import cn.wekyjay.wknetic.common.model.dto.UserProfileUpdateDTO;
 import cn.wekyjay.wknetic.common.model.vo.UserInfoVO;
 import cn.wekyjay.wknetic.common.model.vo.UserProfileVO;
-import cn.wekyjay.wknetic.common.util.JwtUtil;
+import cn.wekyjay.wknetic.common.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public class UserController {
     private IUserFollowService userFollowService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtUtils jwtUtil;
 
     /**
      * 获取当前登录用户信息

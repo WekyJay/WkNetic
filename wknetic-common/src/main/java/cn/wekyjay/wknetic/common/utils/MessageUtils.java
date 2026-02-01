@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.common.util;
+package cn.wekyjay.wknetic.common.utils;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;

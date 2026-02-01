@@ -34,3 +34,4 @@ build/
 
 ### Other ###
 **/.jwt_secret
+application-forum.yml

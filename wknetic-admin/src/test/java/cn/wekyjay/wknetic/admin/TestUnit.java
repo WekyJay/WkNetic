@@ -1,6 +1,6 @@
 package cn.wekyjay.wknetic.admin;
 
-import cn.wekyjay.wknetic.common.util.MessageUtils;
+import cn.wekyjay.wknetic.common.utils.MessageUtils;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

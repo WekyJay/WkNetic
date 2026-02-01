@@ -6,7 +6,7 @@ import cn.wekyjay.wknetic.common.model.dto.InstallPluginDTO;
 import cn.wekyjay.wknetic.common.model.dto.UpdatePluginPermissionsDTO;
 import cn.wekyjay.wknetic.common.model.dto.UpdatePluginStatusDTO;
 import cn.wekyjay.wknetic.common.model.vo.PluginStatusVO;
-import cn.wekyjay.wknetic.common.util.JwtUtil;
+import cn.wekyjay.wknetic.common.utils.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class PluginController {
     private IUserPluginService userPluginService;
 
     @Autowired
-    private JwtUtil jwtUtil;
+    private JwtUtils jwtUtil;
 
     /**
      * 获取用户已安装的插件列表
@@ -68,7 +68,7 @@ public class PluginController {
         try {
             Long userId = getCurrentUserId(request);
             PluginStatusVO plugin = userPluginService.installPlugin(userId, dto);
-            return Result.success(plugin, "安装成功");
+            return Result.success( "安装成功",plugin);
         } catch (RuntimeException e) {
             log.warn("安装插件失败: {}", e.getMessage());
             return Result.error(409, e.getMessage());

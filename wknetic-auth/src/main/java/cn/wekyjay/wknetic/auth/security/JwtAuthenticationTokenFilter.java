@@ -2,7 +2,7 @@ package cn.wekyjay.wknetic.auth.security;
 
 import cn.hutool.core.util.StrUtil;
 import cn.wekyjay.wknetic.common.config.JwtProperties;
-import cn.wekyjay.wknetic.common.util.JwtUtil;
+import cn.wekyjay.wknetic.common.utils.JwtUtils;
 import cn.wekyjay.wknetic.common.domain.SysUser;
 import cn.wekyjay.wknetic.common.mapper.SysUserMapper;
 import jakarta.annotation.Resource;
@@ -35,7 +35,7 @@ import java.util.List;
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
     @Resource
-    private JwtUtil jwtUtil;
+    private JwtUtils jwtUtil;
 
     @Resource
     private JwtProperties jwtProperties;

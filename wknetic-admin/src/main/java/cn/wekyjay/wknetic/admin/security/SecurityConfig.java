@@ -72,7 +72,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()            // 登录注册接口
                 .requestMatchers("/api/v1/captcha/**").permitAll()         // 验证码接口
                 .requestMatchers("/api/v1/open/**").permitAll()            // 开放接口（首页数据、站点配置等）
-                .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**").permitAll() // Swagger
+                .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI
                 // 其他所有请求必须认证
                 .anyRequest().authenticated()
             )

@@ -15,10 +15,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
-
-  "baseUrl": ".",   // 设置基准目录为项目根目录
-  "paths": {        // 配置路径映射
-    "@/*": ["src/*"]
-  }
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
 }

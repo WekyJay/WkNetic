@@ -1,7 +1,7 @@
 package cn.wekyjay.wknetic.common.model;
 
 import cn.wekyjay.wknetic.common.enums.ResultCode;
-import cn.wekyjay.wknetic.common.util.MessageUtils;
+import cn.wekyjay.wknetic.common.utils.MessageUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -88,6 +88,13 @@ public class Result<T> implements Serializable {
      */
     public static <T> Result<T> error(Integer code, String message) {
         return new Result<>(code, message, null);
+    }
+    
+    /**
+     * 快捷错误响应 (使用默认500错误码)
+     */
+    public static <T> Result<T> error(String message) {
+        return new Result<>(500, message, null);
     }
 
     /**

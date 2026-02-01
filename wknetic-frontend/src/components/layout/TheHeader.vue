@@ -169,7 +169,7 @@ function goToSettings() {
             <button 
               class="btn-ghost p-2"
               @click.stop="isLangMenuOpen = !isLangMenuOpen"
-              :title="currentLanguage.name"
+              :title="currentLanguage?.name"
             >
               <span class="i-tabler-language text-xl"></span>
             </button>

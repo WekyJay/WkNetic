@@ -32,3 +32,18 @@ wknetic:
     port: 8081
   # 是否开启数据库自动初始化
   db-auto-init: true
+
+# SpringDoc OpenAPI 配置
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: cn.wekyjay.wknetic.admin

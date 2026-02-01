@@ -2,6 +2,10 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import * as Vue from 'vue'
 
+
+
+
+
 // ---------- 样式导入（确保优先级正确） ---------------
 
 import 'element-plus/dist/index.css'
@@ -21,6 +25,8 @@ import { WknieticSDK } from './sdk'
 
 // ---------- Pinia ---------------
 import { createPinia } from 'pinia'
+// ---------- Pinia 持久化插件 ---------------
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 // ---------- Router ---------------
 import router from './router' // 引入路由实例
@@ -65,7 +71,9 @@ const app = createApp(App)
 WknieticSDK.vue = Vue;
 
 app.use(router)         // 注册路由
-app.use(createPinia())  // 注册 Pinia 状态管理
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate) // 使用持久化插件
+app.use(pinia)         // 注册 Pinia
 app.use(i18n)           // 使用 i18n
 app.use(hljsVuePlugin) // 注册代码高亮插件
 
