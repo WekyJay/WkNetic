@@ -55,6 +55,24 @@ const routes: RouteRecordRaw[] = [
                         title: 'routes.forumPost'
                     }
                 },
+                {
+                    path: '/user/:id',
+                    name: 'user-profile',
+                    component: () => import('@/pages/user/UserProfilePage.vue'),
+                    meta: {
+                        title: 'routes.userProfile'
+                    }
+                },
+                {
+                    path: '/profile',
+                    redirect: (to) => {
+                        const auth = useAuthStore()
+                        if (auth.user?.id) {
+                            return `/user/${auth.user.id}`
+                        }
+                        return '/login'
+                    }
+                },
             ]
         },
         // 管理后台路由

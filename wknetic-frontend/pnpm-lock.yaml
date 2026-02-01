@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@bprogress/vue':
+        specifier: ^1.1.5
+        version: 1.1.5(vue@3.5.27(typescript@5.9.3))
       '@highlightjs/vue-plugin':
         specifier: ^2.1.0
         version: 2.1.0(highlight.js@11.11.1)(vue@3.5.27(typescript@5.9.3))
@@ -266,6 +269,14 @@ packages:
   '@babel/types@7.28.6':
     resolution: {integrity: sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg==}
     engines: {node: '>=6.9.0'}
+
+  '@bprogress/core@1.3.4':
+    resolution: {integrity: sha512-q/AqpurI/1uJzOrQROuZWixn/+ARekh+uvJGwLCP6HQ/EqAX4SkvNf618tSBxL4NysC0MwqAppb/mRw6Tzi61w==}
+
+  '@bprogress/vue@1.1.5':
+    resolution: {integrity: sha512-LpmCjpviG+lnLADFqMjfLpn/799k9V6uPWfPx2pBz+o2cmjrieo2KapsieoXG/Uz9N5KwuO0VzIlpgO2ZIGuFg==}
+    peerDependencies:
+      vue: '>=3.0.0'
 
   '@ctrl/tinycolor@3.6.1':
     resolution: {integrity: sha512-SITSV6aIXsuVNV3f3O0f2n/cgyEDWoSqtZMYiAmcsYHydcKrOz3gUxB/iXd/Qf08+IZX4KpgNbvUdMBmWz+kcA==}
@@ -1873,6 +1884,13 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.28.5
+
+  '@bprogress/core@1.3.4': {}
+
+  '@bprogress/vue@1.1.5(vue@3.5.27(typescript@5.9.3))':
+    dependencies:
+      '@bprogress/core': 1.3.4
+      vue: 3.5.27(typescript@5.9.3)
 
   '@ctrl/tinycolor@3.6.1': {}
 

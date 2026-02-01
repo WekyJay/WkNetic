@@ -12,6 +12,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AdminLayout: typeof import('./src/components/layout/admin/AdminLayout.vue')['default']
+    AppLayout: typeof import('./src/components/layout/AppLayout.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElInput: typeof import('element-plus/es')['ElInput']
     ElOption: typeof import('element-plus/es')['ElOption']

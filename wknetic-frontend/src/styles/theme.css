@@ -148,3 +148,17 @@ html.dark ::-webkit-scrollbar-corner {
 html.dark * {
     scrollbar-color: #52525b #18181b;
 }
+
+/* ==============================================
+   按钮默认样式
+============================================== */
+button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    margin: 0;
+    transition: all 0.2s ease-in-out;
+}

@@ -29,7 +29,7 @@ const tags = [
   { name: 'Forge', count: 756, color: 'bg-orange-500/20 text-orange-400' },
   { name: 'Quilt', count: 234, color: 'bg-purple-500/20 text-purple-400' },
   { name: 'NeoForge', count: 189, color: 'bg-red-500/20 text-red-400' },
-  { name: '1.20.x', count: 1024, color: 'bg-brand/20 text-brand' },
+  { name: '1.20.x', count: 1024, color: 'bg-green-500/20 text-green-400' },
   { name: '1.19.x', count: 567, color: 'bg-blue-500/20 text-blue-400' },
 ]
 

@@ -58,7 +58,7 @@ const posts: Post[] = [
     title: 'Modrinth App 1.0 Released! - Download Now',
     author: { name: 'Modrinth Team', avatar: 'MT', badge: 'Official' },
     topic: 'Announcements',
-    topicColor: 'bg-brand/20 text-brand',
+    topicColor: 'bg-brand/20 text-text',
     content: 'We\'re excited to announce the official release of the Modrinth App! Download it now and enjoy a seamless modding experience.',
     likes: 567,
     replies: 89,
@@ -123,7 +123,7 @@ const posts: Post[] = [
 
 const getBadgeClass = (badge?: string) => {
   switch (badge) {
-    case 'Official': return 'bg-brand/20 text-brand'
+    case 'Official': return 'bg-brand/20 text-text'
     case 'Moderator': return 'bg-red-500/20 text-red-400'
     case 'Helper': return 'bg-blue-500/20 text-blue-400'
     case 'Creator': return 'bg-purple-500/20 text-purple-400'
@@ -155,7 +155,7 @@ const submitPost = () => {
           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
           :class="[
             sortBy === option.value
-              ? 'bg-brand/10 text-brand'
+              ? 'bg-brand/10'
               : 'text-text-secondary hover:bg-bg-hover hover:text-text'
           ]"
           @click="sortBy = option.value"

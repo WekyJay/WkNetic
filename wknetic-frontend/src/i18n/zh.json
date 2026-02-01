@@ -63,6 +63,7 @@
     "adminSettings": "设置",
     "login": "登录",
     "register": "创建账户",
+    "userProfile": "用户资料",
     "notFound": "页面未找到"
   },
   "pages": {

@@ -192,7 +192,7 @@ Also, make sure to always check the mod's changelog before updating - breaking c
 
 const getBadgeClass = (badge?: string) => {
   switch (badge) {
-    case 'Official': return 'bg-brand/20 text-brand'
+    case 'Official': return 'bg-brand/20 text-text'
     case 'Moderator': return 'bg-red-500/20 text-red-400'
     case 'Helper': return 'bg-blue-500/20 text-blue-400'
     case 'Creator': return 'bg-purple-500/20 text-purple-400'

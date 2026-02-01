@@ -63,6 +63,7 @@
     "adminSettings": "Settings",
     "login": "Login",
     "register": "Create Account",
+    "userProfile": "User Profile",
     "notFound": "Page Not Found"
   },
   "pages": {

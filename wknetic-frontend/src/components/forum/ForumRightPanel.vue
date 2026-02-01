@@ -94,11 +94,11 @@ const forumStats = getForumStats()
 </script>
 
 <template>
+  <ExtensionSlot 
+      name="user-profile-header" 
+      :context="{ userId: 1001, name: 'WekyJay' }" 
+    />
   <div class="space-y-4">
-    <ExtensionSlot 
-          name="user-profile-header" 
-          :context="{ userId: 1001, name: 'WekyJay' }" 
-        />
     <!-- 签到卡片 -->
     <div class="card">
       <div class="flex-between mb-4">
@@ -188,7 +188,7 @@ const forumStats = getForumStats()
           :class="[
             day ? 'hover:bg-bg-hover' : '',
             isToday(day) ? 'bg-brand text-bg font-bold' : '',
-            isChecked(day) && !isToday(day) ? 'bg-brand/20 text-brand' : '',
+            isChecked(day) && !isToday(day) ? 'bg-brand/20 text-text' : '',
             !day ? 'invisible' : '',
             selectedDate === day ? 'ring-2 ring-brand' : ''
           ]"

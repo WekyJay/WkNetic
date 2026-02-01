@@ -15,12 +15,7 @@ const isLoginModalOpen = ref(false)
 const isUserMenuOpen = ref(false)
 
 const navCategories = [
-  { name: 'Mods', icon: 'i-tabler-puzzle', href: '/mods' },
-  { name: 'Plugins', icon: 'i-tabler-plug', href: '/plugins' },
-  { name: 'Data Packs', icon: 'i-tabler-database', href: '/datapacks' },
-  { name: 'Shaders', icon: 'i-tabler-sun', href: '/shaders' },
-  { name: 'Resource Packs', icon: 'i-tabler-photo', href: '/resourcepacks' },
-  { name: 'Modpacks', icon: 'i-tabler-package', href: '/modpacks' },
+  { name: 'Home', icon: 'i-tabler-home', href: '/' },
   { name: 'Forum', icon: 'i-tabler-message-circle', href: '/forum' }
 ]
 
@@ -41,7 +36,19 @@ function handleLogout() {
 
 function goToProfile() {
   isUserMenuOpen.value = false
-  router.push('/profile')
+  const currentUser = authStore.user
+  if (currentUser) {
+    // UserInfo 中的ID字段是 userId
+    const userId = currentUser.userId
+    if (userId) {
+      router.push(`/user/${userId}`)
+    } else {
+      console.warn('User ID not found:', currentUser)
+      router.push('/login')
+    }
+  } else {
+    router.push('/login')
+  }
 }
 
 function goToAdmin() {
@@ -114,22 +121,22 @@ function goToAdmin() {
           <!-- 登录按钮或用户菜单 -->
           <div v-if="isAuthenticated && user" class="relative">
             <button 
-              class="flex items-center gap-2 px-4 py-1 rounded-lg bg-transparent hover:bg-bg-surface transition-colors"
+              class="flex items-center gap-2 px-4 py-1 rounded-lg bg-transparent hover:bg-bg-surface transition-colors cursor-pointer"
               @click="isUserMenuOpen = !isUserMenuOpen"
             >
               <img 
                 v-if="user.avatar" 
                 :src="user.avatar" 
                 :alt="user.nickname || user.username"
-                class="w-8 h-8 rounded-full object-cover"
+                class="w-8 h-8 rounded-full object-cover cursor-pointer"
               />
               <div 
                 v-else 
-                class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center"
+                class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center cursor-pointer"
               >
                 <span class="i-tabler-user text-brand"></span>
               </div>
-              <span class="hidden lg:inline text-sm font-medium text-text">
+              <span class="hidden lg:inline text-sm font-medium text-text cursor-pointer">
                 {{ user.nickname || user.username }}
               </span>
               <span class="i-tabler-chevron-down text-sm text-text-muted"></span>
@@ -140,14 +147,29 @@ function goToAdmin() {
               v-if="isUserMenuOpen"
               class="absolute right-0 mt-2 w-56 bg-bg border border-border rounded-lg shadow-lg py-2 z-50"
             >
-              <div class="px-4 py-2  border-border">
-                <p class="text-sm font-medium text-text">{{ user.nickname || user.username }}</p>
-                <p class="text-xs text-text-muted">{{ user.email }}</p>
-                <div class="mt-1.5 flex items-center gap-1.5">
-                  <span class="i-tabler-shield text-xs" :class="userRoleColor"></span>
-                  <span class="text-xs font-medium" :class="userRoleColor">{{ userRoleLabel }}</span>
+              <button
+                class="w-full px-4 py-2 text-left bg-transparent hover:bg-bg-surface transition-colors"
+                @click="goToProfile"
+              >
+                <div class="flex items-center gap-3">
+                  <img 
+                    v-if="user.avatar" 
+                    :src="user.avatar" 
+                    :alt="user.nickname || user.username"
+                    class="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div 
+                    v-else 
+                    class="w-10 h-10 rounded-full bg-brand/10 flex items-center justify-center"
+                  >
+                    <span class="i-tabler-user text-brand"></span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-text">{{ user.nickname || user.username }}</p>
+                    <p class="text-xs text-text-muted">{{ user.email }}</p>
+                  </div>
                 </div>
-              </div>
+              </button>
               
               <div class="border-t border-border my-2"></div>
 
