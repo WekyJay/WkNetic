@@ -35,10 +35,9 @@ const socialLinks = [
         <!-- Logo & 描述 -->
         <div class="col-span-2 md:col-span-4 lg:col-span-1">
           <div class="flex items-center gap-2 mb-4">
-            <div class="w-8 h-8 bg-brand rounded-lg flex-center">
-              <span class="i-tabler-cube text-bg text-lg"></span>
+            <div class="w-38 h-8 rounded-lg flex-start">
+              <img src="/wknetic_logo.png" alt="WkNetic Logo" class="object-contain" />
             </div>
-            <span class="text-xl font-bold">WkNetic</span>
           </div>
           <p class="text-text-secondary text-sm mb-6 max-w-xs">
             Discover and share Minecraft content through our open-source platform built for the community.

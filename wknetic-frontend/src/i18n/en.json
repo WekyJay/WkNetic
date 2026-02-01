@@ -50,6 +50,21 @@
     "onlineNow": "Online Now",
     "todayPosts": "Today's Posts"
   },
+  "routes": {
+    "home": "Home",
+    "mods": "Discover Mods",
+    "project": "Project Details",
+    "forum": "Community Forum",
+    "forumPost": "Post Details",
+    "adminHome": "Dashboard",
+    "adminUsers": "User Management",
+    "adminPlugins": "Plugin Management",
+    "adminRoles": "Role Management",
+    "adminSettings": "Settings",
+    "login": "Login",
+    "register": "Create Account",
+    "notFound": "Page Not Found"
+  },
   "pages": {
     "home": "Home",
     "project": "Project Details",
@@ -170,5 +185,11 @@
   },
   "table": {
     "showing": "Showing {start}-{end} of {total} items"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your site preferences",
+    "saveAll": "Save",
+    "noChanges": "No changes detected"
   }
 }

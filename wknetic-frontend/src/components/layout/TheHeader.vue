@@ -58,10 +58,11 @@ function goToAdmin() {
         <!-- Logo -->
         <div class="flex items-center gap-6">
           <router-link to="/" class="flex items-center gap-2 text-xl font-bold">
-            <div class="w-8 h-8 bg-brand rounded-lg flex-center">
-              <span class="i-tabler-cube text-bg text-lg"></span>
+            <div class="w-28 h-8 rounded-lg flex-center">
+              <img src="/wknetic_logo.png" alt="WkNetic Logo" class="object-contain" />
+
             </div>
-            <span class="hidden sm:block text-text">WkNetic</span>
+            <!-- <span class="hidden sm:block text-text">WkNetic</span> -->
           </router-link>
 
           <!-- 桌面端导航 -->

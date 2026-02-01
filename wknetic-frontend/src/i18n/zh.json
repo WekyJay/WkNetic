@@ -50,6 +50,21 @@
     "onlineNow": "当前在线",
     "todayPosts": "今日发帖"
   },
+  "routes": {
+    "home": "首页",
+    "mods": "浏览模组",
+    "project": "项目详情",
+    "forum": "社区论坛",
+    "forumPost": "帖子详情",
+    "adminHome": "仪表板",
+    "adminUsers": "用户管理",
+    "adminPlugins": "插件管理",
+    "adminRoles": "角色管理",
+    "adminSettings": "设置",
+    "login": "登录",
+    "register": "创建账户",
+    "notFound": "页面未找到"
+  },
   "pages": {
     "home": "首页",
     "project": "项目详情",
@@ -170,5 +185,12 @@
   },
   "table": {
     "showing": "显示 {start}-{end} 项，共 {total} 项"
+  }
+  ,
+  "settings": {
+    "title": "设置",
+    "subtitle": "管理您的站点偏好设置",
+    "saveAll": "保存",
+    "noChanges": "没有检测到更改"
   }
 }

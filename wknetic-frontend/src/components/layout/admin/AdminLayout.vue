@@ -102,8 +102,8 @@ function toggleSidebar() {
       <!-- Logo -->
       <div class="h-16 flex items-center justify-between px-4 border-b border-border">
         <router-link to="/admin/dashboard" class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-brand rounded-xl flex-center flex-shrink-0">
-            <span class="i-tabler-cube text-bg text-xl"></span>
+          <div class="w-10 h-10 flex-center flex-shrink-0">
+            <img src="/wknetic.svg" alt="WkNetic Logo" class="object-contain w-8 h-8" />
           </div>
           <div v-if="!isSidebarCollapsed" class="flex flex-col">
             <span class="font-bold text-text">WkNetic</span>

@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import i18n from '@/i18n'
+
+// 获取 i18n 国际化实例
+const { t } = i18n.global
+
 
 // 定义路由配置
 const routes: RouteRecordRaw[] = [
@@ -14,26 +19,41 @@ const routes: RouteRecordRaw[] = [
                     path: '',
                     name: 'home-home',
                     component: () => import('@/pages/HomePage.vue'),
+                    meta: {
+                        title: 'routes.home'
+                    }
                 },
                 {
                     path: '/mods',
                     name: 'mods',
                     component: () => import('@/pages/SearchPage.vue'),
+                    meta: {
+                        title: 'routes.mods'
+                    }
                 },
                 {
                     path: '/project/:id',
                     name: 'project',
                     component: () => import('@/pages/ProjectPage.vue'),
+                    meta: {
+                        title: 'routes.project'
+                    }
                 },
                 {
                     path: '/forum',
                     name: 'forum',
                     component: () => import('@/pages/forum/ForumPage.vue'),
+                    meta: {
+                        title: 'routes.forum'
+                    }
                 },
                 {
                     path: '/forum/post/:id',
                     name: 'forum-post',
                     component: () => import('@/pages/forum/PostDetailPage.vue'),
+                    meta: {
+                        title: 'routes.forumPost'
+                    }
                 },
             ]
         },
@@ -47,21 +67,41 @@ const routes: RouteRecordRaw[] = [
                     path: '',
                     name: 'admin-home',
                     component: () => import('@/pages/admin/DashboardPage.vue'),
+                    meta: {
+                        title: 'routes.adminHome'
+                    }
                 },
                 {
                     path: 'users',
                     name: 'admin-users',
                     component: () => import('@/pages/admin/UsersPage.vue'),
+                    meta: {
+                        title: 'routes.adminUsers'
+                    }
                 },
                 {
                     path: 'plugins',
                     name: 'admin-plugins',
                     component: () => import('@/pages/admin/PluginsPage.vue'),
+                    meta: {
+                        title: 'routes.adminPlugins'
+                    }
                 },
                 {
                     path: 'roles',
                     name: 'admin-roles',
                     component: () => import('@/pages/admin/RolesPage.vue'),
+                    meta: {
+                        title: 'routes.adminRoles'
+                    }
+                },
+                {
+                    path:'settings',
+                    name: 'admin-settings',
+                    component: () => import('@/pages/admin/SettingsPage.vue'),
+                    meta: {
+                        title: 'routes.adminSettings'
+                    }
                 }
             ]
         },
@@ -70,6 +110,9 @@ const routes: RouteRecordRaw[] = [
             path: '/login',
             name: 'login',
             component: () => import('@/pages/LoginPage.vue'),
+            meta: {
+                title: 'routes.login'
+            }
         },
         // 兼容旧的管理员登录路径，重定向到统一登录页
         {
@@ -86,12 +129,18 @@ const routes: RouteRecordRaw[] = [
             path: '/register',
             name: 'register',
             component: () => import('@/pages/auth/RegisterPage.vue'),
+            meta: {
+                title: 'routes.register'
+            }
         },
         // 404 页面
         {
             path: '/404',
             name: 'not-found',
             component: () => import('../pages/NotFoundPage.vue'),
+            meta: {
+                title: 'routes.notFound'
+            }
         },
         // 404 页面捕获（所有未匹配的路由）
         {
@@ -114,16 +163,32 @@ const router = createRouter({
 
 // 全局前置守卫：权限验证
 router.beforeEach((to, _from, next) => {
-    // 修改网页标题
-    document.title = `${to.meta.title || to.name} | WkNetic` || 'WkNetic'
-    
+    // 动态网页标题处理（支持 i18n）
+    let pageTitle: string = ''
+    if (typeof to.meta.title === 'function') {
+        pageTitle = to.meta.title(to)
+    } else if (to.meta && typeof to.meta.title === 'string') {
+        // 如果 meta.title 是 i18n key（包含 '.'），则翻译它
+        const titleKey = to.meta.title
+        if (titleKey.includes('.')) {
+            pageTitle = t(titleKey)
+        } else {
+            pageTitle = titleKey
+        }
+    } else if (to.name) {
+        pageTitle = to.name.toString()
+    } else {
+        pageTitle = 'WkNetic'
+    }
+    document.title = `${pageTitle} | WkNetic`
+
     // 检查是否需要登录（管理后台）
     if (to.path.startsWith('/admin')) {
         const authStore = useAuthStore()
-        
+
         // 尝试从存储恢复登录状态
         const isAuthenticated = authStore.checkAuth()
-        
+
         if (!isAuthenticated) {
             // 未登录，跳转到 404 页面（根据需求：强行访问后台显示 404）
             console.warn('未授权访问管理后台，跳转到404页面')
@@ -133,7 +198,7 @@ router.beforeEach((to, _from, next) => {
             })
             return
         }
-        
+
         // 已登录，检查是否有管理员权限
         if (!authStore.isAdmin) {
             console.warn('无管理员权限，跳转到404页面')
@@ -144,7 +209,7 @@ router.beforeEach((to, _from, next) => {
             return
         }
     }
-    
+
     // 如果已登录，访问登录页则跳转到首页
     if (to.path === '/login') {
         const authStore = useAuthStore()
@@ -154,7 +219,7 @@ router.beforeEach((to, _from, next) => {
             return
         }
     }
-    
+
     next()
 })
 
