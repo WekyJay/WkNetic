@@ -1,13 +1,59 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { usePermission } from '@/composables/usePermission'
+// import { usePermission } from '@/composables/usePermission'
+import { useTheme } from '@/composables/useTheme'
+import { useI18n } from 'vue-i18n'
 import LoginModal from '@/components/LoginModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const { userRoleLabel, userRoleColor } = usePermission()
+// const { userRoleLabel, userRoleColor } = usePermission()
+const { themeMode, isDark, toggleTheme } = useTheme()
+const { locale } = useI18n()
+
+// 语言切换
+const isLangMenuOpen = ref(false)
+const languages = [
+  { code: 'zh', name: '简体中文', flag: 'i-circle-flags-cn' },
+  { code: 'en', name: 'English', flag: 'i-circle-flags-us' }
+]
+
+function setLanguage(langCode: string) {
+  locale.value = langCode
+  localStorage.setItem('app-language', langCode)
+  isLangMenuOpen.value = false
+}
+
+const currentLanguage = computed(() => {
+  return languages.find(l => l.code === locale.value) || languages[0]
+})
+
+// 主题图标
+const themeIcon = computed(() => {
+  if (themeMode.value === 'auto') return 'i-tabler-device-laptop'
+  return isDark.value ? 'i-tabler-moon' : 'i-tabler-sun'
+})
+
+// 点击外部关闭所有下拉菜单
+function closeAllMenus(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (!target.closest('.lang-menu-container')) {
+    isLangMenuOpen.value = false
+  }
+  if (!target.closest('.user-menu-container')) {
+    isUserMenuOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeAllMenus)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeAllMenus)
+})
 
 const isMenuOpen = ref(false)
 const isSearchOpen = ref(false)
@@ -111,11 +157,6 @@ function goToSettings() {
             <span class="i-tabler-search text-xl"></span>
           </button>
 
-          <!-- Host a server -->
-          <a href="#" class="hidden sm:flex nav-link text-sm">
-            Host a server
-          </a>
-
           <!-- Get App 按钮 -->
           <button class="hidden sm:flex btn-secondary text-sm">
             <span class="i-tabler-download text-lg"></span>
@@ -123,11 +164,49 @@ function goToSettings() {
             <span class="lg:hidden">App</span>
           </button>
 
+          <!-- 语言切换 -->
+          <div class="relative lang-menu-container">
+            <button 
+              class="btn-ghost p-2"
+              @click.stop="isLangMenuOpen = !isLangMenuOpen"
+              :title="currentLanguage.name"
+            >
+              <span class="i-tabler-language text-xl"></span>
+            </button>
+            
+            <!-- 语言下拉菜单 -->
+            <div 
+              v-if="isLangMenuOpen"
+              class="absolute right-0 mt-2 w-36 bg-bg border border-border rounded-lg shadow-lg py-1 z-50"
+            >
+              <button
+                v-for="lang in languages"
+                :key="lang.code"
+                class="w-full px-3 py-2 text-left text-sm bg-transparent hover:bg-bg-surface transition-colors flex items-center gap-2"
+                :class="{ 'text-brand': locale === lang.code }"
+                @click="setLanguage(lang.code)"
+              >
+                <span :class="lang.flag" class="w-5 h-5 rounded-full"></span>
+                <span>{{ lang.name }}</span>
+                <span v-if="locale === lang.code" class="i-tabler-check ml-auto text-brand"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 主题切换 -->
+          <button 
+            class="btn-ghost p-2"
+            @click="toggleTheme"
+            :title="themeMode === 'auto' ? '自动' : (isDark ? '深色模式' : '浅色模式')"
+          >
+            <span :class="themeIcon" class="text-xl"></span>
+          </button>
+
           <!-- 登录按钮或用户菜单 -->
-          <div v-if="isAuthenticated && user" class="relative">
+          <div v-if="isAuthenticated && user" class="relative user-menu-container">
             <button 
               class="flex items-center gap-2 px-4 py-1 rounded-lg bg-transparent hover:bg-bg-surface transition-colors cursor-pointer"
-              @click="isUserMenuOpen = !isUserMenuOpen"
+              @click.stop="isUserMenuOpen = !isUserMenuOpen"
             >
               <img 
                 v-if="user.avatar" 
