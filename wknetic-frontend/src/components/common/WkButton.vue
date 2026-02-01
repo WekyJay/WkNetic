@@ -58,7 +58,7 @@ const buttonClasses = computed(() => {
     'wk-button',
     'inline-flex items-center justify-center gap-2',
     'font-medium rounded-lg transition-all duration-200',
-    'focus:outline-none focus:ring-2 focus:ring-offset-2',
+    'focus:outline-none',
     'disabled:opacity-50 disabled:cursor-not-allowed'
   ]
 
@@ -79,50 +79,43 @@ const buttonClasses = computed(() => {
     case 'primary':
       classes.push(
         'bg-[var(--brand-default)] text-white',
-        'hover:opacity-90',
-        'focus:ring-[var(--brand-default)]'
+        'hover:opacity-90'
       )
       break
     case 'secondary':
       classes.push(
         'bg-[var(--bg-surface)] text-[var(--text-default)] border border-[var(--border-default)]',
-        'hover:bg-[var(--bg-hover)]',
-        'focus:ring-[var(--brand-default)]'
+        'hover:bg-[var(--bg-hover)]'
       )
       break
     case 'danger':
       classes.push(
         'bg-red-600 text-white',
-        'hover:bg-red-700',
-        'focus:ring-red-500'
+        'hover:bg-red-700'
       )
       break
     case 'success':
       classes.push(
         'bg-green-600 text-white',
-        'hover:bg-green-700',
-        'focus:ring-green-500'
+        'hover:bg-green-700'
       )
       break
     case 'warning':
       classes.push(
         'bg-yellow-600 text-white',
-        'hover:bg-yellow-700',
-        'focus:ring-yellow-500'
+        'hover:bg-yellow-700'
       )
       break
     case 'ghost':
       classes.push(
         'bg-transparent text-[var(--text-default)] border border-[var(--border-default)]',
-        'hover:bg-[var(--bg-hover)]',
-        'focus:ring-[var(--brand-default)]'
+        'hover:bg-[var(--bg-hover)]'
       )
       break
     case 'text':
       classes.push(
         'bg-transparent text-[var(--brand-default)]',
-        'hover:bg-[var(--bg-hover)]',
-        'focus:ring-[var(--brand-default)]'
+        'hover:bg-[var(--bg-hover)]'
       )
       break
   }

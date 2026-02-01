@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { userApi, type User, type UserRole, USER_ROLE_MAP } from '@/api/user'
 import { validateUuid, formatUuid, getMinecraftAvatarUrl } from '@/utils/minecraft'
+import { WkButton, WkInput, WkAlert } from '@/components/common'
 
 interface Props {
   visible: boolean
@@ -25,6 +26,8 @@ const emit = defineEmits<{
 const loading = ref(false)
 const mcValidating = ref(false)
 const mcValidated = ref(false)
+const successMessage = ref('')
+const errorMessage = ref('')
 
 const formData = reactive({
   userId: null as number | null,
@@ -153,7 +156,7 @@ function validateForm(): boolean {
 
 async function validateMinecraftUuid() {
   if (!formData.minecraftUuid) {
-    alert('请输入Minecraft UUID')
+    errors.minecraftUuid = '请输入Minecraft UUID'
     return
   }
   
@@ -174,7 +177,8 @@ async function validateMinecraftUuid() {
       formData.minecraftUuid = result.id
       formData.minecraftUsername = result.name
       mcValidated.value = true
-      alert(`验证成功！用户名：${result.name}`)
+      // 显示验证成功（不使用alert）
+      errors.minecraftUuid = ''
     } else {
       errors.minecraftUuid = result.error || 'UUID验证失败'
       mcValidated.value = false
@@ -193,6 +197,7 @@ async function handleSubmit() {
   }
   
   loading.value = true
+  errorMessage.value = ''
   
   try {
     const data: any = {
@@ -213,16 +218,19 @@ async function handleSubmit() {
     
     if (props.mode === 'create') {
       await userApi.createUser(data)
-      alert('创建成功')
+      successMessage.value = '创建成功'
     } else {
       await userApi.updateUser(formData.userId!, data)
-      alert('更新成功')
+      successMessage.value = '更新成功'
     }
     
-    emit('success')
-    handleClose()
+    // 延迟关闭，显示成功消息
+    setTimeout(() => {
+      emit('success')
+      handleClose()
+    }, 500)
   } catch (error: any) {
-    alert(error.message || '操作失败')
+    errorMessage.value = error.message || '操作失败'
   } finally {
     loading.value = false
   }
@@ -237,193 +245,204 @@ defineExpose({ submit: handleSubmit, close: handleClose })
 </script>
 
 <template>
+  <div class="max-w-2xl mx-auto">
+    <!-- Header (only when not used inside WkDialog) -->
+    <div v-if="!props.asDialog" class="flex items-center justify-between p-6 border-b border-[var(--border-default)]">
+      <h2 class="text-xl font-semibold text-[var(--text-default)]">{{ title }}</h2>
+      <WkButton
+        variant="ghost"
+        size="sm"
+        icon="i-tabler-x"
+        @click="handleClose"
+      />
+    </div>
 
-    <div class=" rounded-lgmax-w-2xl mx-4">
-      <!-- Header (only when not used inside WkDialog) -->
-      <div v-if="!props.asDialog" class="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white">{{ title }}</h2>
-        <button
-          @click="handleClose"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          <i class="i-tabler-x w-6 h-6" />
-        </button>
+    <!-- Body -->
+    <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
+      <!-- 成功/错误提示 -->
+      <WkAlert
+        v-if="successMessage"
+        type="success"
+        :message="successMessage"
+        :closable="true"
+        @close="successMessage = ''"
+      />
+      
+      <WkAlert
+        v-if="errorMessage"
+        type="error"
+        :message="errorMessage"
+        :closable="true"
+        @close="errorMessage = ''"
+      />
+
+      <!-- 基本信息 -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-[var(--text-default)]">基本信息</h3>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+              用户名 <span class="text-red-500">*</span>
+            </label>
+            <WkInput
+              v-model="formData.username"
+              :disabled="mode === 'edit'"
+              type="text"
+              placeholder="3-20位字母数字下划线"
+              :error="errors.username"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
+              密码 <span v-if="mode === 'create'" class="text-red-500">*</span>
+              <span v-else class="text-[var(--text-secondary)]">(留空不修改)</span>
+            </label>
+            <WkInput
+              v-model="formData.password"
+              type="password"
+              placeholder="至少6位"
+              :error="errors.password"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">昵称</label>
+            <WkInput
+              v-model="formData.nickname"
+              type="text"
+              placeholder="默认同用户名"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">邮箱</label>
+            <WkInput
+              v-model="formData.email"
+              type="email"
+              placeholder="user@example.com"
+              :error="errors.email"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">手机</label>
+            <WkInput
+              v-model="formData.phone"
+              type="text"
+              placeholder="手机号"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">头像URL</label>
+            <WkInput
+              v-model="formData.avatar"
+              type="url"
+              placeholder="https://..."
+            />
+          </div>
+        </div>
       </div>
 
-      <!-- Body -->
-      <form @submit.prevent="handleSubmit" class="p-6 space-y-6">
-        <!-- 基本信息 -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">基本信息</h3>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                用户名 <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model="formData.username"
-                :disabled="mode === 'edit'"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-                placeholder="3-20位字母数字下划线"
-              />
-              <p v-if="errors.username" class="mt-1 text-sm text-red-500">{{ errors.username }}</p>
-            </div>
+      <!-- 权限设置 -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-[var(--text-default)]">权限设置</h3>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">角色</label>
+            <select
+              v-model="formData.role"
+              class="w-full px-3 py-2 border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)] text-[var(--text-default)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-default)]"
+            >
+              <option v-for="option in roleOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                密码 <span v-if="mode === 'create'" class="text-red-500">*</span>
-                <span v-else class="text-gray-500">(留空不修改)</span>
-              </label>
-              <input
-                v-model="formData.password"
-                type="password"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="至少6位"
-              />
-              <p v-if="errors.password" class="mt-1 text-sm text-red-500">{{ errors.password }}</p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">昵称</label>
-              <input
-                v-model="formData.nickname"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="默认同用户名"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">邮箱</label>
-              <input
-                v-model="formData.email"
-                type="email"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="user@example.com"
-              />
-              <p v-if="errors.email" class="mt-1 text-sm text-red-500">{{ errors.email }}</p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">手机</label>
-              <input
-                v-model="formData.phone"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="手机号"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">头像URL</label>
-              <input
-                v-model="formData.avatar"
-                type="text"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="https://..."
-              />
-            </div>
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">状态</label>
+            <select
+              v-model="formData.status"
+              class="w-full px-3 py-2 border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)] text-[var(--text-default)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-default)]"
+            >
+              <option :value="1">启用</option>
+              <option :value="0">禁用</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        <!-- 权限设置 -->
+      <!-- Minecraft账号绑定 -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-medium text-[var(--text-default)]">Minecraft账号</h3>
+        
         <div class="space-y-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">权限设置</h3>
-          
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">角色</label>
-              <select
-                v-model="formData.role"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option v-for="option in roleOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">状态</label>
-              <select
-                v-model="formData.status"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option :value="1">启用</option>
-                <option :value="0">禁用</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- Minecraft账号绑定 -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-medium text-gray-900 dark:text-white">Minecraft账号</h3>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">UUID</label>
-              <div class="flex gap-2">
-                <input
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">UUID</label>
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <WkInput
                   v-model="formData.minecraftUuid"
                   type="text"
-                  class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                  :error="errors.minecraftUuid"
                   @input="mcValidated = false"
                 />
-                <button
-                  type="button"
-                  @click="validateMinecraftUuid"
-                  :disabled="mcValidating || !formData.minecraftUuid"
-                  class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {{ mcValidating ? '验证中...' : '验证' }}
-                </button>
               </div>
-              <p v-if="errors.minecraftUuid" class="mt-1 text-sm text-red-500">{{ errors.minecraftUuid }}</p>
+              <WkButton
+                type="button"
+                variant="primary"
+                :loading="mcValidating"
+                :disabled="mcValidating || !formData.minecraftUuid"
+                @click="validateMinecraftUuid"
+              >
+                验证
+              </WkButton>
             </div>
+          </div>
 
+          <div>
+            <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">游戏用户名</label>
+            <WkInput
+              v-model="formData.minecraftUsername"
+              type="text"
+              :disabled="true"
+              placeholder="验证后自动填充"
+            />
+          </div>
+
+          <!-- Minecraft头像预览 -->
+          <div v-if="minecraftAvatar" class="flex items-center gap-3 p-3 bg-[var(--bg-surface)] rounded-lg border border-[var(--border-default)]">
+            <img :src="minecraftAvatar" :alt="formData.minecraftUsername" class="w-16 h-16 rounded" />
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">游戏用户名</label>
-              <input
-                v-model="formData.minecraftUsername"
-                type="text"
-                :disabled="true"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="验证后自动填充"
-              />
-            </div>
-
-            <!-- Minecraft头像预览 -->
-            <div v-if="minecraftAvatar" class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
-              <img :src="minecraftAvatar" alt="MC Avatar" class="w-16 h-16 rounded" />
-              <div>
-                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ formData.minecraftUsername }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">验证成功</p>
-              </div>
+              <p class="text-sm font-medium text-[var(--text-default)]">{{ formData.minecraftUsername }}</p>
+              <p class="text-xs text-[var(--text-secondary)]">验证成功</p>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Footer (only when not used inside WkDialog) -->
-        <div v-if="!props.asDialog" class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="button"
-            @click="handleClose"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600"
-          >
-            取消
-          </button>
-          <button
-            type="submit"
-            :disabled="loading"
-            class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {{ loading ? '保存中...' : '保存' }}
-          </button>
-        </div>
-      </form>
-    </div>
+      <!-- Footer (only when not used inside WkDialog) -->
+      <div v-if="!props.asDialog" class="flex justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
+        <WkButton
+          type="button"
+          variant="secondary"
+          @click="handleClose"
+        >
+          取消
+        </WkButton>
+        <WkButton
+          type="submit"
+          variant="primary"
+          :loading="loading"
+        >
+          {{ loading ? '保存中...' : '保存' }}
+        </WkButton>
+      </div>
+    </form>
+  </div>
 </template>

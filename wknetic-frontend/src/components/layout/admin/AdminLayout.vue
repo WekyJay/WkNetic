@@ -90,12 +90,12 @@ function toggleSidebar() {
 </script>
 
 <template>
-  <div class="admin-layout min-h-screen bg-bg-darker flex">
-    <!-- Sidebar -->
+  <div class="admin-layout min-h-screen bg-bg-darker">
+    <!-- Sidebar - 使用固定定位避免滚动条影响 -->
     <aside 
       :class="[
-        'fixed lg:sticky top-0 left-0 z-40 h-screen bg-bg border-r border-border transition-all duration-300',
-        isSidebarCollapsed ? 'w-20' : 'w-64',
+        'admin-sidebar fixed top-0 left-0 z-40 h-screen bg-bg border-r border-border transition-all duration-300',
+        isSidebarCollapsed ? 'collapsed' : '',
         isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       ]"
     >
@@ -202,8 +202,8 @@ function toggleSidebar() {
       @click="isMobileSidebarOpen = false"
     ></div>
 
-    <!-- Main content -->
-    <div class="flex-1 flex flex-col min-h-screen">
+    <!-- Main content - 使用固定 margin-left 避免滚动条影响 -->
+    <div :class="['admin-main-content flex flex-col min-h-screen', isSidebarCollapsed ? 'collapsed' : '']">
       <!-- Top header -->
       <header class="sticky top-0 z-20 h-16 bg-bg/80 backdrop-blur-xl border-b border-border">
         <div class="h-full px-4 lg:px-6 flex items-center justify-between">
@@ -253,5 +253,25 @@ function toggleSidebar() {
 </template>
 
 <style scoped>
-/* Admin layout styles are handled by UnoCSS utilities */
+/* 使用固定像素值，完全避免 rem 单位和滚动条的影响 */
+.admin-sidebar {
+  width: 256px;
+}
+.admin-sidebar.collapsed {
+  width: 80px;
+}
+.admin-main-content {
+  margin-left: 256px;
+}
+.admin-main-content.collapsed {
+  margin-left: 80px;
+}
+
+/* 移动端隐藏侧边栏时，主内容无 margin */
+@media (max-width: 1023px) {
+  .admin-main-content,
+  .admin-main-content.collapsed {
+    margin-left: 0;
+  }
+}
 </style>
