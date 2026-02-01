@@ -4,6 +4,7 @@
   "dashboard": "仪表板",
   "menu": {
     "dashboard": "仪表板",
+    "management": "内容管理",
     "serverToken": "Token",
     "users": "用户",
     "plugins": "插件中心",

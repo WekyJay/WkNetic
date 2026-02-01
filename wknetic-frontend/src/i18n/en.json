@@ -4,6 +4,7 @@
   "dashboard": "Dashboard",
   "menu": {
     "dashboard": "Dashboard",
+    "management": "Content Management",
     "serverToken": "Server Tokens",
     "users": "Users",
     "plugins": "Plugin Center",

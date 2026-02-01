@@ -5,6 +5,14 @@ import { useAuthStore } from '@/stores/auth'
 import { useI18n } from 'vue-i18n'
 import { usePermission } from '@/composables/usePermission'
 
+interface MenuItem {
+  name: string
+  icon: string
+  path?: string
+  badge?: string | null
+  children?: MenuItem[]
+}
+
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -12,16 +20,47 @@ const { t } = useI18n()
 const { userRoleLabel, userRoleColor } = usePermission()
 const user = computed(() => authStore.user)
 
-
 const isSidebarCollapsed = ref(false)
 const isMobileSidebarOpen = ref(false)
+const expandedMenus = ref<string[]>([])
 
-const menuItems = [
+const menuItems: MenuItem[] = [
   { 
     name: 'menu.dashboard', 
     icon: 'i-tabler-dashboard', 
     path: '/admin/',
     badge: null 
+  },
+  { 
+    name: 'menu.management', 
+    icon: 'i-tabler-layout-list', 
+    badge: null,
+    children: [
+      { 
+        name: 'menu.users', 
+        icon: 'i-tabler-users', 
+        path: '/admin/users',
+        badge: null 
+      },
+      { 
+        name: 'menu.roles', 
+        icon: 'i-tabler-shield', 
+        path: '/admin/roles',
+        badge: null 
+      },
+      { 
+        name: 'menu.moderation', 
+        icon: 'i-tabler-shield-check', 
+        path: '/admin/moderation',
+        badge: '23' 
+      },
+      { 
+        name: 'menu.reports', 
+        icon: 'i-tabler-flag', 
+        path: '/admin/reports',
+        badge: '5' 
+      }
+    ]
   },
   { 
     name: 'menu.serverToken', 
@@ -30,34 +69,10 @@ const menuItems = [
     badge: null 
   },
   { 
-    name: 'menu.users', 
-    icon: 'i-tabler-users', 
-    path: '/admin/users',
-    badge: null 
-  },
-  { 
     name: 'menu.plugins', 
     icon: 'i-tabler-puzzle', 
     path: '/admin/plugins',
     badge: null 
-  },
-  { 
-    name: 'menu.roles', 
-    icon: 'i-tabler-shield', 
-    path: '/admin/roles',
-    badge: null 
-  },
-  { 
-    name: 'menu.moderation', 
-    icon: 'i-tabler-shield-check', 
-    path: '/admin/moderation',
-    badge: '23' 
-  },
-  { 
-    name: 'menu.reports', 
-    icon: 'i-tabler-flag', 
-    path: '/admin/reports',
-    badge: '5' 
   },
   { 
     name: 'menu.analytics', 
@@ -75,8 +90,27 @@ const menuItems = [
 
 const currentPath = computed(() => route.path)
 
-function isActive(path: string): boolean {
-  return currentPath.value === path || currentPath.value.startsWith(path + '/')
+function isActive(item: MenuItem): boolean {
+  if (item.path) {
+    return currentPath.value === item.path || currentPath.value.startsWith(item.path + '/')
+  }
+  if (item.children) {
+    return item.children.some(child => isActive(child))
+  }
+  return false
+}
+
+function toggleMenu(menuName: string) {
+  const index = expandedMenus.value.indexOf(menuName)
+  if (index > -1) {
+    expandedMenus.value.splice(index, 1)
+  } else {
+    expandedMenus.value.push(menuName)
+  }
+}
+
+function isMenuExpanded(menuName: string): boolean {
+  return expandedMenus.value.includes(menuName)
 }
 
 function handleLogout() {
@@ -121,30 +155,97 @@ function toggleSidebar() {
 
       <!-- Navigation -->
       <nav class="p-3 space-y-1">
-        <router-link
-          v-for="item in menuItems"
-          :key="item.path"
-          :to="item.path"
-          :class="[
-            'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group',
-            isActive(item.path) 
-              ? 'bg-brand/15' 
-              : 'text-text-muted hover:bg-bg-surface hover:text-text'
-          ]"
-        >
-          <span :class="item.icon" class="text-xl flex-shrink-0"></span>
-          <span v-if="!isSidebarCollapsed" class="flex-1 font-medium">{{ t(item.name) }}</span>
-          <span 
-            v-if="!isSidebarCollapsed && item.badge" 
+        <template v-for="item in menuItems" :key="item.name">
+          <!-- Submenu parent item -->
+          <div 
+            v-if="item.children && item.children.length > 0"
+            class="space-y-1"
+          >
+            <button
+              @click="toggleMenu(item.name)"
+              :class="[
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group',
+                isActive(item) 
+                  ? 'bg-brand/15' 
+                  : 'text-text-muted hover:bg-bg-surface hover:text-text'
+              ]"
+            >
+              <span :class="item.icon" class="text-xl flex-shrink-0"></span>
+              <span v-if="!isSidebarCollapsed" class="flex-1 font-medium text-left">{{ t(item.name) }}</span>
+              <span 
+                v-if="!isSidebarCollapsed"
+                :class="[
+                  'transition-transform duration-200',
+                  isMenuExpanded(item.name) ? 'rotate-180' : ''
+                ]"
+              >
+                <span class="i-tabler-chevron-down text-lg"></span>
+              </span>
+            </button>
+
+            <!-- Submenu items -->
+            <transition
+              enter-active-class="transition-all duration-200"
+              leave-active-class="transition-all duration-200"
+              enter-from-class="opacity-0 max-h-0 overflow-hidden"
+              enter-to-class="opacity-100 max-h-96"
+              leave-from-class="opacity-100 max-h-96"
+              leave-to-class="opacity-0 max-h-0 overflow-hidden"
+            >
+              <div v-show="isMenuExpanded(item.name)" class="space-y-1 pl-4">
+                <router-link
+                  v-for="child in item.children"
+                  :key="child.name"
+                  :to="child.path || '/admin/'"
+                  :class="[
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group',
+                    isActive(child) 
+                      ? 'text-brand' 
+                      : 'text-text-muted hover:bg-bg-surface hover:text-text'
+                  ]"
+                >
+                  <span :class="child.icon" class="text-lg flex-shrink-0"></span>
+                  <span v-if="!isSidebarCollapsed" class="flex-1 font-medium">{{ t(child.name) }}</span>
+                  <span 
+                    v-if="!isSidebarCollapsed && child.badge" 
+                    :class="[
+                      'px-2 py-0.5 rounded-full text-xs font-medium',
+                      isActive(child) ? 'bg-brand text-bg' : 'bg-bg-surface text-text-muted'
+                    ]"
+                  >
+                    {{ child.badge }}
+                  </span>
+                </router-link>
+              </div>
+            </transition>
+          </div>
+
+          <!-- Single menu item (no children) -->
+          <router-link
+            v-else
+            :to="item.path || '/admin/'"
             :class="[
-              'px-2 py-0.5 rounded-full text-xs font-medium',
-              isActive(item.path) ? 'bg-brand text-bg' : 'bg-bg-surface text-text-muted'
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group',
+              isActive(item) 
+                ? 'bg-brand/15' 
+                : 'text-text-muted hover:bg-bg-surface hover:text-text'
             ]"
           >
-            {{ item.badge }}
-          </span>
-        </router-link>
+            <span :class="item.icon" class="text-xl flex-shrink-0"></span>
+            <span v-if="!isSidebarCollapsed" class="flex-1 font-medium">{{ t(item.name) }}</span>
+            <span 
+              v-if="!isSidebarCollapsed && item.badge" 
+              :class="[
+                'px-2 py-0.5 rounded-full text-xs font-medium',
+                isActive(item) ? 'bg-brand text-bg' : 'bg-bg-surface text-text-muted'
+              ]"
+            >
+              {{ item.badge }}
+            </span>
+          </router-link>
+        </template>
       </nav>
+
 
       <!-- Expand button (collapsed state) -->
       <button 
