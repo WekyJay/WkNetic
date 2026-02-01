@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ExtensionSlot from '@/components/ExtensionSlot.vue'
-import UserAvatar from '@/components/user/UserAvatar.vue'
+import { listPosts } from '@/api/post'
+import { listAllTopics } from '@/api/topic'
+import type { PostVO } from '@/api/post'
 
 const { t } = useI18n()
 
@@ -42,7 +44,6 @@ const calendarDays = computed(() => {
   return days
 })
 
-const today = new Date().getDate()
 const isToday = (day: number | null) => {
   if (!day) return false
   const now = new Date()
@@ -51,9 +52,9 @@ const isToday = (day: number | null) => {
          currentDate.value.getFullYear() === now.getFullYear()
 }
 
-// 签到活动日（模拟数据）
-const checkedDays = [1, 2, 3, 5, 8, 9, 10, 12, 15, 16, 18, 20, 22, 23, 25]
-const isChecked = (day: number | null) => day && checkedDays.includes(day)
+// 签到活动日（从本地存储或API获取）
+const checkedDays = ref<number[]>([])
+const isChecked = (day: number | null) => day && checkedDays.value.includes(day)
 
 const prevMonth = () => {
   currentDate.value = new Date(currentDate.value.getFullYear(), currentDate.value.getMonth() - 1, 1)
@@ -65,33 +66,53 @@ const nextMonth = () => {
 
 // 签到相关
 const isCheckedIn = ref(false)
-const streak = ref(7)
-const totalCheckIns = ref(23)
+const streak = ref(0)
+const totalCheckIns = ref(0)
+const latestPosts = ref<PostVO[]>([])
+const forumStats = ref<any[]>([])
 
 const checkIn = () => {
   isCheckedIn.value = true
   streak.value++
   totalCheckIns.value++
+  // TODO: 调用API保存签到记录
 }
 
-// 活跃用户
-const activeUsers = [
-  { name: 'ShadowCrafter', avatar: 'SC', posts: 156, online: true },
-  { name: 'PixelMaster', avatar: 'PM', posts: 134, online: true },
-  { name: 'ModdingGuru', avatar: 'MG', posts: 98, online: false },
-  { name: 'CraftKing99', avatar: 'CK', posts: 87, online: true },
-  { name: 'BlockBuilder', avatar: 'BB', posts: 76, online: false },
-]
+const loadForumData = async () => {
+  try {
+    // 获取最新帖子
+    const postsResponse = await listPosts({ page: 1, size: 5 })
+    latestPosts.value = postsResponse.data.records || []
+    
+    // 获取论坛统计
+    const topicsResponse = await listAllTopics()
+    const topics = topicsResponse.data || []
+    
+    let totalPosts = 0
+    topics.forEach(topic => {
+      totalPosts += topic.postCount || 0
+    })
+    
+    forumStats.value = [
+      { label: t('forum.totalPosts'), value: totalPosts.toLocaleString(), icon: 'i-tabler-message-2' },
+      { label: t('forum.members'), value: '45,231', icon: 'i-tabler-users' },
+      { label: t('forum.onlineNow'), value: '1,234', icon: 'i-tabler-wifi', highlight: true },
+      { label: t('forum.todayPosts'), value: '328', icon: 'i-tabler-calendar-event' },
+    ]
+  } catch (e) {
+    console.error('Error loading forum data:', e)
+    forumStats.value = [
+      { label: t('forum.totalPosts'), value: '--', icon: 'i-tabler-message-2' },
+      { label: t('forum.members'), value: '--', icon: 'i-tabler-users' },
+      { label: t('forum.onlineNow'), value: '--', icon: 'i-tabler-wifi', highlight: true },
+      { label: t('forum.todayPosts'), value: '--', icon: 'i-tabler-calendar-event' },
+    ]
+  }
+}
 
-// 论坛统计
-const getForumStats = () => [
-  { label: t('forum.totalPosts'), value: '12,847', icon: 'i-tabler-message-2' },
-  { label: t('forum.members'), value: '45,231', icon: 'i-tabler-users' },
-  { label: t('forum.onlineNow'), value: '1,234', icon: 'i-tabler-wifi', highlight: true },
-  { label: t('forum.todayPosts'), value: '328', icon: 'i-tabler-calendar-event' },
-]
-
-const forumStats = getForumStats()
+onMounted(() => {
+  loadForumData()
+})
 </script>
 
 <template>
@@ -237,46 +258,33 @@ const forumStats = getForumStats()
       </div>
     </div>
 
-    <!-- 活跃用户 -->
+    <!-- 最新帖子 -->
     <div class="card">
       <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-4">
-        Top Contributors
+        Latest Posts
       </h3>
-      <div class="space-y-3">
+      <div v-if="latestPosts.length === 0" class="text-sm text-text-muted text-center py-4">
+        No posts yet
+      </div>
+      <div v-else class="space-y-3">
         <div
-          v-for="(user, index) in activeUsers"
-          :key="user.name"
-          class="flex items-center gap-3"
+          v-for="(post, index) in latestPosts"
+          :key="post.id"
+          class="flex items-start gap-2"
         >
-          <div class="relative">
-            <UserAvatar
-              :nickname="user.name"
-              size="md"
-              :class="[
-                index === 0 ? 'ring-2 ring-amber-400' :
-                index === 1 ? 'ring-2 ring-gray-400' :
-                index === 2 ? 'ring-2 ring-orange-400' : ''
-              ]"
-            />
-            <div 
-              v-if="user.online"
-              class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-brand rounded-full border-2 border-bg-raised"
-            />
+          <div class="text-lg font-bold text-text-muted">
+            #{{ index + 1 }}
           </div>
           <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-text truncate">{{ user.name }}</div>
-            <div class="text-xs text-text-muted">{{ user.posts }} posts</div>
-          </div>
-          <div 
-            class="text-lg font-bold"
-            :class="[
-              index === 0 ? 'text-amber-400' :
-              index === 1 ? 'text-gray-400' :
-              index === 2 ? 'text-orange-400' :
-              'text-text-muted'
-            ]"
-          >
-            #{{ index + 1 }}
+            <div class="text-sm font-medium text-text truncate hover:text-brand transition-colors cursor-pointer">
+              {{ post.title }}
+            </div>
+            <div class="text-xs text-text-muted mt-1">
+              by {{ post.author?.username || 'Anonymous' }}
+            </div>
+            <div class="text-xs text-text-muted">
+              {{ post.createTime }}
+            </div>
           </div>
         </div>
       </div>

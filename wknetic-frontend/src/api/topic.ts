@@ -2,10 +2,11 @@ import request from './axios'
 import type { IPage } from '@/types/common'
 
 export interface TopicVO {
-  id: number
-  name: string
-  description: string
+  topicId: number
+  topicName: string
+  topicDesc: string
   icon: string
+  color?: string | null
   postCount: number
   createTime: string
 }

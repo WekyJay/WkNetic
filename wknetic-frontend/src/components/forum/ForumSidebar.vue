@@ -1,30 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { listAllTopics } from '@/api/topic'
+import type { TopicVO } from '@/api/topic'
 
 const { t } = useI18n()
 
-interface Topic {
-  id: string
-  name: string
-  icon: string
-  count: number
-  color?: string
-}
+const activeTopic = ref<number | null>(null)
+const topics = ref<TopicVO[]>([])
+const tags = ref<{ name: string; count: number; color: string }[]>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
 
-const activeTopic = ref('all')
-
-const topics: Topic[] = [
-  { id: 'all', name: 'All Topics', icon: 'i-tabler-list', count: 2847 },
-  { id: 'announcements', name: 'Announcements', icon: 'i-tabler-speakerphone', count: 42, color: 'text-brand' },
-  { id: 'mods', name: 'Mod Discussion', icon: 'i-tabler-puzzle', count: 1256 },
-  { id: 'help', name: 'Help & Support', icon: 'i-tabler-help-circle', count: 534 },
-  { id: 'showcase', name: 'Showcase', icon: 'i-tabler-photo', count: 328 },
-  { id: 'suggestions', name: 'Suggestions', icon: 'i-tabler-bulb', count: 187 },
-  { id: 'offtopic', name: 'Off-Topic', icon: 'i-tabler-coffee', count: 500 },
-]
-
-const tags = [
+// 默认标签（可以后续从API获取）
+const defaultTags = [
   { name: 'Fabric', count: 892, color: 'bg-amber-500/20 text-amber-400' },
   { name: 'Forge', count: 756, color: 'bg-orange-500/20 text-orange-400' },
   { name: 'Quilt', count: 234, color: 'bg-purple-500/20 text-purple-400' },
@@ -33,37 +22,71 @@ const tags = [
   { name: '1.19.x', count: 567, color: 'bg-blue-500/20 text-blue-400' },
 ]
 
-const setTopic = (id: string) => {
+onMounted(async () => {
+  try {
+    loading.value = true
+    const response = await listAllTopics()
+    topics.value = response.data || []
+    tags.value = defaultTags
+    // 默认选中第一个话题
+    if (topics.value.length > 0 && topics.value[0]) {
+      activeTopic.value = topics.value[0].topicId
+    }
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Failed to load topics'
+    console.error('Error loading topics:', e)
+  } finally {
+    loading.value = false
+  }
+})
+
+const setTopic = (id: number) => {
   activeTopic.value = id
 }
 </script>
 
 <template>
   <div class="space-y-4">
+    <!-- 加载状态 -->
+    <div v-if="loading" class="card">
+      <div class="space-y-2">
+        <div class="h-8 bg-bg-surface rounded animate-pulse" />
+        <div class="h-8 bg-bg-surface rounded animate-pulse" />
+        <div class="h-8 bg-bg-surface rounded animate-pulse" />
+      </div>
+    </div>
+
+    <!-- 错误状态 -->
+    <div v-else-if="error" class="card">
+      <div class="text-center text-text-secondary">
+        <p>{{ error }}</p>
+      </div>
+    </div>
+
     <!-- 话题分类 -->
-    <div class="card">
+    <div v-else class="card">
       <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-3">
         {{ t('forum.topics') }}
       </h3>
       <nav class="space-y-1">
         <button
           v-for="topic in topics"
-          :key="topic.id"
+          :key="topic.topicId"
           class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200"
           :class="[
-            activeTopic === topic.id 
+            activeTopic === topic.topicId 
               ? 'bg-brand/10' 
               : 'text-text-secondary hover:text-text'
           ]"
-          @click="setTopic(topic.id)"
+          @click="setTopic(topic.topicId)"
         >
-          <span :class="[topic.icon, topic.color || '', 'text-lg']" />
-          <span class="flex-1 font-medium">{{ topic.name }}</span>
+          <span class="text-lg">{{ topic.icon || '📌' }}</span>
+          <span class="flex-1 font-medium">{{ topic.topicName }}</span>
           <span 
             class="text-xs px-2 py-0.5 rounded-full"
-            :class="activeTopic === topic.id ? 'bg-brand/20' : 'bg-bg-surface'"
+            :class="activeTopic === topic.topicId ? 'bg-brand/20' : 'bg-bg-surface'"
           >
-            {{ topic.count }}
+            {{ topic.postCount }}
           </span>
         </button>
       </nav>
