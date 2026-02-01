@@ -153,7 +153,7 @@ const handlePostClick = (postId: number) => {
           <h3 class="text-lg font-semibold text-text">Create New Post</h3>
           <button
             class="btn-ghost text-sm"
-            @click="router.push('/forum/create')"
+            @click="router.push('/forum/post/create')"
             title="Open full editor"
           >
             <span class="i-tabler-arrow-up-right" />
