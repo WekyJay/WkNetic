@@ -21,7 +21,7 @@ export interface UpdatePostDTO {
 }
 
 export interface PostVO {
-  id: number
+  postId: number
   title: string
   excerpt: string
   userId: number
@@ -32,21 +32,21 @@ export interface PostVO {
   commentCount: number
   createTime: string
   updateTime: string
-  liked: boolean
-  bookmarked: boolean
+  isLiked: boolean
+  isBookmarked: boolean
   author?: {
-    id: number
+    userId: number
     username: string
     nickname: string
     avatar: string
   }
   topic?: {
-    id: number
-    name: string
+    topicId: number
+    topicName: string
   }
   tags?: Array<{
-    id: number
-    name: string
+    tagId: number
+    tagName: string
   }>
 }
 

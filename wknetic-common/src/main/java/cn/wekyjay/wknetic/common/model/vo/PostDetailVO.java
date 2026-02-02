@@ -20,6 +20,11 @@ public class PostDetailVO {
     private Long postId;
     
     /**
+     * 作者ID
+     */
+    private Long userId;
+    
+    /**
      * 标题
      */
     private String title;

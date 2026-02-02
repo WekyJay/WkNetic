@@ -158,23 +158,23 @@ async function loadPostDetail() {
     
     // 转换为页面需要的 Post 格式
     post.value = {
-      id: postData.id,
+      id: postData.postId,
       title: postData.title,
       author: {
-        id: postData.author?.id || 0,
+        id: postData.author?.userId || 0,
         name: postData.author?.nickname || postData.author?.username || '匿名用户',
         avatar: postData.author?.avatar || '',
       },
-      topic: postData.topic?.name || '未分类',
+      topic: postData.topic?.topicName || '未分类',
       topicColor: 'bg-blue-500/20 text-blue-400',
       content: postData.content || '',
       likes: postData.likeCount || 0,
       views: postData.viewCount || 0,
       createdAt: formatTime(postData.createTime),
       updatedAt: postData.updateTime ? formatTime(postData.updateTime) : undefined,
-      isLiked: postData.liked || false,
-      isBookmarked: postData.bookmarked || false,
-      tags: postData.tags?.map(t => t.name) || [],
+      isLiked: postData.isLiked || false,
+      isBookmarked: postData.isBookmarked || false,
+      tags: postData.tags?.map(t => t.tagName) || [],
       comments: [],
     }
     

@@ -2,14 +2,16 @@
 import { ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/zh-cn'
 import UserAvatar from '@/components/user/UserAvatar.vue'
 import UserPopover from '@/components/user/UserPopover.vue'
 import { listPosts, createPost } from '@/api/post'
 import { listAllTopics } from '@/api/topic'
 import type { PostVO } from '@/api/post'
 import type { TopicVO } from '@/api/topic'
-
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 
 const sortBy = ref('latest')
@@ -33,6 +35,17 @@ const getSortOptions = () => [
 ]
 
 const sortOptions = getSortOptions()
+
+dayjs.extend(relativeTime)
+
+/**
+ * 格式化时间为相对时间 (e.g., "2 hours ago")
+ */
+const formatRelativeTime = (dateTime: string | null | undefined): string => {
+  if (!dateTime) return ''
+  const localeValue = locale.value === 'zh' ? 'zh-cn' : 'en'
+  return dayjs(dateTime).locale(localeValue).fromNow()
+}
 
 const loadTopics = async () => {
   try {
@@ -223,9 +236,9 @@ const handlePostClick = (postId: number) => {
     <div v-else class="space-y-3">
       <article
         v-for="post in posts"
-        :key="post.id"
+        :key="post.postId"
         class="card-hover cursor-pointer group"
-        @click="handlePostClick(post.id)"
+        @click="handlePostClick(post.postId)"
       >
         <div class="flex gap-4">
           <!-- 作者头像 -->
@@ -238,6 +251,7 @@ const handlePostClick = (postId: number) => {
             >
               <UserAvatar
                 :nickname="post.author?.nickname || 'User'"
+                :src="post.author?.avatar"
                 size="lg"
                 clickable
               />
@@ -255,18 +269,20 @@ const handlePostClick = (postId: number) => {
 
             <!-- 作者信息 -->
             <div class="flex items-center gap-2 mb-2 flex-wrap">
-              <span class="text-sm text-text-secondary">{{ post.author?.username || 'Anonymous' }}</span>
+              <span class="text-sm text-text-secondary">{{ post.author?.nickname || 'Anonymous' }}</span>
               <span class="text-text-muted">·</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-brand/10 text-brand">
-                {{ post.topic?.name || 'Uncategorized' }}
+              <span class="text-xs px-2 py-0.5 rounded-full bg-brand/10">
+                {{ post.topic?.topicName || 'Uncategorized' }}
               </span>
               <span class="text-text-muted">·</span>
-              <span class="text-sm text-text-muted">{{ post.createTime }}</span>
+              <span class="text-sm text-text-muted">
+                {{ t('forum.lastUpdated') }} {{ formatRelativeTime(post.updateTime) }}
+              </span>
             </div>
 
             <!-- 内容预览 -->
-            <p class="text-text-secondary text-sm line-clamp-2 mb-3">
-              {{ post.intro }}
+            <p v-if="post.excerpt" class="text-text-secondary text-sm line-clamp-2 mb-3">
+              {{ post.excerpt }}
             </p>
 
             <!-- 标签和统计 -->
@@ -274,10 +290,10 @@ const handlePostClick = (postId: number) => {
               <div class="flex flex-wrap gap-1.5">
                 <span
                   v-for="tag in (post.tags || []).slice(0, 3)"
-                  :key="tag.id"
+                  :key="tag.tagId"
                   class="text-xs px-2 py-0.5 rounded bg-bg-surface text-text-muted"
                 >
-                  {{ tag.name }}
+                  #{{ tag.tagName }}
                 </span>
                 <span v-if="(post.tags || []).length > 3" class="text-xs text-text-muted">
                   +{{ (post.tags || []).length - 3 }}

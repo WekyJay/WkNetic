@@ -3,6 +3,7 @@ package cn.wekyjay.wknetic.admin.forum.service;
 import cn.wekyjay.wknetic.admin.forum.document.PostDocument;
 import cn.wekyjay.wknetic.community.event.EventPublisher;
 import cn.wekyjay.wknetic.community.event.post.*;
+import cn.wekyjay.wknetic.common.domain.SysUser;
 import cn.wekyjay.wknetic.common.mapper.*;
 import cn.wekyjay.wknetic.common.model.dto.CreatePostDTO;
 import cn.wekyjay.wknetic.common.model.dto.SearchPostDTO;
@@ -11,6 +12,9 @@ import cn.wekyjay.wknetic.common.model.entity.*;
 import cn.wekyjay.wknetic.common.model.vo.PostDetailVO;
 import cn.wekyjay.wknetic.common.model.vo.PostSearchVO;
 import cn.wekyjay.wknetic.common.model.vo.PostVO;
+import cn.wekyjay.wknetic.common.model.vo.UserInfoVO;
+import cn.wekyjay.wknetic.common.model.vo.TopicVO;
+import cn.wekyjay.wknetic.common.model.vo.TagVO;
 import cn.wekyjay.wknetic.auth.utils.SecurityUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -47,6 +51,7 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
     private final PostLikeMapper postLikeMapper;
     private final PostBookmarkMapper postBookmarkMapper;
     private final PostHistoryMapper postHistoryMapper;
+    private final SysUserMapper sysUserMapper;
     private final EventPublisher eventPublisher;
     private final ElasticsearchService elasticsearchService;
     
@@ -220,9 +225,9 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
         // 增加浏览数
         postMapper.incrementViewCount(postId);
         
-        // TODO: 转换为VO（需要关联查询作者、话题、标签等信息）
         PostDetailVO vo = new PostDetailVO();
         vo.setPostId(post.getPostId());
+        vo.setUserId(post.getUserId());
         vo.setTitle(post.getTitle());
         vo.setExcerpt(post.getExcerpt());
         vo.setContent(post.getContent());
@@ -232,10 +237,38 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
         vo.setIsHot(post.getIsHot());
         vo.setLikeCount(post.getLikeCount());
         vo.setCommentCount(post.getCommentCount());
-        vo.setViewCount(post.getViewCount());
+        vo.setViewCount(post.getViewCount() + 1); // 加1因为已增加
         vo.setBookmarkCount(post.getBookmarkCount());
         vo.setCreateTime(post.getCreateTime());
         vo.setUpdateTime(post.getUpdateTime());
+        
+        // 查询作者信息
+        SysUser author = sysUserMapper.selectById(post.getUserId());
+        if (author != null) {
+            vo.setAuthor(convertUserToVO(author));
+        }
+        
+        // 查询话题信息
+        if (post.getTopicId() != null) {
+            ForumTopic topic = topicMapper.selectById(post.getTopicId());
+            if (topic != null) {
+                vo.setTopic(convertTopicToVO(topic));
+            }
+        }
+        
+        // 查询标签信息
+        List<PostTag> postTags = postTagMapper.selectList(
+                new LambdaQueryWrapper<PostTag>()
+                        .eq(PostTag::getPostId, postId)
+        );
+        if (!postTags.isEmpty()) {
+            List<Long> tagIds = postTags.stream().map(PostTag::getTagId).collect(Collectors.toList());
+            List<ForumTag> tags = tagMapper.selectList(
+                    new LambdaQueryWrapper<ForumTag>()
+                            .in(ForumTag::getTagId, tagIds)
+            );
+            vo.setTags(tags.stream().map(this::convertTagToVO).collect(Collectors.toList()));
+        }
         
         // 检查当前用户是否点赞/收藏
         Long userId = SecurityUtils.getCurrentUserId();
@@ -244,6 +277,46 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
             vo.setIsBookmarked(checkUserBookmarked(postId, userId));
         }
         
+        return vo;
+    }
+    
+    /**
+     * 将用户转换为VO
+     */
+    private UserInfoVO convertUserToVO(SysUser user) {
+        if (user == null) return null;
+        UserInfoVO vo = new UserInfoVO();
+        vo.setUserId(user.getUserId());
+        vo.setUsername(user.getUsername());
+        vo.setNickname(user.getNickname());
+        vo.setAvatar(user.getAvatar());
+        return vo;
+    }
+    
+    /**
+     * 将话题转换为VO
+     */
+    private TopicVO convertTopicToVO(ForumTopic topic) {
+        if (topic == null) return null;
+        TopicVO vo = new TopicVO();
+        vo.setTopicId(topic.getTopicId());
+        vo.setTopicName(topic.getTopicName());
+        vo.setTopicDesc(topic.getTopicDesc());
+        vo.setIcon(topic.getIcon());
+        vo.setColor(topic.getColor());
+        vo.setPostCount(topic.getPostCount());
+        return vo;
+    }
+    
+    /**
+     * 将标签转换为VO
+     */
+    private TagVO convertTagToVO(ForumTag tag) {
+        if (tag == null) return null;
+        TagVO vo = new TagVO();
+        vo.setTagId(tag.getTagId());
+        vo.setTagName(tag.getTagName());
+        vo.setUseCount(tag.getUseCount());
         return vo;
     }
     
@@ -277,15 +350,66 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
         
         IPage<ForumPost> postPage = postMapper.selectPage(pageParam, wrapper);
         
-        // TODO: 转换为VO（需要关联查询）
-        return postPage.convert(post -> {
-            PostVO vo = new PostVO();
-            vo.setPostId(post.getPostId());
-            vo.setTitle(post.getTitle());
-            vo.setExcerpt(post.getExcerpt());
-            // ... 其他字段
-            return vo;
-        });
+        // 转换为VO，加载关联数据
+        Long userId = SecurityUtils.getCurrentUserId();
+        return postPage.convert(post -> convertPostToVO(post, userId));
+    }
+    
+    /**
+     * 将ForumPost转换为PostVO，包含关联数据
+     */
+    private PostVO convertPostToVO(ForumPost post, Long userId) {
+        PostVO vo = new PostVO();
+        vo.setPostId(post.getPostId());
+        vo.setUserId(post.getUserId());
+        vo.setTitle(post.getTitle());
+        vo.setExcerpt(post.getExcerpt());
+        vo.setStatus(post.getStatus());
+        vo.setIsPinned(post.getIsPinned());
+        vo.setIsHot(post.getIsHot());
+        vo.setLikeCount(post.getLikeCount());
+        vo.setCommentCount(post.getCommentCount());
+        vo.setViewCount(post.getViewCount());
+        vo.setBookmarkCount(post.getBookmarkCount());
+        vo.setLastCommentTime(post.getLastCommentTime());
+        vo.setCreateTime(post.getCreateTime());
+        vo.setUpdateTime(post.getUpdateTime());
+        
+        // 查询作者信息
+        SysUser author = sysUserMapper.selectById(post.getUserId());
+        if (author != null) {
+            vo.setAuthor(convertUserToVO(author));
+        }
+        
+        // 查询话题信息
+        if (post.getTopicId() != null) {
+            ForumTopic topic = topicMapper.selectById(post.getTopicId());
+            if (topic != null) {
+                vo.setTopic(convertTopicToVO(topic));
+            }
+        }
+        
+        // 查询标签信息
+        List<PostTag> postTags = postTagMapper.selectList(
+                new LambdaQueryWrapper<PostTag>()
+                        .eq(PostTag::getPostId, post.getPostId())
+        );
+        if (!postTags.isEmpty()) {
+            List<Long> tagIds = postTags.stream().map(PostTag::getTagId).collect(Collectors.toList());
+            List<ForumTag> tags = tagMapper.selectList(
+                    new LambdaQueryWrapper<ForumTag>()
+                            .in(ForumTag::getTagId, tagIds)
+            );
+            vo.setTags(tags.stream().map(this::convertTagToVO).collect(Collectors.toList()));
+        }
+        
+        // 检查当前用户是否点赞/收藏
+        if (userId != null) {
+            vo.setIsLiked(checkUserLiked(post.getPostId(), userId));
+            vo.setIsBookmarked(checkUserBookmarked(post.getPostId(), userId));
+        }
+        
+        return vo;
     }
     
     /**
