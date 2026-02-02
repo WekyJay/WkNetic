@@ -78,9 +78,14 @@ export function useCaptcha(type: CaptchaType = 'simple') {
     }
   }
 
-  // 初始化时自动获取验证码
-  if (type === 'simple') {
-    fetchSimpleCaptcha()
+  /**
+   * 初始化验证码（按需调用）
+   * 仅在需要时手动调用，避免每次页面刷新都请求验证码
+   */
+  function initCaptcha() {
+    if (type === 'simple') {
+      fetchSimpleCaptcha()
+    }
   }
 
   return {
@@ -90,6 +95,7 @@ export function useCaptcha(type: CaptchaType = 'simple') {
     isLoading,
     fetchSimpleCaptcha,
     getCaptchaToken,
-    resetCaptcha
+    resetCaptcha,
+    initCaptcha
   }
 }

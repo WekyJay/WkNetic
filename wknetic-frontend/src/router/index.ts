@@ -32,6 +32,14 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
+                    path: '/mods/search',
+                    name: 'mods-search',
+                    component: () => import('@/pages/mods/Search.vue'),
+                    meta: {
+                        title: 'routes.modsSearch'
+                    }
+                },
+                {
                     path: '/project/:id',
                     name: 'project',
                     component: () => import('@/pages/ProjectPage.vue'),

@@ -1,12 +1,15 @@
 package cn.wekyjay.wknetic.admin.forum.service;
 
+import cn.wekyjay.wknetic.admin.forum.document.PostDocument;
 import cn.wekyjay.wknetic.community.event.EventPublisher;
 import cn.wekyjay.wknetic.community.event.post.*;
 import cn.wekyjay.wknetic.common.mapper.*;
 import cn.wekyjay.wknetic.common.model.dto.CreatePostDTO;
+import cn.wekyjay.wknetic.common.model.dto.SearchPostDTO;
 import cn.wekyjay.wknetic.common.model.dto.UpdatePostDTO;
 import cn.wekyjay.wknetic.common.model.entity.*;
 import cn.wekyjay.wknetic.common.model.vo.PostDetailVO;
+import cn.wekyjay.wknetic.common.model.vo.PostSearchVO;
 import cn.wekyjay.wknetic.common.model.vo.PostVO;
 import cn.wekyjay.wknetic.auth.utils.SecurityUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,6 +18,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +48,7 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
     private final PostBookmarkMapper postBookmarkMapper;
     private final PostHistoryMapper postHistoryMapper;
     private final EventPublisher eventPublisher;
+    private final ElasticsearchService elasticsearchService;
     
     /**
      * 创建帖子
@@ -399,4 +406,55 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
                         .eq(PostBookmark::getUserId, userId)
         ) > 0;
     }
+    
+    /**
+     * 搜索帖子（基于Elasticsearch）
+     */
+    public IPage<PostSearchVO> searchPosts(SearchPostDTO dto) {
+        // 调用Elasticsearch服务进行搜索
+        org.springframework.data.domain.Page<PostDocument> esPage = elasticsearchService.searchPosts(
+            dto.getKeyword(),
+            dto.getTopicId(),
+            dto.getTags(),
+            dto.getStatus(),
+            dto.getStartTime(),
+            dto.getEndTime(),
+            dto.getSortBy(),
+            dto.getSortOrder(),
+            dto.getPage(),
+            dto.getSize()
+        );
+        
+        // 转换为 PostSearchVO
+        List<PostSearchVO> voList = esPage.getContent().stream()
+            .map(doc -> PostSearchVO.builder()
+                .postId(doc.getPostId())
+                .title(doc.getTitle())
+                .excerpt(doc.getExcerpt())
+                .userId(doc.getUserId())
+                .username(doc.getUsername())
+                .topicId(doc.getTopicId())
+                .topicName(doc.getTopicName())
+                .tags(doc.getTags())
+                .status(doc.getStatus())
+                .isPinned(doc.getIsPinned())
+                .isHot(doc.getIsHot())
+                .likeCount(doc.getLikeCount())
+                .commentCount(doc.getCommentCount())
+                .viewCount(doc.getViewCount())
+                .bookmarkCount(doc.getBookmarkCount())
+                .createTime(doc.getCreateTime())
+                .updateTime(doc.getUpdateTime())
+                .lastCommentTime(doc.getLastCommentTime())
+                .build())
+            .collect(Collectors.toList());
+        
+        // 转换为 MyBatis-Plus IPage
+        Page<PostSearchVO> page = new Page<>(dto.getPage() + 1, dto.getSize());
+        page.setRecords(voList);
+        page.setTotal(esPage.getTotalElements());
+        
+        return page;
+    }
 }
+

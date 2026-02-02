@@ -17,7 +17,7 @@
       </div>
       <div class="topic-actions">
         <el-button type="primary" @click="createPost">
-          <el-icon><Edit /></el-icon>
+          <i class="i-tabler-edit" />
           发帖
         </el-button>
       </div>
@@ -40,7 +40,7 @@
               @change="handleSearch"
             >
               <template #prefix>
-                <el-icon><Search /></el-icon>
+                <i class="i-tabler-search" />
               </template>
             </el-input>
           </div>
@@ -86,15 +86,15 @@
             </div>
             <div class="post-stats">
               <div class="stat-item">
-                <el-icon><View /></el-icon>
+                <i class="i-tabler-eye" />
                 <span>{{ formatCount(post.viewCount) }}</span>
               </div>
               <div class="stat-item">
-                <el-icon><Star /></el-icon>
+                <i class="i-tabler-star-filled" />
                 <span>{{ formatCount(post.likeCount) }}</span>
               </div>
               <div class="stat-item">
-                <el-icon><ChatDotRound /></el-icon>
+                <i class="i-tabler-message" />
                 <span>{{ formatCount(post.commentCount) }}</span>
               </div>
             </div>
@@ -120,7 +120,6 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Edit, Search, View, Star, ChatDotRound } from '@element-plus/icons-vue'
 import { getTopicDetail } from '@/api/topic'
 import { listPosts } from '@/api/post'
 import type { TopicVO, PostVO } from '@/api/post'

@@ -16,6 +16,55 @@ spring:
     basename: i18n/messages
     encoding: UTF-8
     use-code-as-default-message: true
+  task:
+    execution:
+      pool:
+        core-size: 5
+        max-size: 10
+        queue-capacity: 100
+        keep-alive: 60s
+      thread-name-prefix: async-task-
+    scheduling:
+      pool:
+        size: 2
+      thread-name-prefix: scheduled-
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+      file-size-threshold: 0
+  elasticsearch:
+    uris: http://localhost:9200
+    connection-timeout: 5s
+    socket-timeout: 60s
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
+
+# 文件存储配置
+storage:
+  # 存储类型：local（本地）, minio（MinIO对象存储）, imgbed（图床）
+  type: local
+  
+  # 本地存储配置
+  local:
+    base-path: ./data/uploads
+    base-url: http://localhost:8080/uploads
+  
+  # MinIO对象存储配置
+  minio:
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket-name: wknetic
+  
+  # 图床配置（SM.MS 或 ImgBB）
+  imgbed:
+    type: smms  # smms 或 imgbb
+    api-url: https://sm.ms/api/v2/upload
+    api-key: your-api-key-here
 
 # MyBatis-Plus 配置
 mybatis-plus:
@@ -26,6 +75,12 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     # 开启驼峰命名转换 (oper_id -> operId)
     map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
     
 wknetic:
   socket:

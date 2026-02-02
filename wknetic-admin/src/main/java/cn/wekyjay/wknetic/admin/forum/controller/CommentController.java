@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 评论Controller
@@ -65,6 +66,24 @@ public class CommentController {
     public Result<List<CommentVO>> getPostComments(@PathVariable Long postId) {
         List<CommentVO> comments = commentService.getPostComments(postId);
         return Result.success(comments);
+    }
+    
+    /**
+     * 获取帖子评论列表（分页）
+     */
+    @Operation(summary = "获取帖子评论列表（分页）", description = "获取指定帖子的评论列表，支持分页。")
+    @Parameters({
+            @Parameter(name = "postId", description = "帖子ID", required = true, example = "1"),
+            @Parameter(name = "page", description = "页码（从1开始）", example = "1"),
+            @Parameter(name = "size", description = "每页条数", example = "10")
+    })
+    @GetMapping("/list")
+    public Result<Map<String, Object>> listComments(
+            @RequestParam Long postId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        Map<String, Object> pageResult = commentService.listCommentsByPostId(postId, page, size);
+        return Result.success(pageResult);
     }
     
     /**

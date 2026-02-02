@@ -237,9 +237,9 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Intro" prop="intro">
+        <el-form-item label="Excerpt" prop="excerpt">
           <el-input
-            v-model="form.intro"
+            v-model="form.excerpt"
             type="textarea"
             :rows="3"
             maxlength="200"
@@ -316,7 +316,7 @@ const postId = computed(() => route.params.id as string)
 const form = reactive({
   title: '',
   content: '',
-  intro: '',
+  excerpt: '',
   topicId: null as number | null,
   tags: [] as string[],
   changeSummary: ''
@@ -333,9 +333,9 @@ const publishFormRef = ref<FormInstance>()
 
 const publishRules: FormRules = {
   topicId: [{ required: true, message: 'Please select a topic', trigger: 'change' }],
-  intro: [
-    { required: true, message: 'Please enter an intro', trigger: 'blur' },
-    { min: 10, message: 'Intro must be at least 10 characters', trigger: 'blur' }
+  excerpt: [
+    { required: true, message: 'Please enter an excerpt', trigger: 'blur' },
+    { min: 10, message: 'Excerpt must be at least 10 characters', trigger: 'blur' }
   ],
   tags: [
     {
@@ -373,7 +373,7 @@ const loadPostDetail = async () => {
 
     form.title = post.title
     form.content = post.content || ''
-    form.intro = post.intro
+    form.excerpt = post.excerpt
     form.topicId = Number(post.topicId)
     form.tags = post.tags?.map(t => t.name) || []
 
@@ -437,7 +437,7 @@ const saveDraft = async () => {
       await updatePost(Number(postId.value), {
         title: form.title,
         content: form.content,
-        intro: form.intro,
+        excerpt: form.excerpt,
         topicId: form.topicId ?? 0,
         tags: form.tags,
         changeSummary: form.changeSummary
@@ -446,7 +446,7 @@ const saveDraft = async () => {
       await createPost({
         title: form.title,
         content: form.content,
-        intro: form.intro,
+        excerpt: form.excerpt,
         topicId: form.topicId ?? 0,
         tags: form.tags,
         publish: false
@@ -484,7 +484,7 @@ const publishPost = async () => {
       await updatePost(Number(postId.value), {
         title: form.title,
         content: form.content,
-        intro: form.intro,
+        excerpt: form.excerpt,
         topicId: form.topicId ?? 0,
         tags: form.tags,
         changeSummary: form.changeSummary
@@ -494,7 +494,7 @@ const publishPost = async () => {
       const res = await createPost({
         title: form.title,
         content: form.content,
-        intro: form.intro,
+        excerpt: form.excerpt,
         topicId: form.topicId ?? 0,
         tags: form.tags,
         publish: true

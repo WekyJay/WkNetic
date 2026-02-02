@@ -1,7 +1,8 @@
 package cn.wekyjay.wknetic.admin.forum.controller;
 
+import cn.wekyjay.wknetic.admin.forum.dto.AuditPostVO;
+import cn.wekyjay.wknetic.admin.forum.dto.AuditStatisticsVO;
 import cn.wekyjay.wknetic.admin.forum.service.AuditService;
-import cn.wekyjay.wknetic.common.model.entity.ForumPost;
 import cn.wekyjay.wknetic.common.model.Result;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,10 +37,10 @@ public class AuditController {
     })
     @GetMapping("/pending")
     @PreAuthorize("hasRole('MODERATOR')")
-    public Result<IPage<ForumPost>> getPendingPosts(
+    public Result<IPage<AuditPostVO>> getPendingPosts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        IPage<ForumPost> posts = auditService.getPendingPosts(page, size);
+        IPage<AuditPostVO> posts = auditService.getPendingPosts(page, size);
         return Result.success(posts);
     }
     
@@ -81,15 +82,15 @@ public class AuditController {
     @Parameters({
             @Parameter(name = "page", description = "页码", example = "1"),
             @Parameter(name = "size", description = "每页条数", example = "20"),
-            @Parameter(name = "status", description = "审核状态：1=通过，-1=拒绝（可选）", example = "1")
+            @Parameter(name = "status", description = "审核状态：2=通过，3=拒绝（可选）", example = "2")
     })
     @GetMapping("/history")
     @PreAuthorize("hasRole('MODERATOR')")
-    public Result<IPage<ForumPost>> getAuditHistory(
+    public Result<IPage<AuditPostVO>> getAuditHistory(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Integer status) {
-        IPage<ForumPost> posts = auditService.getAuditHistory(page, size, status);
+        IPage<AuditPostVO> posts = auditService.getAuditHistory(page, size, status);
         return Result.success(posts);
     }
     
@@ -102,5 +103,16 @@ public class AuditController {
     public Result<Long> getPendingPostCount() {
         Long count = auditService.getPendingPostCount();
         return Result.success(count);
+    }
+    
+    /**
+     * 获取审核统计信息
+     */
+    @Operation(summary = "获取审核统计", description = "获取审核统计数据，包括待审核数、通过率、拒绝率等。")
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('MODERATOR')")
+    public Result<AuditStatisticsVO> getAuditStatistics() {
+        AuditStatisticsVO statistics = auditService.getAuditStatistics();
+        return Result.success(statistics);
     }
 }

@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import TheHeader from '@/components/layout/TheHeader.vue'
-import TheFooter from '@/components/layout/TheFooter.vue'
+import { ElMessage } from 'element-plus'
 import WkMarkdownRenderer from '@/components/common/WkMarkdownRenderer.vue'
 import WkMarkdownEditor from '@/components/common/WkMarkdownEditor.vue'
 import UserAvatar from '@/components/user/UserAvatar.vue'
+import { getPostDetail } from '@/api/post'
+import { listComments } from '@/api/comment'
 
 interface Author {
   id: number
   name: string
   avatar: string
   badge?: string
-  joinDate: string
-  postCount: number
-  reputation: number
+  joinDate?: string
+  postCount?: number
+  reputation?: number
 }
 
 interface Comment {
@@ -47,149 +48,18 @@ interface Post {
 
 const route = useRoute()
 const router = useRouter()
-const postId = computed(() => route.params.id)
+const postId = computed(() => Number(route.params.id))
 
 const isLoading = ref(true)
+const errorMessage = ref('')
 const newComment = ref('')
 const replyingTo = ref<number | null>(null)
 const replyContent = ref('')
 const showShareMenu = ref(false)
 
-// 模拟帖子数据
-const post = ref<Post>({
-  id: 1,
-  title: '[1.20.4] Sodium + Iris Compatibility Issue - Need Help!',
-  author: {
-    id: 1,
-    name: 'MinecraftFan2024',
-    avatar: 'MF',
-    badge: 'Helper',
-    joinDate: 'Jan 2023',
-    postCount: 156,
-    reputation: 1240,
-  },
-  topic: 'Help & Support',
-  topicColor: 'bg-blue-500/20 text-blue-400',
-  content: `# The Problem
-
-I've been trying to get **Sodium** and **Iris** working together on Minecraft 1.20.4, but I keep running into crashes. Here's what I've tried so far:
-
-## My Setup
-
-- Minecraft: 1.20.4
-- Fabric Loader: 0.15.6
-- Sodium: 0.5.8
-- Iris: 1.6.17
-
-## Error Log
-
-\`\`\`
-java.lang.RuntimeException: Could not execute entrypoint stage 'client' due to errors!
-  at net.fabricmc.loader.impl.entrypoint.EntrypointUtils.lambda$invoke
-  at net.fabricmc.loader.impl.entrypoint.EntrypointUtils.invoke(EntrypointUtils.java:34)
-  ...
-Caused by: java.lang.NoSuchMethodError: 'void net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter'
-\`\`\`
-
-## What I've Tried
-
-1. Reinstalling both mods
-2. Clearing the shader cache
-3. Using different shader packs
-4. Downgrading to older versions
-
-> None of these solutions have worked for me.
-
-## Screenshots
-
-The game crashes immediately when I try to enable any shader pack.
-
-![Crash Screenshot](https://img.cdn1.vip/i/6979a510b85cc_1769579792.webp)
-
----
-
-Has anyone else encountered this issue? Any help would be greatly appreciated!
-
-**System Specs:**
-| Component | Specification |
-| --- | --- |
-| CPU | AMD Ryzen 5 5600X |
-| GPU | NVIDIA RTX 3060 |
-| RAM | 16GB DDR4 |
-| OS | Windows 11 |`,
-  likes: 24,
-  views: 342,
-  createdAt: '2 hours ago',
-  updatedAt: '1 hour ago',
-  isPinned: false,
-  isLiked: false,
-  isBookmarked: false,
-  tags: ['Fabric', '1.20.4', 'Sodium', 'Iris', 'Shaders'],
-  comments: [
-    {
-      id: 1,
-      author: {
-        id: 2,
-        name: 'ShaderExpert',
-        avatar: 'SE',
-        badge: 'Moderator',
-        joinDate: 'Mar 2021',
-        postCount: 892,
-        reputation: 5420,
-      },
-      content: `This is a known issue with the latest Sodium version. Try using **Sodium 0.5.7** instead - it's compatible with Iris 1.6.17.
-
-You can download it from the [Modrinth page](https://modrinth.com/mod/sodium/versions).
-
-\`\`\`bash
-# Quick fix command
-rm sodium-fabric-0.5.8.jar
-# Then download 0.5.7
-\`\`\`
-
-Let me know if this helps!`,
-      likes: 18,
-      createdAt: '1 hour ago',
-      isLiked: true,
-      replies: [
-        {
-          id: 3,
-          author: {
-            id: 1,
-            name: 'MinecraftFan2024',
-            avatar: 'MF',
-            badge: 'Helper',
-            joinDate: 'Jan 2023',
-            postCount: 156,
-            reputation: 1240,
-          },
-          content: `Thank you so much! Downgrading to 0.5.7 fixed the issue. I should have tried that specific version earlier.`,
-          likes: 5,
-          createdAt: '45 mins ago',
-        },
-      ],
-    },
-    {
-      id: 2,
-      author: {
-        id: 3,
-        name: 'FabricDev',
-        avatar: 'FD',
-        badge: 'Creator',
-        joinDate: 'Jun 2020',
-        postCount: 2341,
-        reputation: 12500,
-      },
-      content: `For future reference, you can check compatibility between mods using the [Fabric Compatibility Checker](https://example.com).
-
-Also, make sure to always check the mod's changelog before updating - breaking changes are usually documented there.
-
-> Pro tip: Keep a backup of working mod configurations!`,
-      likes: 12,
-      createdAt: '30 mins ago',
-    },
-  ],
-})
+// 帖子数据
+const post = ref<Post | null>(null)
+const comments = ref<Comment[]>([])
 
 const getBadgeClass = (badge?: string) => {
   switch (badge) {
@@ -202,11 +72,13 @@ const getBadgeClass = (badge?: string) => {
 }
 
 const toggleLike = () => {
+  if (!post.value) return
   post.value.isLiked = !post.value.isLiked
   post.value.likes += post.value.isLiked ? 1 : -1
 }
 
 const toggleBookmark = () => {
+  if (!post.value) return
   post.value.isBookmarked = !post.value.isBookmarked
 }
 
@@ -217,6 +89,7 @@ const toggleCommentLike = (comment: Comment) => {
 
 const submitComment = () => {
   if (!newComment.value.trim()) return
+  if (!post.value) return
   
   const comment: Comment = {
     id: Date.now(),
@@ -272,11 +145,108 @@ const goBack = () => {
   router.push('/forum')
 }
 
-onMounted(() => {
-  // 模拟加载
-  setTimeout(() => {
+/**
+ * 加载帖子详情
+ */
+async function loadPostDetail() {
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+    
+    const response = await getPostDetail(postId.value)
+    const postData = response.data
+    
+    // 转换为页面需要的 Post 格式
+    post.value = {
+      id: postData.id,
+      title: postData.title,
+      author: {
+        id: postData.author?.id || 0,
+        name: postData.author?.nickname || postData.author?.username || '匿名用户',
+        avatar: postData.author?.avatar || '',
+      },
+      topic: postData.topic?.name || '未分类',
+      topicColor: 'bg-blue-500/20 text-blue-400',
+      content: postData.content || '',
+      likes: postData.likeCount || 0,
+      views: postData.viewCount || 0,
+      createdAt: formatTime(postData.createTime),
+      updatedAt: postData.updateTime ? formatTime(postData.updateTime) : undefined,
+      isLiked: postData.liked || false,
+      isBookmarked: postData.bookmarked || false,
+      tags: postData.tags?.map(t => t.name) || [],
+      comments: [],
+    }
+    
+    // 加载评论
+    await loadComments()
+  } catch (error: any) {
+    errorMessage.value = error.message || '加载帖子详情失败'
+    ElMessage.error(errorMessage.value)
+  } finally {
     isLoading.value = false
-  }, 500)
+  }
+}
+
+/**
+ * 加载评论列表
+ */
+async function loadComments() {
+  try {
+    const response = await listComments({
+      postId: postId.value,
+      page: 1,
+      size: 50,
+    })
+    
+    comments.value = response.data?.records?.map((comment: any) => ({
+      id: comment.id,
+      author: {
+        id: comment.author?.id || 0,
+        name: comment.author?.nickname || comment.author?.username || '匿名用户',
+        avatar: comment.author?.avatar || '',
+      },
+      content: comment.content || '',
+      likes: comment.likeCount || 0,
+      createdAt: formatTime(comment.createTime),
+      isLiked: false,
+    })) || []
+    
+    if (post.value) {
+      post.value.comments = comments.value
+    }
+  } catch (error) {
+    console.error('加载评论失败:', error)
+  }
+}
+
+/**
+ * 格式化时间
+ */
+function formatTime(dateTime: string): string {
+  if (!dateTime) return ''
+  
+  const date = new Date(dateTime)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  const seconds = Math.floor(diff / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(minutes / 60)
+  const days = Math.floor(hours / 24)
+  
+  if (seconds < 60) return 'Just now'
+  if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`
+  if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`
+  if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`
+  
+  return date.toLocaleDateString()
+}
+
+onMounted(() => {
+  if (postId.value) {
+    loadPostDetail()
+  }
 })
 </script>
 
@@ -298,7 +268,21 @@ onMounted(() => {
         <span class="i-tabler-loader-2 text-4xl text-brand animate-spin" />
       </div>
       
-      <template v-else>
+      <!-- 错误状态 -->
+      <div v-else-if="errorMessage" class="flex-center py-20">
+        <div class="text-center">
+          <span class="i-tabler-alert-circle text-5xl text-red-500 mb-4 block" />
+          <p class="text-text-secondary mb-4">{{ errorMessage }}</p>
+          <button 
+            class="btn-primary"
+            @click="goBack"
+          >
+            返回论坛
+          </button>
+        </div>
+      </div>
+      
+      <template v-else-if="post">
         <!-- 帖子主体 -->
         <article class="card mb-6">
           <!-- 帖子头部 -->

@@ -22,13 +22,13 @@ const rememberMe = ref(false)
 const errorMessage = ref('')
 
 // 验证码
-const { captchaImage, captchaCode, isLoading: captchaLoading, getCaptchaToken, resetCaptcha } = useCaptcha('simple')
+const { captchaImage, captchaCode, isLoading: captchaLoading, getCaptchaToken, resetCaptcha, initCaptcha } = useCaptcha('simple')
 
 // 监听弹窗打开/关闭，处理body滚动
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     document.body.style.overflow = 'hidden'
-    resetCaptcha() // 打开弹窗时重新加载验证码
+    initCaptcha() // 打开弹窗时初始化验证码
   } else {
     document.body.style.overflow = ''
     resetForm()

@@ -51,7 +51,7 @@ const menuItems: MenuItem[] = [
       { 
         name: 'menu.moderation', 
         icon: 'i-tabler-shield-check', 
-        path: '/admin/moderation',
+        path: '/admin/audit',
         badge: '23' 
       },
       { 

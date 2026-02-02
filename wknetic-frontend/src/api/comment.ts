@@ -53,6 +53,17 @@ export const getPostComments = (postId: number) => {
 }
 
 /**
+ * 获取帖子评论列表（带分页）
+ */
+export const listComments = (params: {
+  postId: number
+  page?: number
+  size?: number
+}) => {
+  return request.get<{ records: CommentVO[], total: number }>('/api/v1/comment/list', { params })
+}
+
+/**
  * 点赞/取消点赞评论
  */
 export const toggleCommentLike = (commentId: number) => {

@@ -31,7 +31,7 @@ public class OpenApiConfig {
                         .version("v1.0.0")
                         .contact(new Contact()
                                 .name("WkNetic Team")
-                                .email("support@wknetic.cn"))
+                                .email("wekyjay@icloud.com"))
                         .license(new License()
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")))

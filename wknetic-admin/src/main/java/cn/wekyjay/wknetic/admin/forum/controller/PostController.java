@@ -1,9 +1,12 @@
 package cn.wekyjay.wknetic.admin.forum.controller;
 
+import cn.wekyjay.wknetic.admin.forum.service.ElasticsearchService;
 import cn.wekyjay.wknetic.admin.forum.service.PostService;
 import cn.wekyjay.wknetic.common.model.dto.CreatePostDTO;
+import cn.wekyjay.wknetic.common.model.dto.SearchPostDTO;
 import cn.wekyjay.wknetic.common.model.dto.UpdatePostDTO;
 import cn.wekyjay.wknetic.common.model.vo.PostDetailVO;
+import cn.wekyjay.wknetic.common.model.vo.PostSearchVO;
 import cn.wekyjay.wknetic.common.model.vo.PostVO;
 import cn.wekyjay.wknetic.common.model.Result;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,6 +18,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 帖子Controller
@@ -29,13 +34,14 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
     
     private final PostService postService;
+    private final ElasticsearchService elasticsearchService;
     
     /**
      * 创建帖子 - 创建一个新的论坛帖子
      */
     @Operation(summary = "创建帖子", description = "创建一个新的论坛帖子。需要提供标题、内容、所属分类等信息。")
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','MODERATOR')")
     public Result<Long> createPost(@Valid @RequestBody CreatePostDTO dto) {
         Long postId = postService.createPost(dto);
         return Result.success(postId);
@@ -49,7 +55,7 @@ public class PostController {
             @Parameter(name = "postId", description = "帖子ID", required = true, example = "1")
     })
     @PutMapping("/{postId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','MODERATOR')")
     public Result<Void> updatePost(@PathVariable Long postId, @Valid @RequestBody UpdatePostDTO dto) {
         postService.updatePost(postId, dto);
         return Result.success();
@@ -63,7 +69,7 @@ public class PostController {
             @Parameter(name = "postId", description = "帖子ID", required = true, example = "1")
     })
     @DeleteMapping("/{postId}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','MODERATOR')")
     public Result<Void> deletePost(@PathVariable Long postId) {
         postService.deletePost(postId);
         return Result.success();
@@ -110,9 +116,44 @@ public class PostController {
             @Parameter(name = "postId", description = "帖子ID", required = true, example = "1")
     })
     @PostMapping("/{postId}/like")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','MODERATOR')")
     public Result<Boolean> toggleLike(@PathVariable Long postId) {
         boolean liked = postService.toggleLike(postId);
         return Result.success(liked);
     }
+    
+    /**
+     * 搜索帖子 - 全文搜索帖子（基于Elasticsearch）
+     */
+    @Operation(summary = "搜索帖子", description = "使用Elasticsearch进行全文搜索，支持关键词、过滤、排序等功能")
+    @PostMapping("/search")
+    public Result<IPage<PostSearchVO>> searchPosts(@RequestBody SearchPostDTO dto) {
+        IPage<PostSearchVO> result = postService.searchPosts(dto);
+        return Result.success(result);
+    }
+    
+    /**
+     * 搜索建议 - 根据前缀获取搜索建议
+     */
+    @Operation(summary = "搜索建议", description = "根据输入的前缀返回可能的搜索关键词建议")
+    @Parameters({
+            @Parameter(name = "prefix", description = "搜索前缀", required = true, example = "Java")
+    })
+    @GetMapping("/search/suggest")
+    public Result<List<String>> getSuggestions(@RequestParam String prefix) {
+        List<String> suggestions = elasticsearchService.getSuggestions(prefix, 5);
+        return Result.success(suggestions);
+    }
+    
+    /**
+     * 热门搜索词 - 获取最近热门的搜索关键词
+     */
+    @Operation(summary = "热门搜索词", description = "获取最近7天的热门搜索关键词Top 10")
+    @GetMapping("/search/hot")
+    public Result<List<String>> getHotSearchKeywords() {
+        // TODO: 实现热门搜索词统计逻辑
+        List<String> hotKeywords = List.of("Java", "Spring Boot", "Elasticsearch", "Vue", "Docker");
+        return Result.success(hotKeywords);
+    }
 }
+

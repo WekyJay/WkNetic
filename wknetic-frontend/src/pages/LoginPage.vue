@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -17,7 +17,7 @@ const error = ref('')
 const rememberMe = ref(false)
 
 // 验证码 (默认使用 simple 类型，可根据配置动态切换)
-const { captchaImage, captchaCode, isLoading: captchaLoading, getCaptchaToken, resetCaptcha } = useCaptcha('simple')
+const { captchaImage, captchaCode, isLoading: captchaLoading, getCaptchaToken, resetCaptcha, initCaptcha } = useCaptcha('simple')
 
 // 获取重定向地址
 const redirectPath = computed(() => {
@@ -46,6 +46,11 @@ const checkAuthAndRedirect = () => {
 }
 
 checkAuthAndRedirect()
+
+// 页面挂载时初始化验证码
+onMounted(() => {
+  initCaptcha()
+})
 
 async function handleLogin() {
   error.value = ''

@@ -45,6 +45,11 @@
         </dependency>
         <dependency>
             <groupId>cn.wekyjay.wknetic</groupId>
+            <artifactId>wknetic-common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.wekyjay.wknetic</groupId>
             <artifactId>wknetic-community</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
@@ -75,6 +80,21 @@
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
+        </dependency>
+        <!-- Configuration metadata for custom properties -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- Elasticsearch -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-elasticsearch</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
         </dependency>
     </dependencies>
 

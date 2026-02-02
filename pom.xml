@@ -39,6 +39,7 @@
         <slf4j-api.version>2.0.9</slf4j-api.version>
         <springdoc.version>2.8.3</springdoc.version>
         <minio.version>8.5.7</minio.version>
+        <elasticsearch.version>8.15.4</elasticsearch.version>
     </properties>
 
     <modules>
@@ -88,6 +89,17 @@
                 <groupId>io.minio</groupId>
                 <artifactId>minio</artifactId>
                 <version>${minio.version}</version>
+            </dependency>
+            <!-- Elasticsearch -->
+            <dependency>
+                <groupId>org.springframework.data</groupId>
+                <artifactId>spring-data-elasticsearch</artifactId>
+                <version>5.4.7</version>
+            </dependency>
+            <dependency>
+                <groupId>co.elastic.clients</groupId>
+                <artifactId>elasticsearch-java</artifactId>
+                <version>${elasticsearch.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

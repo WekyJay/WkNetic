@@ -143,6 +143,60 @@ public class CommentService extends ServiceImpl<ForumCommentMapper, ForumComment
     }
     
     /**
+     * 获取帖子的评论列表（分页）
+     *
+     * @param postId 帖子ID
+     * @param page 页码（从1开始）
+     * @param size 每页条数
+     * @return 分页评论列表
+     */
+    public Map<String, Object> listCommentsByPostId(Long postId, Integer page, Integer size) {
+        // 计算offset
+        int offset = (page - 1) * size;
+        
+        // 查询评论总数
+        long total = commentMapper.selectCount(
+                new LambdaQueryWrapper<ForumComment>()
+                        .eq(ForumComment::getPostId, postId)
+                        .eq(ForumComment::getParentId, null)  // 只计算顶级评论
+        );
+        
+        // 查询分页评论
+        List<ForumComment> comments = commentMapper.selectList(
+                new LambdaQueryWrapper<ForumComment>()
+                        .eq(ForumComment::getPostId, postId)
+                        .eq(ForumComment::getParentId, null)  // 只获取顶级评论
+                        .orderByDesc(ForumComment::getCreateTime)
+                        .last("LIMIT " + offset + ", " + size)
+        );
+        
+        // 获取所有子评论
+        List<Long> commentIds = comments.stream().map(ForumComment::getCommentId).collect(Collectors.toList());
+        List<ForumComment> replies = commentMapper.selectList(
+                new LambdaQueryWrapper<ForumComment>()
+                        .eq(ForumComment::getPostId, postId)
+                        .in(ForumComment::getParentId, commentIds)
+        );
+        
+        // 构建评论树
+        Map<Long, List<ForumComment>> childrenMap = new HashMap<>();
+        for (ForumComment reply : replies) {
+            childrenMap.computeIfAbsent(reply.getParentId(), k -> new ArrayList<>())
+                    .add(reply);
+        }
+        
+        List<CommentVO> records = comments.stream()
+                .map(comment -> buildCommentVO(comment, childrenMap))
+                .collect(Collectors.toList());
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("records", records);
+        result.put("total", total);
+        
+        return result;
+    }
+    
+    /**
      * 点赞/取消点赞评论
      *
      * @param commentId 评论ID

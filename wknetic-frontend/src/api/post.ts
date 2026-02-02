@@ -5,7 +5,7 @@ import type { IPage } from '@/types/common'
 export interface CreatePostDTO {
   title: string
   content: string
-  intro?: string
+  excerpt?: string
   topicId: number
   tags?: string[]
   publish?: boolean
@@ -14,7 +14,7 @@ export interface CreatePostDTO {
 export interface UpdatePostDTO {
   title?: string
   content?: string
-  intro?: string
+  excerpt?: string
   topicId?: number
   tags?: string[]
   changeSummary?: string
@@ -23,7 +23,7 @@ export interface UpdatePostDTO {
 export interface PostVO {
   id: number
   title: string
-  intro: string
+  excerpt: string
   userId: number
   topicId: number
   status: number
