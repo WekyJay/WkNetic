@@ -47,18 +47,25 @@ const menuItems: MenuItem[] = [
         icon: 'i-tabler-shield', 
         path: '/admin/roles',
         badge: null 
-      },
+      }
+    ]
+  },
+  { 
+    name: 'menu.forum', 
+    icon: 'i-tabler-message', 
+    badge: null,
+    children: [
       { 
-        name: 'menu.moderation', 
+        name: 'menu.forumModeration', 
         icon: 'i-tabler-shield-check', 
         path: '/admin/audit',
-        badge: '23' 
+        badge: null 
       },
       { 
-        name: 'menu.reports', 
-        icon: 'i-tabler-flag', 
-        path: '/admin/reports',
-        badge: '5' 
+        name: 'menu.topicManagement', 
+        icon: 'i-tabler-layout-list', 
+        path: '/admin/topics',
+        badge: null 
       }
     ]
   },

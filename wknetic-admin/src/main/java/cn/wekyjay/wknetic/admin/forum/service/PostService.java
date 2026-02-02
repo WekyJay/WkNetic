@@ -104,15 +104,15 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
             handlePostTags(post.getPostId(), dto.getTags());
         }
         
-        // 更新话题帖子数（仅当话题不为空时）
-        if (dto.getTopicId() != null && dto.getTopicId() > 0) {
-            topicMapper.incrementPostCount(dto.getTopicId());
-        }
+        // 注意：这里不更新话题帖子数，因为帖子处于审核状态
+        // 只有当帖子审核通过时，才在StatisticsListener中更新话题计数
+        // 这样可以避免帖子被重复计数
         
         // 发布帖子创建事件
         if (Boolean.TRUE.equals(dto.getPublish())) {
             eventPublisher.publishEvent(new PostCreatedEvent(
-                    this, post.getPostId(), userId, post.getTitle(), post.getTopicId()
+                    this, post.getPostId(), userId, post.getTitle(), post.getTopicId(), 
+                    post.getStatus() == ForumPost.Status.UNDER_REVIEW.getCode()
             ));
         }
         
@@ -249,6 +249,7 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
         vo.setCommentCount(post.getCommentCount());
         vo.setViewCount(post.getViewCount() + 1); // 加1因为已增加
         vo.setBookmarkCount(post.getBookmarkCount());
+        vo.setTopicId(post.getTopicId());
         vo.setCreateTime(post.getCreateTime());
         vo.setUpdateTime(post.getUpdateTime());
         
@@ -300,6 +301,55 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
         vo.setUsername(user.getUsername());
         vo.setNickname(user.getNickname());
         vo.setAvatar(user.getAvatar());
+        return vo;
+    }
+    
+    /**
+     * 获取当前用户最新的草稿
+     *
+     * @return 草稿VO（如果不存在返回null）
+     */
+    public PostDetailVO getLatestDraft() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        
+        ForumPost draft = postMapper.selectOne(
+                new LambdaQueryWrapper<ForumPost>()
+                        .eq(ForumPost::getUserId, userId)
+                        .eq(ForumPost::getStatus, ForumPost.Status.DRAFT.getCode())
+                        .orderByDesc(ForumPost::getUpdateTime)
+                        .last("LIMIT 1")
+        );
+        
+        if (draft == null) {
+            return null;
+        }
+        
+        // 转换为VO（不增加浏览数）
+        PostDetailVO vo = new PostDetailVO();
+        vo.setPostId(draft.getPostId());
+        vo.setUserId(draft.getUserId());
+        vo.setTitle(draft.getTitle());
+        vo.setExcerpt(draft.getExcerpt());
+        vo.setContent(draft.getContent());
+        vo.setTopicId(draft.getTopicId());
+        vo.setStatus(draft.getStatus());
+        vo.setCreateTime(draft.getCreateTime());
+        vo.setUpdateTime(draft.getUpdateTime());
+        
+        // 加载标签
+        List<PostTag> postTags = postTagMapper.selectList(
+                new LambdaQueryWrapper<PostTag>()
+                        .eq(PostTag::getPostId, draft.getPostId())
+        );
+        if (!postTags.isEmpty()) {
+            List<Long> tagIds = postTags.stream().map(PostTag::getTagId).collect(Collectors.toList());
+            List<ForumTag> tags = tagMapper.selectList(
+                    new LambdaQueryWrapper<ForumTag>()
+                            .in(ForumTag::getTagId, tagIds)
+            );
+            vo.setTags(tags.stream().map(this::convertTagToVO).collect(Collectors.toList()));
+        }
+        
         return vo;
     }
     

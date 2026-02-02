@@ -47,6 +47,7 @@ declare module 'vue' {
     ForumSidebar: typeof import('./src/components/forum/ForumSidebar.vue')['default']
     HeroSection: typeof import('./src/components/home/HeroSection.vue')['default']
     HomeLayout: typeof import('./src/components/layout/HomeLayout.vue')['default']
+    IconPickerDialog: typeof import('./src/components/common/IconPickerDialog.vue')['default']
     LoginModal: typeof import('./src/components/LoginModal.vue')['default']
     NewsSection: typeof import('./src/components/home/NewsSection.vue')['default']
     PostSearchCard: typeof import('./src/components/forum/PostSearchCard.vue')['default']

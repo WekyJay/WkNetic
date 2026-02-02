@@ -50,6 +50,11 @@ public class PostDetailVO {
     private UserInfoVO author;
     
     /**
+     * 话题ID
+     */
+    private Long topicId;
+    
+    /**
      * 话题信息
      */
     private TopicVO topic;

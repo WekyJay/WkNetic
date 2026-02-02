@@ -173,6 +173,15 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
+                    path: 'topics',
+                    name: 'admin-topics',
+                    component: () => import('@/pages/admin/TopicManagementPage.vue'),
+                    meta: {
+                        title: 'routes.adminTopics',
+                        requiresRole: ['MODERATOR', 'ADMIN']
+                    }
+                },
+                {
                     path:'settings',
                     name: 'admin-settings',
                     component: () => import('@/pages/admin/SettingsPage.vue'),

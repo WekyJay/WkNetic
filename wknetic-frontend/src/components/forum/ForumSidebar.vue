@@ -80,7 +80,7 @@ const setTopic = (id: number) => {
           ]"
           @click="setTopic(topic.topicId)"
         >
-          <span class="text-lg">{{ topic.icon || '📌' }}</span>
+          <span :class="['text-lg flex-shrink-0', topic.icon || 'i-tabler-bookmark']" />
           <span class="flex-1 font-medium">{{ topic.topicName }}</span>
           <span 
             class="text-xs px-2 py-0.5 rounded-full"

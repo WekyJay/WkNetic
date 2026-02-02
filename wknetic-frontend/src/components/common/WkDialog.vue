@@ -147,12 +147,12 @@ const dialogStyle = computed(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div
-        v-if="visible"
-        class="wk-dialog-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
-        :class="{ 'bg-black/50': modal, 'p-0': fullscreen }"
-        @click.self="handleMaskClick"
-      >
+        <div
+          v-if="visible"
+          class="wk-dialog-overlay fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          :class="{ 'bg-black/50': modal, 'p-0': fullscreen }"
+          @click.self="handleMaskClick"
+        >
         <transition
           enter-active-class="transition-all duration-300"
           enter-from-class="opacity-0 scale-95 -translate-y-4"

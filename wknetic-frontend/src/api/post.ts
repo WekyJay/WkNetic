@@ -86,6 +86,13 @@ export const getPostDetail = (postId: number) => {
 }
 
 /**
+ * 获取最新草稿
+ */
+export const getLatestDraft = () => {
+  return request.get<PostDetailVO>('/api/v1/post/draft/latest')
+}
+
+/**
  * 获取帖子列表
  */
 export const listPosts = (params: {

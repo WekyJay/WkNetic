@@ -89,6 +89,17 @@ public class PostController {
     }
     
     /**
+     * 获取最新草稿 - 查询当前用户是否有未发布的草稿
+     */
+    @Operation(summary = "获取最新草稿", description = "获取当前登录用户的最新一篇草稿。")
+    @GetMapping("/draft/latest")
+    @PreAuthorize("hasAnyRole('USER','ADMIN','MODERATOR')")
+    public Result<PostDetailVO> getLatestDraft() {
+        PostDetailVO draft = postService.getLatestDraft();
+        return Result.success(draft);
+    }
+    
+    /**
      * 获取帖子列表 - 分页查询帖子列表
      */
     @Operation(summary = "获取帖子列表", description = "分页获取帖子列表，可按分类和状态筛选。")

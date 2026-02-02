@@ -21,6 +21,16 @@
               <span v-else class="i-tabler-bookmark" />
               {{ saving ? 'Saving...' : 'Save Draft' }}
             </button>
+            <!-- 已保存状态指示 -->
+            <div v-if="isSaved && !hasUnsavedChanges" class="flex items-center gap-2 text-green-600 px-3 py-2 bg-green-50 rounded-md">
+              <span class="i-tabler-circle-check text-lg" />
+              <span class="text-sm font-medium">Saved</span>
+            </div>
+            <!-- 未保存状态指示 -->
+            <div v-else-if="hasUnsavedChanges" class="flex items-center gap-2 text-yellow-600 px-3 py-2 bg-yellow-50 rounded-md">
+              <span class="i-tabler-circle-dotted text-lg animate-spin" />
+              <span class="text-sm font-medium">Unsaved</span>
+            </div>
             <button class="btn-primary" @click="openPublishDialog" :disabled="publishing">
               <span v-if="publishing" class="i-tabler-loader-2 animate-spin" />
               <span v-else class="i-tabler-send" />
@@ -152,14 +162,48 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- 草稿确认对话框 -->
+    <el-dialog
+      v-model="draftConfirmVisible"
+      title="Draft Found"
+      width="480px"
+      align-center
+      @close="discardDraft"
+      :close-on-click-modal="false"
+    >
+      <div class="space-y-4">
+        <div class="flex items-start gap-3">
+          <span class="i-tabler-file-text text-2xl text-blue-600 flex-shrink-0 mt-1" />
+          <div class="flex-1">
+            <h3 class="font-semibold text-text mb-1">Draft: {{ draftToUse?.title }}</h3>
+            <p class="text-sm text-text-muted mb-2">
+              {{ draftToUse?.content?.substring(0, 100) }}{{ draftToUse?.content?.length > 100 ? '...' : '' }}
+            </p>
+            <p class="text-xs text-text-muted">
+              Last saved: {{ new Date(draftToUse?.updateTime).toLocaleString() }}
+            </p>
+          </div>
+        </div>
+        <p class="text-sm text-text-secondary">
+          Do you want to use this draft or start fresh?
+        </p>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <el-button @click="draftConfirmVisible = false">Start Fresh</el-button>
+          <el-button type="primary" @click="useDraft">Use Draft</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { listAllTopics } from '@/api/topic'
-import { createPost, updatePost, getPostDetail } from '@/api/post'
+import { createPost, updatePost, getPostDetail, getLatestDraft } from '@/api/post'
 import type { CreatePostDTO, UpdatePostDTO } from '@/api/post'
 import type { TopicVO } from '@/api/topic'
 import type { FormInstance, FormRules } from 'element-plus'
@@ -180,6 +224,16 @@ const form = reactive({
   changeSummary: ''
 })
 
+// 保存初始表单状态用于检测变化
+const initialForm = reactive({
+  title: '',
+  content: '',
+  excerpt: '',
+  topicId: null as number | null,
+  tags: [] as string[],
+  changeSummary: ''
+})
+
 const topics = ref<TopicVO[]>([])
 const saving = ref(false)
 const publishing = ref(false)
@@ -187,6 +241,17 @@ const publishDialogVisible = ref(false)
 const auditDialogVisible = ref(false)
 const publishedPostId = ref<number | null>(null)
 const publishFormRef = ref<FormInstance>()
+
+// 状态管理
+const isSaved = ref(true) // 是否已保存
+const draftPostId = ref<number | null>(null) // 草稿ID，用于复用旧草稿
+const hasUnsavedChanges = computed(() => {
+  return JSON.stringify(form) !== JSON.stringify(initialForm)
+})
+
+// 草稿确认对话框
+const draftConfirmVisible = ref(false)
+const draftToUse = ref<any>(null)
 
 const publishRules: FormRules = {
   topicId: [{ required: true, message: 'Please select a topic', trigger: 'change' }],
@@ -210,6 +275,13 @@ const publishRules: FormRules = {
   ]
 }
 
+// 更新已保存状态（监听表单变化）
+watch(() => form.title, () => { isSaved.value = false }, { deep: true })
+watch(() => form.content, () => { isSaved.value = false }, { deep: true })
+watch(() => form.excerpt, () => { isSaved.value = false }, { deep: true })
+watch(() => form.topicId, () => { isSaved.value = false }, { deep: true })
+watch(() => form.tags, () => { isSaved.value = false }, { deep: true })
+
 // 加载板块列表
 const loadTopics = async () => {
   try {
@@ -218,6 +290,51 @@ const loadTopics = async () => {
   } catch (e) {
     console.error('Failed to load topics:', e)
   }
+}
+
+// 加载草稿
+const loadDraft = async () => {
+  try {
+    const res = await getLatestDraft()
+    if (res.data && res.data.postId) {
+      draftToUse.value = res.data
+      draftConfirmVisible.value = true
+    }
+  } catch (e) {
+    console.error('Failed to load draft:', e)
+    // 没有草稿是正常的，不需要显示错误
+  }
+}
+
+// 使用草稿
+const useDraft = () => {
+  if (!draftToUse.value) return
+  
+  const draft = draftToUse.value
+  form.title = draft.title || ''
+  form.content = draft.content || ''
+  form.excerpt = draft.excerpt || ''
+  form.topicId = draft.topicId ? Number(draft.topicId) : null
+  form.tags = draft.tags?.map((t: any) => t?.tagName || '') || []
+  
+  // 保存草稿ID，后续保存时使用该ID
+  draftPostId.value = draft.postId
+  
+  // 更新初始状态
+  Object.assign(initialForm, form)
+  isSaved.value = true
+  
+  draftConfirmVisible.value = false
+  draftToUse.value = null
+}
+
+// 丢弃草稿
+const discardDraft = () => {
+  // 强制使用草稿id,但不加载内容
+  console.log('Discarding draft , use id only.')
+  draftPostId.value = draftToUse.value?.postId || null
+  draftConfirmVisible.value = false
+  draftToUse.value = null
 }
 
 // 加载帖子详情（编辑模式）
@@ -233,6 +350,10 @@ const loadPostDetail = async () => {
     form.excerpt = post.excerpt
     form.topicId = Number(post.topicId)
     form.tags = post.tags?.map(t => t != null ? t.tagName : '') || []
+    
+    // 保存初始状态
+    Object.assign(initialForm, form)
+    isSaved.value = true
   } catch (e) {
     console.error('Failed to load post:', e)
     router.push('/forum')
@@ -246,7 +367,9 @@ const openPublishDialog = () => {
 // 保存草稿
 const saveDraft = async () => {
   if (!form.title.trim()) {
-    alert('Please enter a title')
+    // 使用 ElMessage 作为临时通知方案
+    const { ElMessage } = await import('element-plus')
+    ElMessage.warning('Please enter a title')
     return
   }
 
@@ -254,6 +377,7 @@ const saveDraft = async () => {
     saving.value = true
 
     if (isEdit.value) {
+      // 编辑已发布的帖子
       await updatePost(Number(postId.value), {
         title: form.title,
         content: form.content,
@@ -262,8 +386,17 @@ const saveDraft = async () => {
         tags: form.tags,
         changeSummary: form.changeSummary
       } as UpdatePostDTO)
+    } else if (draftPostId.value) {
+      // 复用旧草稿：使用草稿的ID进行更新，避免数据冗余
+      await updatePost(draftPostId.value, {
+        title: form.title,
+        content: form.content,
+        excerpt: form.excerpt,
+        topicId: form.topicId ?? undefined,
+        tags: form.tags
+      } as UpdatePostDTO)
     } else {
-      // 草稿模式：如果没有选择话题，不发送 topicId
+      // 创建新草稿
       const draftData: any = {
         title: form.title,
         content: form.content,
@@ -277,15 +410,22 @@ const saveDraft = async () => {
         draftData.topicId = form.topicId
       }
       
-      await createPost(draftData as CreatePostDTO)
+      const res = await createPost(draftData as CreatePostDTO)
+      // 保存新创建的草稿ID，后续保存将复用此ID
+      draftPostId.value = res.data
     }
 
-    alert('Draft saved successfully!')
+    // 更新初始状态和保存标记
+    Object.assign(initialForm, form)
+    isSaved.value = true
+    
+    const { ElMessage } = await import('element-plus')
+    ElMessage.success('Draft saved successfully!')
   } catch (e) {
     console.error('Failed to save draft:', e)
-    // 显示更详细的错误信息
+    const { ElMessage } = await import('element-plus')
     const errorMsg = (e as any)?.response?.data?.message || (e as any)?.message || 'Unknown error'
-    alert(`Failed to save draft: ${errorMsg}`)
+    ElMessage.error(`Failed to save draft: ${errorMsg}`)
   } finally {
     saving.value = false
   }
@@ -302,7 +442,8 @@ const publishPost = async () => {
     errors.push('Content must be at least 20 characters')
   }
   if (errors.length > 0) {
-    alert(errors.join('\n'))
+    const { ElMessage } = await import('element-plus')
+    ElMessage.error(errors.join('\n'))
     return
   }
 
@@ -334,7 +475,8 @@ const publishPost = async () => {
     auditDialogVisible.value = true
   } catch (e) {
     console.error('Failed to publish post:', e)
-    alert('Failed to publish post')
+    const { ElMessage } = await import('element-plus')
+    ElMessage.error('Failed to publish post')
   } finally {
     publishing.value = false
   }
@@ -366,15 +508,37 @@ const goToPost = () => {
   }
 }
 
-const goBack = () => {
-  if (confirm('Are you sure you want to leave? Unsaved changes will be lost.')) {
+const goBack = async () => {
+  // 如果有未保存的变更，提示用户
+  if (hasUnsavedChanges.value) {
+    const { ElMessageBox } = await import('element-plus')
+    try {
+      await ElMessageBox.confirm(
+        'You have unsaved changes. Are you sure you want to leave?',
+        'Warning',
+        {
+          confirmButtonText: 'Leave',
+          cancelButtonText: 'Cancel',
+          type: 'warning',
+        }
+      )
+      router.back()
+    } catch {
+      // 用户取消了离开
+    }
+  } else {
     router.back()
   }
 }
 
-onMounted(() => {
-  loadTopics()
-  loadPostDetail()
+onMounted(async () => {
+  await loadTopics()
+  if (isEdit.value) {
+    await loadPostDetail()
+  } else {
+    // 非编辑模式下，检查是否有草稿
+    await loadDraft()
+  }
 })
 </script>
 
