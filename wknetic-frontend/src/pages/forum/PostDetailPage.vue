@@ -452,6 +452,7 @@ onMounted(() => {
           <div class="card">
             <h3 class="text-sm font-medium text-text-secondary mb-3">Write a comment</h3>
             <WkMarkdownEditor 
+            class="rounded-xl"
               v-model="newComment" 
               placeholder="Share your thoughts... Markdown is supported!"
               min-height="150px"

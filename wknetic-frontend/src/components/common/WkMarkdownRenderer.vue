@@ -25,6 +25,38 @@ renderer.code = (code: { text: string; lang?: string; escaped?: boolean; type: '
   return `<code-block data-index="${blockIndex}"></code-block>`
 }
 
+// 自定义blockquote渲染 - 支持特殊标签
+renderer.blockquote = ({ text }: { text: string }) => {
+  // 检测特殊标签 [!TIP], [!INFO], [!WARNING], [!NOTE], [!DANGER] (不区分大小写)
+  const alertMatch = text.match(/^\[!(TIP|INFO|WARNING|NOTE|DANGER)\]\s*\n?/i)
+  
+  if (alertMatch) {
+    const type = alertMatch[1]!.toLowerCase()
+    const content = text.replace(alertMatch[0], '')
+    const icons: Record<string, string> = {
+      tip: 'i-tabler-bulb',
+      info: 'i-tabler-info-circle',
+      warning: 'i-tabler-alert-triangle',
+      note: 'i-tabler-note',
+      danger: 'i-tabler-alert-octagon'
+    }
+    const titles: Record<string, string> = {
+      tip: 'Tip',
+      info: 'Info',
+      warning: 'Warning',
+      note: 'Note',
+      danger: 'Danger'
+    }
+    
+    return `<blockquote class="alert alert-${type}">
+      <div class="alert-title"><span class="alert-icon ${icons[type] || ''}"></span>${titles[type] || type.toUpperCase()}</div>
+      <div class="alert-content">${content}</div>
+    </blockquote>`
+  }
+  
+  return `<blockquote>${text}</blockquote>`
+}
+
 // 自定义链接渲染
 renderer.link = ({ href, title, text }: { href: string; title?: string | null; text: string }) => {
   const isExternal = href?.startsWith('http')
@@ -151,8 +183,8 @@ watch(
 .markdown-body-content h6 {
   color: var(--text-default);
   font-weight: 600;
-  margin-top: 1.5em;
-  margin-bottom: 0.75em;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
   line-height: 1.3;
 }
 
@@ -202,16 +234,155 @@ watch(
 }
 
 .markdown-body-content blockquote {
+  position: relative;
   border-left: 4px solid var(--color-brand);
-  padding: 0.5em 1em;
-  margin: 1em 0;
+  padding: 1em 1.25em 1em 2.5em;
+  margin: 1.5em 0;
   background: var(--color-bg-surface);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.markdown-body-content blockquote::before {
+  content: '"';
+  position: absolute;
+  left: 0.75em;
+  top: 0.25em;
+  font-size: 2.5em;
+  line-height: 1;
+  color: var(--color-brand);
+  opacity: 0.3;
+  font-family: Georgia, serif;
+}
+
+.markdown-body-content blockquote p:first-child {
+  margin-top: 0;
 }
 
 .markdown-body-content blockquote p:last-child {
   margin-bottom: 0;
+}
+
+.markdown-body-content blockquote cite {
+  display: block;
+  text-align: right;
+  margin-top: 0.5em;
+  font-size: 0.875em;
+  color: var(--color-text-muted);
+  font-style: normal;
+}
+
+.markdown-body-content blockquote cite::before {
+  content: '— ';
+}
+
+/* Alert blockquotes (tip, info, warning, note, danger) */
+.markdown-body-content .alert {
+  position: relative;
+  border-left: 4px solid;
+  padding: 1em 1.25em;
+  margin: 1.5em 0;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  font-style: normal;
+}
+
+.markdown-body-content .alert::before {
+  display: none;
+}
+
+.markdown-body-content .alert-title {
+  font-weight: 600;
+  margin-bottom: 0.5em;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.markdown-body-content .alert-icon {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  flex-shrink: 0;
+}
+
+.markdown-body-content .alert-content {
+  color: var(--color-text-secondary);
+}
+
+.markdown-body-content .alert-content p:first-child {
+  margin-top: 0;
+}
+
+.markdown-body-content .alert-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Alert types */
+.markdown-body-content .alert-tip {
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.markdown-body-content .alert-tip .alert-title {
+  color: #3b82f6;
+}
+
+.markdown-body-content .alert-tip .alert-icon {
+  color: #3b82f6;
+}
+
+.markdown-body-content .alert-info {
+  border-left-color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+}
+
+.markdown-body-content .alert-info .alert-title {
+  color: #06b6d4;
+}
+
+.markdown-body-content .alert-info .alert-icon {
+  color: #06b6d4;
+}
+
+.markdown-body-content .alert-warning {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.markdown-body-content .alert-warning .alert-title {
+  color: #f59e0b;
+}
+
+.markdown-body-content .alert-warning .alert-icon {
+  color: #f59e0b;
+}
+
+.markdown-body-content .alert-note {
+  border-left-color: #8b5cf6;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.markdown-body-content .alert-note .alert-title {
+  color: #8b5cf6;
+}
+
+.markdown-body-content .alert-note .alert-icon {
+  color: #8b5cf6;
+}
+
+.markdown-body-content .alert-danger {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.markdown-body-content .alert-danger .alert-title {
+  color: #ef4444;
+}
+
+.markdown-body-content .alert-danger .alert-icon {
+  color: #ef4444;
 }
 
 /* 行内代码样式 */
@@ -334,8 +505,10 @@ watch(
 
 .markdown-body-content hr {
   border: none;
-  border-top: 1px solid var(--color-border);
-  margin: 2em 0;
+  height: 1px;
+  width: 100%;
+  background: var(--border-default);
+  margin: 1em 0;
 }
 
 .markdown-body-content img {
@@ -360,6 +533,10 @@ watch(
 /* 任务列表 */
 .markdown-body-content input[type="checkbox"] {
   margin-right: 0.5em;
+}
+
+.markdown-body-content li:has(> input[type="checkbox"]) {
+  list-style: none;
 }
 </style>
 

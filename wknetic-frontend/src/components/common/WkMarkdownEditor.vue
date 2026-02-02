@@ -7,10 +7,12 @@ const props = withDefaults(defineProps<{
   placeholder?: string
   minHeight?: string
   maxHeight?: string
+  mode?: 'tabs' | 'split' | 'write-only' | 'preview-only'
 }>(), {
   placeholder: 'Write your content here... Markdown is supported!',
   minHeight: '200px',
   maxHeight: '500px',
+  mode: 'tabs',
 })
 
 const emit = defineEmits<{
@@ -19,11 +21,32 @@ const emit = defineEmits<{
 
 const activeTab = ref<'write' | 'preview'>('write')
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const showWrite = ref(true) // split 模式下控制编辑器显示
+const showPreview = ref(true) // split 模式下控制预览显示
 
 const content = computed({
   get: () => props.modelValue,
   set: (value: string) => emit('update:modelValue', value),
 })
+
+// split模式下切换显示
+const toggleWrite = () => {
+  if (props.mode !== 'split') return
+  if (!showWrite.value && !showPreview.value) {
+    showWrite.value = true
+  } else {
+    showWrite.value = !showWrite.value
+  }
+}
+
+const togglePreview = () => {
+  if (props.mode !== 'split') return
+  if (!showWrite.value && !showPreview.value) {
+    showPreview.value = true
+  } else {
+    showPreview.value = !showPreview.value
+  }
+}
 
 // 工具栏按钮
 const toolbarButtons = [
@@ -111,6 +134,76 @@ const handleKeydown = (e: KeyboardEvent) => {
     }
   }
   
+  // Enter 键 - 自动补全 > 用于引用块、列表项
+  if (e.key === 'Enter') {
+    const textarea = textareaRef.value
+    if (!textarea) return
+    
+    const start = textarea.selectionStart
+    const text = content.value
+    const lineStart = text.lastIndexOf('\n', start - 1) + 1
+    const currentLine = text.substring(lineStart, start)
+    
+    // 检查当前行是否以 > 开头（可能有空格）- 引用块
+    const quoteMatch = currentLine.match(/^>\s*/)
+    if (quoteMatch) {
+      e.preventDefault()
+      const indent = quoteMatch[0]
+      content.value = text.substring(0, start) + '\n' + indent + text.substring(start)
+      
+      setTimeout(() => {
+        const newPos = start + indent.length + 1
+        textarea.setSelectionRange(newPos, newPos)
+      }, 0)
+      return
+    }
+    
+    // 检查当前行是否是无序列表项 (-, *, +) 可能有缩进
+    const unorderedMatch = currentLine.match(/^(\s*)[-*+]\s+/)
+    if (unorderedMatch) {
+      e.preventDefault()
+      const indent = unorderedMatch[1] || ''
+      const prefix = currentLine.match(/^(\s*)[-*+]/)?.[0] || '-'
+      content.value = text.substring(0, start) + '\n' + indent + prefix.replace(/\s+$/, '') + ' ' + text.substring(start)
+      
+      setTimeout(() => {
+        const newPos = start + indent.length + prefix.length + 1
+        textarea.setSelectionRange(newPos, newPos)
+      }, 0)
+      return
+    }
+    
+    // 检查当前行是否是有序列表项 (1., 2., 等等)
+    const orderedMatch = currentLine.match(/^(\s*)(\d+)\.\s+/)
+    if (orderedMatch) {
+      e.preventDefault()
+      const indent = orderedMatch[1] || ''
+      const currentNum = parseInt(orderedMatch[2]!, 10)
+      const nextNum = currentNum + 1
+      content.value = text.substring(0, start) + '\n' + indent + nextNum + '. ' + text.substring(start)
+      
+      setTimeout(() => {
+        const newPos = start + indent.length + nextNum.toString().length + 2
+        textarea.setSelectionRange(newPos, newPos)
+      }, 0)
+      return
+    }
+    
+    // 检查当前行是否是任务列表项 (- [ ] 或 - [x])
+    const checkboxMatch = currentLine.match(/^(\s*)\-\s+\[.\]\s+/)
+    if (checkboxMatch) {
+      e.preventDefault()
+      const indent = checkboxMatch[1] || ''
+      content.value = text.substring(0, start) + '\n' + indent + '- [ ] ' + text.substring(start)
+      
+      setTimeout(() => {
+        const newPos = start + indent.length + 6
+        textarea.setSelectionRange(newPos, newPos)
+      }, 0)
+      return
+    }
+  }
+  
   // Tab 键插入空格
   if (e.key === 'Tab') {
     e.preventDefault()
@@ -142,9 +235,11 @@ const wordCount = computed(() => {
 </script>
 
 <template>
-  <div class="markdown-editor rounded-xl border border-border bg-bg-raised overflow-hidden">
-    <!-- 标签页切换 -->
-    <div class="flex items-center justify-between border-b border-border bg-bg-surface">
+  <div class="markdown-editor border border-border bg-bg-raised overflow-hidden" :class="{ 'flex h-full': props.mode === 'split' }">
+    <!-- tabs 模式：标签切换 -->
+    <template v-if="props.mode === 'tabs'">
+      <!-- 标签页切换 -->
+      <div class="flex items-center justify-between border-b border-border bg-bg-surface">
       <div class="flex">
         <button
           class="px-4 py-2.5 text-sm font-medium transition-colors relative"
@@ -229,9 +324,9 @@ const wordCount = computed(() => {
         v-if="content.trim()" 
         :content="content" 
       />
-      <div v-else class="text-text-muted text-center py-8">
-        <span class="i-tabler-markdown text-4xl mb-2 block opacity-50" />
-        <p>Nothing to preview yet...</p>
+      <div v-else class="h-full flex flex-col items-center justify-center text-text-muted">
+        <span class="i-tabler-markdown text-4xl mt-5 mb-2 opacity-50" />
+        <p class="text-sm">Nothing to preview yet...</p>
       </div>
     </div>
     
@@ -242,6 +337,119 @@ const wordCount = computed(() => {
       <span><kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">K</kbd> Link</span>
       <span><kbd class="kbd">Tab</kbd> Indent</span>
     </div>
+    </template>
+
+    <!-- split 模式：左编辑右预览 -->
+    <template v-else-if="props.mode === 'split'">
+      <!-- 左侧编辑器 -->
+      <div v-show="showWrite" class="flex-1 flex flex-col border-r border-border min-w-0">
+        <!-- 编辑器头部 -->
+        <div class="flex items-center justify-between border-b border-border bg-bg-surface px-4 py-2 flex-shrink-0">
+          <div class="flex items-center gap-2 text-sm font-medium text-text">
+            <span class="i-tabler-pencil text-base" />
+            Write
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="text-xs text-text-muted flex items-center gap-3">
+              <span>{{ wordCount.chars }} chars</span>
+              <span>{{ wordCount.words }} words</span>
+            </div>
+            <button 
+              v-if="showPreview"
+              class="p-1.5 rounded-md text-text-secondary hover:text-text hover:bg-bg-hover transition-colors"
+              title="Hide editor"
+              @click="toggleWrite"
+            >
+              <span class="i-tabler-layout-sidebar-left-collapse text-lg" />
+            </button>
+          </div>
+        </div>
+        
+        <!-- 工具栏 -->
+        <div class="flex flex-wrap items-center gap-0.5 p-2 border-b border-border bg-bg-surface/50 flex-shrink-0">
+          <template v-for="(button, index) in toolbarButtons" :key="index">
+            <div v-if="button.type === 'divider'" class="w-px h-5 bg-border mx-1" />
+            <button
+              v-else
+              class="p-1.5 rounded-md text-text-secondary hover:text-text hover:bg-bg-hover transition-colors"
+              :title="button.title"
+              @click="insertMarkdown(button)"
+            >
+              <span :class="button.icon" class="text-lg" />
+            </button>
+          </template>
+        </div>
+        
+        <!-- 编辑区 -->
+        <textarea
+          ref="textareaRef"
+          v-model="content"
+          class="flex-1 p-4 bg-transparent text-text resize-none outline-none font-mono text-sm leading-relaxed placeholder:text-text-muted overflow-auto"
+          :placeholder="placeholder"
+          @keydown="handleKeydown"
+        />
+        
+        <!-- 快捷键提示 -->
+        <div class="px-4 py-2 border-t border-border bg-bg-surface/30 text-xs text-text-muted flex items-center gap-4 flex-shrink-0">
+          <span><kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">B</kbd> Bold</span>
+          <span><kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">I</kbd> Italic</span>
+          <span><kbd class="kbd">Ctrl</kbd> + <kbd class="kbd">K</kbd> Link</span>
+        </div>
+      </div>
+
+      <!-- 右侧预览 -->
+      <div v-show="showPreview" class="flex-1 flex flex-col bg-bg-surface min-w-0">
+        <!-- 预览头部 -->
+        <div class="flex items-center justify-between border-b border-border bg-bg-surface px-4 py-2 flex-shrink-0">
+          <div class="flex items-center gap-2 text-sm font-medium text-text">
+            <span class="i-tabler-eye text-base" />
+            Preview
+          </div>
+          <button 
+            v-if="showWrite"
+            class="p-1.5 rounded-md text-text-secondary hover:text-text hover:bg-bg-hover transition-colors"
+            title="Hide preview"
+            @click="togglePreview"
+          >
+            <span class="i-tabler-layout-sidebar-right-collapse text-lg" />
+          </button>
+        </div>
+        
+        <!-- 预览内容 -->
+        <div class="flex-1 overflow-auto p-8">
+          <WkMarkdownRenderer 
+            v-if="content.trim()" 
+            :content="content" 
+          />
+          <div v-else class="h-full flex flex-col items-center justify-center text-text-muted">
+            <span class="i-tabler-markdown text-4xl mb-2 opacity-50" />
+            <p class="text-sm">Nothing to preview yet...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 恢复按钮（当编辑器或预览被隐藏时） -->
+      <div v-if="!showWrite" class="flex items-center border-r border-border bg-bg-surface px-2">
+        <button 
+          class="p-2 rounded-md text-text-secondary hover:text-text hover:bg-bg-hover transition-colors"
+          title="Show editor"
+          @click="toggleWrite"
+        >
+          <span class="i-tabler-layout-sidebar-left-expand text-xl" />
+        </button>
+      </div>
+      <div v-if="!showPreview" class="flex items-center bg-bg-surface px-2">
+        <button 
+          class="p-2 rounded-md text-text-secondary hover:text-text hover:bg-bg-hover transition-colors"
+          title="Show preview"
+          @click="togglePreview"
+        >
+          <span class="i-tabler-layout-sidebar-right-expand text-xl" />
+        </button>
+      </div>
+    </template>
+
+    <!-- write-only 和 preview-only模式保持原样 -->
   </div>
 </template>
 

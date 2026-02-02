@@ -50,7 +50,7 @@ onMounted(() => {
       <!-- 404 数字 -->
       <div class="relative inline-block mb-8">
         <h1 class="text-[8rem] sm:text-[12rem] md:text-[16rem] font-bold leading-none select-none">
-          <span class="text-bg-surface">4</span>
+          <span class="text-bg-default">4</span>
           <span class="relative inline-block">
             <!-- Creeper 脸形状代替 0 -->
             <span class="text-brand">0</span>
@@ -64,7 +64,7 @@ onMounted(() => {
               </div>
             </div>
           </span>
-          <span class="text-bg-surface">4</span>
+          <span class="text-bg-default">4</span>
         </h1>
         
         <!-- 光晕效果 -->

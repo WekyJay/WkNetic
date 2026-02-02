@@ -36,9 +36,8 @@ public class CreatePostDTO {
     private String content;
     
     /**
-     * 所属话题ID
+     * 所属话题ID（发布时必填，草稿可以为空）
      */
-    @NotNull(message = "话题不能为空")
     private Long topicId;
     
     /**

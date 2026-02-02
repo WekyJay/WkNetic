@@ -197,7 +197,7 @@ INSERT IGNORE INTO `forum_topic` (`topic_name`, `topic_desc`, `icon`, `color`, `
 CREATE TABLE IF NOT EXISTS `forum_post` (
   `post_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '帖子ID',
   `user_id` bigint(20) NOT NULL COMMENT '发帖用户ID',
-  `topic_id` bigint(20) NOT NULL COMMENT '所属话题ID',
+  `topic_id` bigint(20) DEFAULT NULL COMMENT '所属话题ID（保存草稿时可以为空）',
   `title` varchar(200) NOT NULL COMMENT '帖子标题',
   `excerpt` varchar(500) DEFAULT NULL COMMENT '帖子简介/摘要',
   `content` text NOT NULL COMMENT 'Markdown格式内容',
@@ -224,7 +224,7 @@ CREATE TABLE IF NOT EXISTS `forum_post` (
   KEY `idx_pinned` (`is_pinned`, `create_time` DESC),
   KEY `idx_last_comment` (`last_comment_time` DESC),
   CONSTRAINT `fk_post_user` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_post_topic` FOREIGN KEY (`topic_id`) REFERENCES `forum_topic` (`topic_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_post_topic` FOREIGN KEY (`topic_id`) REFERENCES `forum_topic` (`topic_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='论坛帖子表';
 
 -- ----------------------------

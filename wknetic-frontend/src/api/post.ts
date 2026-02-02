@@ -6,7 +6,7 @@ export interface CreatePostDTO {
   title: string
   content: string
   excerpt?: string
-  topicId: number
+  topicId?: number
   tags?: string[]
   publish?: boolean
 }

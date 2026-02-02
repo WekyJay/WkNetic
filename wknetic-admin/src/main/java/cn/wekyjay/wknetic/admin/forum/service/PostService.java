@@ -65,6 +65,14 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
     public Long createPost(CreatePostDTO dto) {
         Long userId = SecurityUtils.getCurrentUserId();
         
+        // 设置状态：直接发布则进入审核，否则保存为草稿
+        boolean isPublish = Boolean.TRUE.equals(dto.getPublish());
+        
+        // 发布时必须选择话题，草稿可以没有
+        if (isPublish && (dto.getTopicId() == null || dto.getTopicId() <= 0)) {
+            throw new RuntimeException("发布帖子时必须选择话题");
+        }
+        
         // 创建帖子实体
         ForumPost post = new ForumPost();
         post.setUserId(userId);
@@ -73,8 +81,8 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
         post.setExcerpt(dto.getExcerpt());
         post.setContent(dto.getContent());
         
-        // 设置状态：直接发布则进入审核，否则保存为草稿
-        if (Boolean.TRUE.equals(dto.getPublish())) {
+        // 设置状态
+        if (isPublish) {
             post.setStatus(ForumPost.Status.UNDER_REVIEW.getCode());
         } else {
             post.setStatus(ForumPost.Status.DRAFT.getCode());
@@ -96,8 +104,10 @@ public class PostService extends ServiceImpl<ForumPostMapper, ForumPost> {
             handlePostTags(post.getPostId(), dto.getTags());
         }
         
-        // 更新话题帖子数
-        topicMapper.incrementPostCount(dto.getTopicId());
+        // 更新话题帖子数（仅当话题不为空时）
+        if (dto.getTopicId() != null && dto.getTopicId() > 0) {
+            topicMapper.incrementPostCount(dto.getTopicId());
+        }
         
         // 发布帖子创建事件
         if (Boolean.TRUE.equals(dto.getPublish())) {
