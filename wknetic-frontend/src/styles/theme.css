@@ -114,6 +114,7 @@ html.dark {
     width: 10px;
     height: 10px;
     background: transparent;
+    border-radius: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -138,6 +139,7 @@ html.dark {
 /* 暗色模式滚动条 */
 html.dark ::-webkit-scrollbar {
     background: #18181b;
+    border-radius: 5px;
 }
 
 html.dark ::-webkit-scrollbar-track {
@@ -163,10 +165,11 @@ html.dark ::-webkit-scrollbar-corner {
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--text-secondary) transparent;
+    
 }
 
 html.dark * {
-    scrollbar-color: #52525b #18181b;
+    scrollbar-color: #52525b transparent;
 }
 
 /* ==============================================

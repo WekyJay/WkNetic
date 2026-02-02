@@ -1,15 +1,16 @@
 <template>
-  <div class="space-y-6">
-    <!-- 页头 -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-[var(--text-default)]">板块管理</h1>
-        <p class="text-[var(--text-secondary)] mt-1">管理论坛板块，设置名称、图标和颜色</p>
+  <div>
+    <div class="space-y-6">
+      <!-- 页头 -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-[var(--text-default)]">板块管理</h1>
+          <p class="text-[var(--text-secondary)] mt-1">管理论坛板块，设置名称、图标和颜色</p>
+        </div>
+        <WkButton variant="primary" icon="i-tabler-plus" @click="handleCreate">
+          新建板块
+        </WkButton>
       </div>
-      <WkButton variant="primary" icon="i-tabler-plus" @click="handleCreate">
-        新建板块
-      </WkButton>
-    </div>
 
     <!-- 板块列表 -->
     <WkCard>
@@ -114,6 +115,7 @@
         </div>
       </div>
     </WkCard>
+    </div>
 
     <!-- 编辑/创建对话框 -->
     <el-dialog

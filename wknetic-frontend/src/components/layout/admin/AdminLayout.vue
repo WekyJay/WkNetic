@@ -361,6 +361,11 @@ function toggleSidebar() {
 </template>
 
 <style scoped>
+/* 后台布局不需要预留滚动条空间 */
+.admin-layout {
+  scrollbar-gutter: auto;
+}
+
 /* 使用固定像素值，完全避免 rem 单位和滚动条的影响 */
 .admin-sidebar {
   width: 256px;

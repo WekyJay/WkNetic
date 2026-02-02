@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { Icon } from '@iconify/vue'
+import { useVirtualList } from '@vueuse/core'
 import WkDialog, { type DialogSize } from './WkDialog.vue'
 import WkInput from './WkInput.vue'
 import WkButton from './WkButton.vue'
 
+// 直接导入 tabler 图标集的 icons.json
+import tablerIcons from '@iconify-json/tabler/icons.json'
+
 /**
  * 图标选择器弹窗组件
- * 用于选择Unocss图标
+ * 使用 @iconify/vue 渲染图标，支持虚拟滚动优化性能
  */
 
 export interface IconItem {
-  id: string
-  name: string
-  class: string
-  category: string
+  name: string        // 图标名称 (如 'home')
+  icon: string        // 完整图标名 (如 'tabler:home')
+  category: string    // 分类
 }
 
 interface Props {
@@ -23,7 +27,7 @@ interface Props {
   size?: DialogSize
   /** 是否显示 */
   modelValue?: boolean
-  /** 选中的图标 */
+  /** 选中的图标 (格式: 'tabler:home' 或 'i-tabler-home') */
   selectedIcon?: string
   /** 显示颜色选择器 */
   showColorPicker?: boolean
@@ -56,432 +60,78 @@ const selectedIcon = ref(props.selectedIcon)
 const selectedColor = ref(props.selectedColor)
 const activeCategory = ref('all')
 
-// 图标配置 - 按分类组织，支持动态生成
-const iconConfig: Record<string, { label: string; icons: Array<[string, string]> }> = {
-  common: {
-    label: '常用',
-    icons: [
-      ['home', '首页'],
-      ['dashboard', '仪表板'],
-      ['settings', '设置'],
-      ['user', '用户'],
-      ['users', '用户组'],
-      ['message', '消息'],
-      ['bell', '通知'],
-      ['bookmark', '收藏'],
-      ['heart', '收心'],
-      ['star', '星标'],
-    ]
-  },
-  ui: {
-    label: '界面元素',
-    icons: [
-      ['layout', '布局'],
-      ['menu', '菜单'],
-      ['menu-2', '菜单2'],
-      ['grid', '网格'],
-      ['list', '列表'],
-      ['layout-grid', '网格布局'],
-      ['layout-list', '列表布局'],
-      ['layout-navbar', '导航栏布局'],
-      ['layout-sidebar', '侧边栏布局'],
-      ['square', '方块'],
-      ['circle', '圆形'],
-      ['rectangle', '矩形'],
-    ]
-  },
-  arrow: {
-    label: '箭头',
-    icons: [
-      ['arrow-up', '上箭头'],
-      ['arrow-down', '下箭头'],
-      ['arrow-left', '左箭头'],
-      ['arrow-right', '右箭头'],
-      ['chevron-up', '上折角'],
-      ['chevron-down', '下折角'],
-      ['chevron-left', '左折角'],
-      ['chevron-right', '右折角'],
-      ['arrows-up-down', '上下箭头'],
-      ['arrows-left-right', '左右箭头'],
-      ['corner-up-left', '左上角'],
-      ['corner-up-right', '右上角'],
-      ['corner-down-left', '左下角'],
-      ['corner-down-right', '右下角'],
-    ]
-  },
-  social: {
-    label: '社交',
-    icons: [
-      ['brand-facebook', 'Facebook'],
-      ['brand-twitter', 'Twitter'],
-      ['brand-github', 'GitHub'],
-      ['brand-discord', 'Discord'],
-      ['brand-youtube', 'YouTube'],
-      ['brand-instagram', 'Instagram'],
-      ['brand-linkedin', 'LinkedIn'],
-      ['brand-telegram', 'Telegram'],
-      ['brand-whatsapp', 'WhatsApp'],
-      ['brand-slack', 'Slack'],
-      ['brand-weibo', '微博'],
-      ['brand-qq', 'QQ'],
-      ['brand-wechat', '微信'],
-    ]
-  },
-  file: {
-    label: '文件',
-    icons: [
-      ['file', '文件'],
-      ['file-text', '文本文件'],
-      ['file-code', '代码文件'],
-      ['file-image', '图片文件'],
-      ['file-music', '音乐文件'],
-      ['file-video', '视频文件'],
-      ['file-pdf', 'PDF文件'],
-      ['file-zip', '压缩文件'],
-      ['folder', '文件夹'],
-      ['folder-open', '打开文件夹'],
-      ['folder-plus', '新建文件夹'],
-      ['folder-minus', '删除文件夹'],
-      ['download', '下载'],
-      ['upload', '上传'],
-      ['copy', '复制'],
-      ['cut', '剪切'],
-      ['paste', '粘贴'],
-    ]
-  },
-  media: {
-    label: '媒体',
-    icons: [
-      ['photo', '图片'],
-      ['photo-plus', '添加图片'],
-      ['photo-off', '关闭图片'],
-      ['video', '视频'],
-      ['video-plus', '添加视频'],
-      ['music', '音乐'],
-      ['music-plus', '添加音乐'],
-      ['camera', '相机'],
-      ['camera-off', '关闭相机'],
-      ['microphone', '麦克风'],
-      ['microphone-off', '关闭麦克风'],
-      ['headphones', '耳机'],
-      ['volume', '音量'],
-      ['volume-off', '关闭声音'],
-      ['speaker', '扬声器'],
-      ['artboard', '画板'],
-      ['frame', '框架'],
-    ]
-  },
-  weather: {
-    label: '天气',
-    icons: [
-      ['sun', '太阳'],
-      ['moon', '月亮'],
-      ['cloud', '云'],
-      ['cloud-rain', '雨'],
-      ['cloud-snow', '雪'],
-      ['wind', '风'],
-      ['droplets', '水滴'],
-      ['snowflake', '雪花'],
-      ['umbrella', '伞'],
-      ['sun-moon', '日月'],
-    ]
-  },
-  tool: {
-    label: '工具',
-    icons: [
-      ['search', '搜索'],
-      ['search-off', '关闭搜索'],
-      ['edit', '编辑'],
-      ['trash', '删除'],
-      ['trash-off', '取消删除'],
-      ['plus', '添加'],
-      ['minus', '减少'],
-      ['multiply', '乘法'],
-      ['check', '确认'],
-      ['x', '取消'],
-      ['help', '帮助'],
-      ['question-mark', '问号'],
-      ['code', '代码'],
-      ['terminal', '终端'],
-      ['brackets-curly', '花括号'],
-      ['brand-html5', 'HTML5'],
-      ['brand-css3', 'CSS3'],
-      ['brand-javascript', 'JavaScript'],
-    ]
-  },
-  status: {
-    label: '状态',
-    icons: [
-      ['info-circle', '信息'],
-      ['alert-triangle', '警告'],
-      ['alert-circle', '错误'],
-      ['circle-check', '成功'],
-      ['loader-2', '加载'],
-      ['ban', '禁止'],
-      ['clock-off', '时间结束'],
-      ['mood-smile', '微笑'],
-      ['mood-sad', '难过'],
-      ['mood-confused', '困惑'],
-      ['mood-angry', '愤怒'],
-      ['thumbs-up', '点赞'],
-      ['thumbs-down', '踩'],
-      ['hand-rock', '摇滚手势'],
-      ['hand-paper', '纸牌手势'],
-      ['hand-scissors', '剪刀手势'],
-    ]
-  },
-  business: {
-    label: '业务',
-    icons: [
-      ['briefcase', '公文包'],
-      ['briefcase-2', '公文包2'],
-      ['building', '建筑'],
-      ['building-factory', '工厂'],
-      ['building-bank', '银行'],
-      ['handshake', '握手'],
-      ['target', '目标'],
-      ['trophy', '奖杯'],
-      ['medal', '奖章'],
-      ['wallet', '钱包'],
-      ['credit-card', '信用卡'],
-      ['coins', '硬币'],
-      ['money', '钱'],
-      ['receipt', '收据'],
-      ['receipt-2', '收据2'],
-      ['discount', '折扣'],
-      ['percent', '百分比'],
-      ['barcode', '条形码'],
-      ['qrcode', '二维码'],
-    ]
-  },
-  chart: {
-    label: '图表',
-    icons: [
-      ['chart-bar', '柱形图'],
-      ['chart-bar-stacked', '堆积柱形图'],
-      ['chart-line', '折线图'],
-      ['chart-pie', '饼图'],
-      ['chart-dots', '散点图'],
-      ['chart-area', '面积图'],
-      ['chart-area-line', '面积线图'],
-      ['chart-candle', '蜡烛图'],
-      ['chart-bubble', '气泡图'],
-      ['chart-radar', '雷达图'],
-      ['trending-up', '上升趋势'],
-      ['trending-down', '下降趋势'],
-      ['arrow-up-right', '右上箭头'],
-      ['arrow-down-right', '右下箭头'],
-      ['line-chart', '线性图表'],
-      ['axis-x', 'X轴'],
-      ['axis-y', 'Y轴'],
-    ]
-  },
-  communication: {
-    label: '通讯',
-    icons: [
-      ['mail', '邮件'],
-      ['mail-opened', '打开邮件'],
-      ['mail-fast', '快速邮件'],
-      ['mail-plus', '添加邮件'],
-      ['phone', '电话'],
-      ['phone-call', '通话'],
-      ['phone-plus', '添加电话'],
-      ['phone-missed', '未接电话'],
-      ['phone-outgoing', '外呼'],
-      ['phone-incoming', '来电'],
-      ['at', '@标签'],
-      ['hash', '#标签'],
-      ['comments', '评论'],
-      ['comment', '评论'],
-      ['comment-dots', '评论详情'],
-      ['comment-plus', '添加评论'],
-      ['send', '发送'],
-      ['share', '分享'],
-      ['share-2', '分享2'],
-      ['share-3', '分享3'],
-      ['brand-telegram', '电报'],
-      ['inbox', '收件箱'],
-      ['inbox-2', '收件箱2'],
-    ]
-  },
-  time: {
-    label: '时间',
-    icons: [
-      ['clock', '时钟'],
-      ['clock-2', '时钟2'],
-      ['clock-off', '关闭时钟'],
-      ['hourglass', '沙漏'],
-      ['hourglass-low', '沙漏(低)'],
-      ['hourglass-high', '沙漏(高)'],
-      ['hourglass-empty', '空沙漏'],
-      ['calendar', '日历'],
-      ['calendar-event', '日程'],
-      ['calendar-today', '今天'],
-      ['calendar-off', '关闭日历'],
-      ['calendar-plus', '添加日期'],
-      ['calendar-minus', '删除日期'],
-      ['date', '日期'],
-      ['history', '历史'],
-      ['history-toggle-10', '历史切换'],
-      ['alarm', '闹钟'],
-      ['alarm-plus', '添加闹钟'],
-      ['alarm-minus', '删除闹钟'],
-      ['stopwatch', '秒表'],
-      ['timer', '计时器'],
-      ['timer-off', '关闭计时器'],
-    ]
-  },
-  game: {
-    label: '游戏',
-    icons: [
-      ['dice', '骰子'],
-      ['dice-1', '骰子1'],
-      ['dice-2', '骰子2'],
-      ['dice-3', '骰子3'],
-      ['dice-4', '骰子4'],
-      ['dice-5', '骰子5'],
-      ['dice-6', '骰子6'],
-      ['gamepad', '手柄'],
-      ['gamepad-2', '手柄2'],
-      ['cards', '卡片'],
-      ['cards-diamond', '方块卡'],
-      ['cards-heart', '红心卡'],
-      ['cards-club', '梅花卡'],
-      ['cards-spade', '黑桃卡'],
-      ['puzzle', '拼图'],
-      ['ball', '球'],
-      ['ball-american-football', '美式足球'],
-      ['ball-basketball', '篮球'],
-      ['ball-bowling', '保龄球'],
-      ['tennis', '网球'],
-      ['chess', '国际象棋'],
-      ['chess-board', '棋盘'],
-      ['go', '围棋'],
-      ['player-play', '播放'],
-      ['player-pause', '暂停'],
-      ['player-stop', '停止'],
-    ]
-  },
-  security: {
-    label: '安全',
-    icons: [
-      ['lock', '锁定'],
-      ['lock-open', '打开'],
-      ['lock-off', '关闭'],
-      ['lock-check', '锁定确认'],
-      ['lock-exclamation', '锁定警告'],
-      ['unlock', '解锁'],
-      ['shield', '盾牌'],
-      ['shield-check', '盾牌确认'],
-      ['shield-warning', '盾牌警告'],
-      ['shield-off', '盾牌关闭'],
-      ['shield-exclamation', '盾牌感叹号'],
-      ['key', '钥匙'],
-      ['key-off', '关闭钥匙'],
-      ['keys', '多把钥匙'],
-      ['fingerprint', '指纹'],
-      ['eye', '查看'],
-      ['eye-off', '隐藏'],
-      ['eye-check', '查看确认'],
-      ['password', '密码'],
-      ['auth', '认证'],
-      ['encrypted', '加密'],
-    ]
-  },
-  network: {
-    label: '网络',
-    icons: [
-      ['wifi', '无线网'],
-      ['wifi-off', '关闭无线网'],
-      ['wifi-0', '无信号'],
-      ['wifi-1', '弱信号'],
-      ['wifi-2', '中信号'],
-      ['wifi-3', '强信号'],
-      ['router', '路由器'],
-      ['database', '数据库'],
-      ['database-import', '数据库导入'],
-      ['database-export', '数据库导出'],
-      ['database-plus', '添加数据库'],
-      ['database-minus', '删除数据库'],
-      ['server', '服务器'],
-      ['server-2', '服务器2'],
-      ['cloud', '云'],
-      ['cloud-upload', '云上传'],
-      ['cloud-download', '云下载'],
-      ['cloud-off', '云关闭'],
-      ['globe', '全球'],
-      ['globe-2', '地球2'],
-      ['world', '世界'],
-      ['world-latitude', '纬度'],
-      ['world-longitude', '经度'],
-      ['link', '链接'],
-      ['link-off', '取消链接'],
-      ['unlink', '取消链接'],
-      ['network', '网络'],
-      ['brand-internet-explorer', 'IE'],
-      ['brand-chrome', 'Chrome'],
-      ['brand-firefox', 'Firefox'],
-      ['brand-safari', 'Safari'],
-      ['rss', 'RSS订阅'],
-      ['broadcast', '广播'],
-    ]
-  },
-  editor: {
-    label: '编辑',
-    icons: [
-      ['pencil', '铅笔'],
-      ['pencil-2', '铅笔2'],
-      ['pen', '笔'],
-      ['pen-2', '笔2'],
-      ['palette', '调色板'],
-      ['highlight', '高亮'],
-      ['eraser', '橡皮擦'],
-      ['paint', '油漆桶'],
-      ['paintbrush', '画笔'],
-      ['crop', '裁剪'],
-      ['crop-2', '裁剪2'],
-      ['maximize', '放大'],
-      ['minimize', '缩小'],
-      ['rotate', '旋转'],
-      ['rotate-clockwise', '顺时针旋转'],
-      ['rotate-2', '旋转2'],
-      ['flip-horizontal', '水平翻转'],
-      ['flip-vertical', '垂直翻转'],
-      ['zoom-in', '放大'],
-      ['zoom-out', '缩小'],
-      ['zoom-check', '缩放确认'],
-      ['focus', '焦点'],
-      ['focus-2', '焦点2'],
-      ['aperture', '光圈'],
-      ['contrast', '对比度'],
-      ['brightness-half', '亮度'],
-      ['brightness-up', '增加亮度'],
-      ['brightness-down', '降低亮度'],
-    ]
-  }
+// 图标分类映射 - 根据图标名称前缀自动分类
+const categoryKeywords: Record<string, string[]> = {
+  common: ['home', 'dashboard', 'settings', 'user', 'users', 'message', 'bell', 'bookmark', 'heart', 'star', 'menu', 'dots'],
+  arrow: ['arrow', 'chevron', 'caret', 'corner', 'direction'],
+  social: ['brand-'],
+  file: ['file', 'folder', 'document', 'download', 'upload', 'copy', 'clipboard'],
+  media: ['photo', 'video', 'music', 'camera', 'microphone', 'headphone', 'volume', 'speaker', 'player'],
+  weather: ['sun', 'moon', 'cloud', 'rain', 'snow', 'wind', 'droplet', 'umbrella', 'temperature'],
+  tool: ['search', 'edit', 'trash', 'plus', 'minus', 'check', 'x', 'help', 'question', 'code', 'terminal', 'tool', 'hammer', 'wrench'],
+  status: ['info', 'alert', 'error', 'success', 'warning', 'loader', 'ban', 'mood', 'thumb', 'hand'],
+  business: ['briefcase', 'building', 'handshake', 'target', 'trophy', 'medal', 'wallet', 'credit-card', 'coin', 'money', 'receipt', 'discount', 'percent', 'barcode', 'qrcode'],
+  chart: ['chart', 'trending', 'graph', 'axis', 'report', 'analytics'],
+  communication: ['mail', 'phone', 'at', 'hash', 'comment', 'send', 'share', 'inbox', 'antenna', 'broadcast'],
+  time: ['clock', 'hourglass', 'calendar', 'date', 'history', 'alarm', 'stopwatch', 'timer'],
+  game: ['dice', 'gamepad', 'cards', 'puzzle', 'ball', 'tennis', 'chess', 'go', 'play', 'pause', 'stop'],
+  security: ['lock', 'unlock', 'shield', 'key', 'fingerprint', 'eye', 'password', 'auth', 'encrypt'],
+  network: ['wifi', 'router', 'database', 'server', 'cloud', 'globe', 'world', 'link', 'network', 'rss', 'api'],
+  editor: ['pencil', 'pen', 'palette', 'highlight', 'eraser', 'paint', 'brush', 'crop', 'zoom', 'focus', 'rotate', 'flip', 'brightness', 'contrast'],
+  layout: ['layout', 'grid', 'list', 'table', 'columns', 'rows', 'sidebar', 'navbar'],
+  shape: ['square', 'circle', 'rectangle', 'triangle', 'polygon', 'hexagon', 'octagon']
 }
 
-// 图标分类标签
-const iconCategories = Object.entries(iconConfig).reduce((acc, [key, value]) => {
-  acc[key] = value.label
-  return acc
-}, { all: '全部图标' } as Record<string, string>)
+// 分类标签
+const iconCategories: Record<string, string> = {
+  all: '全部图标',
+  common: '常用',
+  arrow: '箭头',
+  social: '社交品牌',
+  file: '文件',
+  media: '媒体',
+  weather: '天气',
+  tool: '工具',
+  status: '状态',
+  business: '业务',
+  chart: '图表',
+  communication: '通讯',
+  time: '时间',
+  game: '游戏',
+  security: '安全',
+  network: '网络',
+  editor: '编辑',
+  layout: '布局',
+  shape: '形状',
+  other: '其他'
+}
 
-// 动态生成icons数组
-const icons: IconItem[] = (() => {
-  const allIcons: IconItem[] = []
-  Object.entries(iconConfig).forEach(([category, { icons: categoryIcons }]) => {
-    categoryIcons.forEach(([iconName, label]) => {
-      allIcons.push({
-        id: iconName,
-        name: label,
-        class: `i-tabler-${iconName}`,
-        category
-      })
+// 根据图标名称获取分类
+function getIconCategory(iconName: string): string {
+  const lowerName = iconName.toLowerCase()
+  for (const [category, keywords] of Object.entries(categoryKeywords)) {
+    if (keywords.some(keyword => lowerName.includes(keyword))) {
+      return category
+    }
+  }
+  return 'other'
+}
+
+// 从 @iconify-json/tabler 解析所有图标
+const allIcons = computed<IconItem[]>(() => {
+  const icons: IconItem[] = []
+  const iconNames = Object.keys(tablerIcons.icons)
+  
+  for (const name of iconNames) {
+    icons.push({
+      name,
+      icon: `tabler:${name}`,
+      category: getIconCategory(name)
     })
-  })
-  return allIcons
-})()
+  }
+  
+  return icons
+})
 
 // 颜色选项
 const colorOptions = [
@@ -499,15 +149,12 @@ const colorOptions = [
 
 // 过滤后的图标
 const filteredIcons = computed(() => {
-  let result = icons
+  let result = allIcons.value
   
   // 按搜索词过滤
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter(icon => 
-      icon.name.toLowerCase().includes(query) || 
-      icon.id.toLowerCase().includes(query)
-    )
+    result = result.filter(icon => icon.name.toLowerCase().includes(query))
   }
   
   // 按分类过滤
@@ -518,9 +165,63 @@ const filteredIcons = computed(() => {
   return result
 })
 
-// 处理图标选择
-const handleIconSelect = (iconClass: string) => {
-  selectedIcon.value = iconClass
+// 计算每行显示的图标数量 (用于虚拟滚动)
+const ICONS_PER_ROW = 8
+const ROW_HEIGHT = 80 // 每行高度 (px)
+
+// 将图标按行分组
+const iconRows = computed(() => {
+  const rows: IconItem[][] = []
+  const icons = filteredIcons.value
+  for (let i = 0; i < icons.length; i += ICONS_PER_ROW) {
+    rows.push(icons.slice(i, i + ICONS_PER_ROW))
+  }
+  return rows
+})
+
+// 使用 @vueuse/core 的虚拟滚动
+const containerRef = ref<HTMLElement | null>(null)
+const { list: virtualRows, containerProps, wrapperProps } = useVirtualList(
+  iconRows,
+  {
+    itemHeight: ROW_HEIGHT,
+    overscan: 5
+  }
+)
+
+// 转换图标格式: 'tabler:home' <-> 'i-tabler-home'
+function toIconifyFormat(icon: string): string {
+  if (icon.startsWith('i-')) {
+    // i-tabler-home -> tabler:home
+    const parts = icon.slice(2).split('-')
+    if (parts.length >= 2) {
+      const prefix = parts[0]
+      const name = parts.slice(1).join('-')
+      return `${prefix}:${name}`
+    }
+  }
+  return icon
+}
+
+function toUnocssFormat(icon: string): string {
+  if (icon.includes(':')) {
+    // tabler:home -> i-tabler-home
+    return 'i-' + icon.replace(':', '-')
+  }
+  return icon
+}
+
+// 处理图标选择 - 存储为 iconify 格式
+const handleIconSelect = (icon: string) => {
+  selectedIcon.value = icon
+}
+
+// 检查图标是否被选中
+const isIconSelected = (icon: string): boolean => {
+  if (!selectedIcon.value) return false
+  const normalizedSelected = toIconifyFormat(selectedIcon.value)
+  const normalizedIcon = toIconifyFormat(icon)
+  return normalizedSelected === normalizedIcon
 }
 
 // 处理颜色选择
@@ -528,12 +229,13 @@ const handleColorSelect = (color: string) => {
   selectedColor.value = color
 }
 
-// 确认选择
+// 确认选择 - 输出为 unocss 格式 (i-tabler-xxx)
 const handleConfirm = () => {
   if (selectedIcon.value) {
-    emit('update:selectedIcon', selectedIcon.value)
+    const unocssIcon = toUnocssFormat(selectedIcon.value)
+    emit('update:selectedIcon', unocssIcon)
     emit('update:selectedColor', selectedColor.value)
-    emit('select', selectedIcon.value, selectedColor.value)
+    emit('select', unocssIcon, selectedColor.value)
     visible.value = false
   }
 }
@@ -543,19 +245,40 @@ const handleCancel = () => {
   visible.value = false
 }
 
+// 获取分类下的图标数量
+const getCategoryCount = (category: string): number => {
+  if (category === 'all') return allIcons.value.length
+  return allIcons.value.filter(icon => icon.category === category).length
+}
+
 // 初始化选中状态
 onMounted(() => {
-  selectedIcon.value = props.selectedIcon
+  selectedIcon.value = props.selectedIcon ? toIconifyFormat(props.selectedIcon) : ''
   selectedColor.value = props.selectedColor
 })
 
 // 监听props变化
 watch(() => props.selectedIcon, (val) => {
-  selectedIcon.value = val
+  selectedIcon.value = val ? toIconifyFormat(val) : ''
 })
 
 watch(() => props.selectedColor, (val) => {
   selectedColor.value = val
+})
+
+// 切换分类时重置虚拟滚动位置
+watch(activeCategory, async () => {
+  await nextTick()
+  if (containerRef.value) {
+    containerRef.value.scrollTop = 0
+  }
+})
+
+watch(searchQuery, async () => {
+  await nextTick()
+  if (containerRef.value) {
+    containerRef.value.scrollTop = 0
+  }
 })
 </script>
 
@@ -574,12 +297,12 @@ watch(() => props.selectedColor, (val) => {
         <label class="text-sm font-medium text-[var(--text-secondary)]">搜索图标</label>
         <WkInput
           v-model="searchQuery"
-          placeholder="输入图标名称搜索..."
+          placeholder="输入图标名称搜索 (如 home, user, settings...)"
           class="w-full"
           :clearable="true"
         >
           <template #prefix>
-            <span class="i-tabler-search" />
+            <Icon icon="tabler:search" class="w-4 h-4" />
           </template>
         </WkInput>
       </div>
@@ -587,7 +310,7 @@ watch(() => props.selectedColor, (val) => {
       <!-- 分类筛选 -->
       <div v-if="showCategories" class="flex flex-col gap-2">
         <label class="text-sm font-medium text-[var(--text-secondary)]">图标分类</label>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 max-h-50 overflow-y-auto">
           <WkButton
             v-for="(categoryName, categoryKey) in iconCategories"
             :key="categoryKey"
@@ -595,7 +318,7 @@ watch(() => props.selectedColor, (val) => {
             size="sm"
             @click="activeCategory = categoryKey"
           >
-            {{ categoryName }}
+            {{ categoryName }} ({{ getCategoryCount(categoryKey) }})
           </WkButton>
         </div>
       </div>
@@ -622,38 +345,55 @@ watch(() => props.selectedColor, (val) => {
       <div class="flex flex-col gap-2">
         <div class="flex items-center justify-between">
           <label class="text-sm font-medium text-[var(--text-secondary)]">
-            图标库 ({{ filteredIcons.length }})
+            图标库 ({{ filteredIcons.length }} / {{ allIcons.length }})
           </label>
           <div v-if="selectedIcon" class="flex items-center gap-2 text-sm">
             <span>已选择:</span>
             <div class="flex items-center gap-1">
-              <span :class="selectedIcon" :style="{ color: selectedColor }" class="text-xl" />
-              <span class="text-[var(--text-secondary)]">{{ selectedIcon }}</span>
+              <Icon 
+                :icon="selectedIcon" 
+                :style="{ color: selectedColor }" 
+                class="text-xl" 
+              />
+              <span class="text-[var(--text-secondary)]">{{ toUnocssFormat(selectedIcon) }}</span>
             </div>
           </div>
         </div>
         
-        <!-- 图标网格 -->
-        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 max-h-[300px] overflow-y-auto p-1">
-          <div
-            v-for="icon in filteredIcons"
-            :key="icon.id"
-            class="flex flex-col items-center justify-center p-3 rounded-lg cursor-pointer transition-all hover:bg-[var(--bg-hover)] border"
-            :class="{
-              'border-[var(--primary)] bg-[var(--primary-light)]': selectedIcon === icon.class,
-              'border-transparent': selectedIcon !== icon.class
-            }"
-            :title="icon.name"
-            @click="handleIconSelect(icon.class)"
-          >
-            <span 
-              :class="icon.class" 
-              class="text-2xl mb-1"
-              :style="{ color: selectedIcon === icon.class ? selectedColor : 'var(--text-default)' }"
-            />
-            <span class="text-xs text-[var(--text-secondary)] truncate w-full text-center">
-              {{ icon.name }}
-            </span>
+        <!-- 虚拟滚动图标网格 -->
+        <div 
+          v-bind="containerProps"
+          class="h-[320px] overflow-y-auto border border-bg-surface rounded-lg icon-grid-container"
+          @scroll="containerRef = $event.target as HTMLElement"
+        >
+          <div v-bind="wrapperProps" class="p-2">
+            <div 
+              v-for="{ data: row, index } in virtualRows" 
+              :key="index"
+              class="grid grid-cols-8 gap-2"
+              :style="{ height: ROW_HEIGHT + 'px' }"
+            >
+              <div
+                v-for="icon in row"
+                :key="icon.icon"
+                class="flex flex-col items-center justify-center p-2 rounded-lg cursor-pointer transition-all hover:bg-[var(--bg-hover)] border"
+                :class="{
+                  'border-[var(--primary)] bg-[var(--primary-light)]': isIconSelected(icon.icon),
+                  'border-transparent': !isIconSelected(icon.icon)
+                }"
+                :title="icon.name"
+                @click="handleIconSelect(icon.icon)"
+              >
+                <Icon 
+                  :icon="icon.icon" 
+                  class="text-2xl mb-1"
+                  :style="{ color: isIconSelected(icon.icon) ? selectedColor : 'var(--text-default)' }"
+                />
+                <span class="text-xs text-[var(--text-secondary)] truncate w-full text-center">
+                  {{ icon.name }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -674,11 +414,30 @@ watch(() => props.selectedColor, (val) => {
 
 <style scoped>
 :deep(.wk-dialog) {
-  max-height: 80vh;
+  max-height: 85vh;
 }
 
 /* 确保图标选择器显示在父级对话框之上 */
 .wk-icon-picker-dialog :deep(.wk-dialog-overlay) {
   z-index: 10000 !important;
+}
+
+/* 虚拟滚动容器滚动条样式 */
+.icon-grid-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.icon-grid-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.icon-grid-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.icon-grid-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 </style>

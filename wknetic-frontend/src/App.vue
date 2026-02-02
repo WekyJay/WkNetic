@@ -22,7 +22,7 @@ html {
   -webkit-overflow-scrolling: touch;
   height: 100%;
   overflow: auto;
-  scrollbar-gutter: stable;
+  /* scrollbar-gutter: stable; */
 }
 
 body {
