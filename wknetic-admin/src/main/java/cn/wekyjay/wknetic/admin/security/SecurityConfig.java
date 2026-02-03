@@ -77,6 +77,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/captcha/**").permitAll()         // 验证码接口
                 .requestMatchers("/api/v1/open/**").permitAll()            // 开放接口（首页数据、站点配置等）
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swagger UI
+                .requestMatchers("/ws-connect/**").permitAll()             // WebSocket 连接 (认证通过 STOMP)
                 // 其他所有请求必须认证
                 .anyRequest().authenticated()
             )

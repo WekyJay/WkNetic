@@ -13,6 +13,8 @@ import { computed, watch } from 'vue'
 export type DialogSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 
 interface Props {
+  /** 控制对话框显示/隐藏 */
+  modelValue?: boolean
   /** 对话框标题 */
   title?: string
   /** 对话框宽度 */
@@ -38,6 +40,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  modelValue: false,
   size: 'md',
   closable: true,
   modal: true,
@@ -57,7 +60,10 @@ const emit = defineEmits<{
   'closed': []
 }>()
 
-const visible = defineModel<boolean>({ default: false })
+const visible = computed({
+  get: () => props.modelValue,
+  set: (value) => emit('update:modelValue', value)
+})
 
 // 处理关闭
 const handleClose = () => {

@@ -416,3 +416,21 @@ CREATE TABLE IF NOT EXISTS `sys_notification` (
   CONSTRAINT `fk_notification_user` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_notification_sender` FOREIGN KEY (`sender_id`) REFERENCES `sys_user` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统通知表';
+
+-- 创建服务器Token表
+CREATE TABLE IF NOT EXISTS `sys_server_token` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `name` VARCHAR(64) NOT NULL COMMENT 'Token名称（便于识别）',
+    `token_value` VARCHAR(64) NOT NULL COMMENT 'Token值（UUID）',
+    `status` TINYINT NOT NULL DEFAULT 1 COMMENT '状态：0=禁用，1=启用',
+    `remark` VARCHAR(255) DEFAULT NULL COMMENT '备注',
+    `last_login_ip` VARCHAR(45) DEFAULT NULL COMMENT '最后登录IP',
+    `last_login_time` DATETIME DEFAULT NULL COMMENT '最后登录时间',
+    `create_by` VARCHAR(64) DEFAULT NULL COMMENT '创建人',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_token_value` (`token_value`),
+    KEY `idx_status` (`status`),
+    KEY `idx_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='服务器Token表';

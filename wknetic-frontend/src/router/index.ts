@@ -109,8 +109,8 @@ const routes: RouteRecordRaw[] = [
                     path: '/profile',
                     redirect: (to) => {
                         const auth = useAuthStore()
-                        if (auth.user?.id) {
-                            return `/user/${auth.user.id}`
+                        if (auth.user?.userId) {
+                            return `/user/${auth.user.userId}`
                         }
                         return '/login'
                     }
@@ -148,6 +148,22 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
+                    path: 'test-dialog',
+                    name: 'admin-test-dialog',
+                    component: () => import('@/pages/admin/TestDialog.vue'),
+                    meta: {
+                        title: 'Test Dialog'
+                    }
+                },
+                {
+                    path: 'server-tokens-simplified',
+                    name: 'admin-server-tokens-simplified',
+                    component: () => import('@/pages/admin/ServerTokenPageSimplified.vue'),
+                    meta: {
+                        title: 'Server Tokens Simplified'
+                    }
+                },
+                {
                     path: 'plugins',
                     name: 'admin-plugins',
                     component: () => import('@/pages/admin/PluginsPage.vue'),
@@ -178,6 +194,24 @@ const routes: RouteRecordRaw[] = [
                     component: () => import('@/pages/admin/TopicManagementPage.vue'),
                     meta: {
                         title: 'routes.adminTopics',
+                        requiresRole: ['MODERATOR', 'ADMIN']
+                    }
+                },
+                {
+                    path: 'server-monitor',
+                    name: 'admin-server-monitor',
+                    component: () => import('@/pages/admin/ServerMonitorPage.vue'),
+                    meta: {
+                        title: 'routes.adminServerMonitor',
+                        requiresRole: ['MODERATOR', 'ADMIN']
+                    }
+                },
+                {
+                    path: 'server-monitor/:token',
+                    name: 'admin-server-detail',
+                    component: () => import('@/pages/admin/ServerDetailPage.vue'),
+                    meta: {
+                        title: 'routes.adminServerDetail',
                         requiresRole: ['MODERATOR', 'ADMIN']
                     }
                 },

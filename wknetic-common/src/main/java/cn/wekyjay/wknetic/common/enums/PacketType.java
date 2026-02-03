@@ -96,7 +96,15 @@ public enum PacketType {
     // 安全/风控 (200-209)
     ANTI_CHEAT_ALERT       (200), // 反作弊告警
     BAN_NOTICE             (201), // 封禁/处罚通知
-    CLIENT_LOG_UPLOAD      (202); // 客户端日志上报
+    CLIENT_LOG_UPLOAD      (202), // 客户端日志上报
+
+    // 游戏服务器管理 (210-229)
+    SERVER_LOGIN           (210), // 游戏服务器登录（携带Token）
+    SERVER_LOGIN_RESP      (211), // 登录响应
+    SERVER_HEARTBEAT       (212), // 游戏服务器心跳
+    SERVER_INFO            (213), // 服务器信息（MOTD、玩家、插件等）
+    ADMIN_COMMAND          (214), // 管理员下发命令
+    ADMIN_COMMAND_RESP     (215); // 命令执行结果
 
     private final int id;
     PacketType(int id) { this.id = id; }

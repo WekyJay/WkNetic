@@ -1,21 +1,36 @@
 package cn.wekyjay.wknetic.socket.handler;
 
+import cn.wekyjay.wknetic.common.domain.SysServerToken;
+import cn.wekyjay.wknetic.common.dto.socket.PlayerInfoDto;
+import cn.wekyjay.wknetic.common.dto.socket.PluginInfoDto;
+import cn.wekyjay.wknetic.common.dto.socket.ServerInfoPacket;
+import cn.wekyjay.wknetic.common.dto.socket.ServerLoginPacket;
 import cn.wekyjay.wknetic.common.enums.PacketType;
+import cn.wekyjay.wknetic.common.mapper.SysServerTokenMapper;
 import cn.wekyjay.wknetic.socket.manager.ChannelManager;
+import cn.wekyjay.wknetic.socket.model.ServerSession;
 
 // 引入 Jackson
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import jakarta.annotation.Resource;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -25,32 +40,31 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
     @Resource
     private ChannelManager channelManager;
     
-    // ✅ 直接注入 Spring Boot 自带的 ObjectMapper
     @Resource
     private ObjectMapper objectMapper;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private SysServerTokenMapper serverTokenMapper;
+
     public static final String CHAT_TOPIC = "wknetic-global-chat";
+    public static final String SERVER_STATUS_TOPIC = "wknetic:server:status";
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, String msg) {
-        log.info("RECV: {}", msg);
+        log.debug("RECV: {}", msg);
 
         try {
-            // ✅ Jackson 解析方式：readTree
-            // 类似于 Fastjson 的 JSONObject，Jackson 用 JsonNode
             JsonNode json = objectMapper.readTree(msg);
             
-            // 安全取值
             if (!json.has("type")) return;
             int type = json.get("type").asInt();
 
-            // 通过枚举解码，优先按协议编号处理
             PacketType packetType = PacketType.getById(type);
             if (packetType == null) {
-                // 兼容旧编号，防止误判为聊天
+                // 兼容旧编号
                 if (type == 3) {
                     handleGameChat(json);
                     return;
@@ -67,6 +81,18 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
                     handleLogin(ctx, json);
                     break;
 
+                case SERVER_LOGIN:
+                    handleServerLogin(ctx, json);
+                    break;
+
+                case SERVER_HEARTBEAT:
+                    handleServerHeartbeat(ctx, json);
+                    break;
+
+                case SERVER_INFO:
+                    handleServerInfo(ctx, json);
+                    break;
+
                 case CHAT_MSG:
                 case PRIVATE_MSG:
                 case GROUP_CHAT:
@@ -77,32 +103,150 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
                 default:
                     log.warn("Unhandled packet type: {}", packetType);
                     break;
-                // ... 其他 case
             }
         } catch (Exception e) {
             log.error("Packet parse error", e);
         }
     }
 
-    // 处理器 - 游戏登录
-    private void handleLogin(ChannelHandlerContext ctx, JsonNode json) {
-        // Jackson 取字符串: node.get("key").asText()
-        String token = json.has("token") ? json.get("token").asText() : "";
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        // 连接断开时清理
+        channelManager.removeChannel(ctx.channel());
+        super.channelInactive(ctx);
+    }
 
-        // ... 验证逻辑不变 ...
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+        log.error("Channel exception", cause);
+        ctx.close();
+    }
+
+    /**
+     * 处理游戏服务器登录
+     */
+    private void handleServerLogin(ChannelHandlerContext ctx, JsonNode json) {
+        try {
+            ServerLoginPacket loginPacket = objectMapper.treeToValue(json, ServerLoginPacket.class);
+            String token = loginPacket.getToken();
+            
+            if (!StringUtils.hasText(token)) {
+                sendServerResponse(ctx, PacketType.SERVER_LOGIN_RESP, false, "Token不能为空");
+                ctx.close();
+                return;
+            }
+
+            // 验证Token
+            LambdaQueryWrapper<SysServerToken> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(SysServerToken::getTokenValue, token)
+                   .eq(SysServerToken::getStatus, 1);
+            SysServerToken serverToken = serverTokenMapper.selectOne(wrapper);
+
+            if (serverToken == null) {
+                sendServerResponse(ctx, PacketType.SERVER_LOGIN_RESP, false, "Token无效或已禁用");
+                ctx.close();
+                return;
+            }
+
+            // 获取登录IP
+            String loginIp = getClientIp(ctx.channel());
+
+            // 创建服务器会话
+            ServerSession session = ServerSession.builder()
+                    .token(token)
+                    .serverName(loginPacket.getServerName())
+                    .serverVersion(loginPacket.getServerVersion())
+                    .loginIp(loginIp)
+                    .loginTime(new Date())
+                    .lastActiveTime(new Date())
+                    .channel(ctx.channel())
+                    .build();
+
+            // 注册连接（单点登录）
+            channelManager.registerChannel(token, ctx.channel(), session);
+
+            // 更新数据库中的最后登录信息
+            serverTokenMapper.updateLastLogin(token, loginIp);
+
+            // 发送成功响应
+            sendServerResponse(ctx, PacketType.SERVER_LOGIN_RESP, true, "登录成功");
+            
+            log.info("游戏服务器登录成功: {} ({})", loginPacket.getServerName(), token);
+        } catch (Exception e) {
+            log.error("处理服务器登录失败", e);
+            sendServerResponse(ctx, PacketType.SERVER_LOGIN_RESP, false, "登录处理异常");
+            ctx.close();
+        }
+    }
+
+    /**
+     * 处理服务器心跳
+     */
+    private void handleServerHeartbeat(ChannelHandlerContext ctx, JsonNode json) {
+        ServerSession session = channelManager.getSession(ctx.channel());
+        if (session != null) {
+            session.setLastActiveTime(new Date());
+            channelManager.updateSession(ctx.channel(), session);
+        }
+    }
+
+    /**
+     * 处理服务器信息更新
+     */
+    private void handleServerInfo(ChannelHandlerContext ctx, JsonNode json) {
+        try {
+            ServerInfoPacket infoPacket = objectMapper.treeToValue(json, ServerInfoPacket.class);
+            
+            ServerSession session = channelManager.getSession(ctx.channel());
+            if (session == null) {
+                log.warn("收到未认证连接的服务器信息");
+                return;
+            }
+
+            // 更新会话信息
+            session.setMotd(infoPacket.getMotd());
+            session.setServerName(infoPacket.getServerName());
+            session.setOnlinePlayers(infoPacket.getOnlinePlayers());
+            session.setMaxPlayers(infoPacket.getMaxPlayers());
+            session.setTps(infoPacket.getTps());
+            session.setRamUsage(infoPacket.getRamUsage());
+            session.setMaxRam(infoPacket.getMaxRam());
+            session.setPlayerList(infoPacket.getPlayerList());
+            session.setPluginList(infoPacket.getPluginList());
+            session.setLastActiveTime(new Date());
+            
+            channelManager.updateSession(ctx.channel(), session);
+
+            // 发布到Redis，供管理后台推送到前端
+            // 设置token字段（确保前端能正确识别服务器）
+            infoPacket.setToken(session.getToken());
+            String redisKey = SERVER_STATUS_TOPIC + ":" + session.getToken();
+            stringRedisTemplate.convertAndSend(redisKey, objectMapper.writeValueAsString(infoPacket));
+            
+            log.debug("服务器状态更新: {} - 在线玩家: {}/{}", session.getServerName(), 
+                      infoPacket.getOnlinePlayers(), infoPacket.getMaxPlayers());
+        } catch (Exception e) {
+            log.error("处理服务器信息失败", e);
+        }
+    }
+
+    /**
+     * 处理游戏登录（兼容旧版）
+     */
+    private void handleLogin(ChannelHandlerContext ctx, JsonNode json) {
+        String token = json.has("token") ? json.get("token").asText() : "";
         boolean isValid = true; 
 
         if (isValid) {
-            // 保存用户通道映射，方便后续通信。
             channelManager.addChannel(token, ctx.channel());
-            // 发送响应
             sendJson(ctx, 100, "Login Success");
         }
     }
 
-    // 处理器 - 游戏聊天
+    /**
+     * 处理游戏聊天
+     */
     private void handleGameChat(JsonNode json) {
-        // 1. 提取数据
         String playerName = json.has("player") ? json.get("player").asText() : "";
         String content = json.has("msg") ? json.get("msg").asText() : "";
         String server = json.has("server") ? json.get("server").asText() : "Unknown";
@@ -110,7 +254,6 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
         String world = json.has("world") ? json.get("world").asText() : "Global";
         String uuid = json.has("uuid") ? json.get("uuid").asText() : "";
         
-        // 2. 构造要广播的数据 (可以加时间戳、服务器名等)
         ObjectNode broadcastMsg = objectMapper.createObjectNode();
         broadcastMsg.put("player", playerName);
         broadcastMsg.put("content", content);
@@ -119,39 +262,42 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
         broadcastMsg.put("time", time);
         broadcastMsg.put("world", world);
 
-        // 3. 【极速上报】推送到 Redis Channel
         stringRedisTemplate.convertAndSend(CHAT_TOPIC, broadcastMsg.toString());
 
-        // ==========================================
-        // 4. 【动作 B：存储】(给后来的人看)
-        // 使用 Redis List 结构，存最近 50 条
-        // ==========================================
         String historyKey = "wknetic:chat:history";
-        
-        // LPUSH: 从左边塞进去 (最新的在最上面)
         stringRedisTemplate.opsForList().leftPush(historyKey, broadcastMsg.toString());
-        
-        // LTRIM: 只保留前 50 条 (修剪列表)，防止 Redis 爆满
         stringRedisTemplate.opsForList().trim(historyKey, 0, 49);
         
         log.info("转发并保存聊天: [{}] {}", playerName, content);
-
     }
 
+    /**
+     * 发送服务器响应
+     */
+    private void sendServerResponse(ChannelHandlerContext ctx, PacketType type, boolean success, String message) {
+        ObjectNode resp = objectMapper.createObjectNode();
+        resp.put("type", type.getId());
+        resp.put("success", success);
+        resp.put("message", message);
+        resp.put("timestamp", System.currentTimeMillis());
+        ctx.writeAndFlush(resp.toString());
+    }
 
     /**
-     * 发送响应消息到客户端
-     * @param ctx
-     * @param code
-     * @param msg
+     * 发送JSON响应（兼容旧版）
      */
     private void sendJson(ChannelHandlerContext ctx, int code, String msg) {
-        // ✅ Jackson 构造 JSON：createObjectNode
         ObjectNode resp = objectMapper.createObjectNode();
         resp.put("code", code);
         resp.put("msg", msg);
-        
-        // 转为字符串发送
         ctx.writeAndFlush(resp.toString());
+    }
+
+    /**
+     * 获取客户端IP
+     */
+    private String getClientIp(Channel channel) {
+        InetSocketAddress address = (InetSocketAddress) channel.remoteAddress();
+        return address.getAddress().getHostAddress();
     }
 }

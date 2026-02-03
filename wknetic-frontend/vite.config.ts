@@ -26,5 +26,9 @@ export default defineConfig({
       // 这里的 './src' 意思是把 '@' 映射到项目根目录下的 src 文件夹
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  // 3. 添加 define 配置，为 SockJS 提供 global 变量
+  define: {
+    global: 'globalThis'
   }
 })

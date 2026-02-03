@@ -76,6 +76,12 @@ const menuItems: MenuItem[] = [
     badge: null 
   },
   { 
+    name: 'menu.serverMonitor', 
+    icon: 'i-tabler-server', 
+    path: '/admin/server-monitor',
+    badge: null 
+  },
+  { 
     name: 'menu.plugins', 
     icon: 'i-tabler-puzzle', 
     path: '/admin/plugins',

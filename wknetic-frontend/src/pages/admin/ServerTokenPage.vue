@@ -18,11 +18,9 @@ const isEditing = ref(false)
 const formLoading = ref(false)
 
 const formData = reactive({
-  tokenId: null as number | null,
-  tokenName: '',
-  description: '',
-  tags: '',
-  status: 1
+  id: null as number | null,
+  name: '',
+  remark: ''
 })
 
 const formErrors = reactive({
@@ -31,19 +29,17 @@ const formErrors = reactive({
 
 // 复制状态
 const copyingTokenId = ref<number | null>(null)
-const copyingSecretId = ref<number | null>(null)
 
 onMounted(() => {
   loadTokens()
 })
 
 async function loadTokens() {
-  loading.value = true
+  loading.value = false
   errorMessage.value = ''
   try {
     const response = await serverTokenApi.getTokenList()
-    tokens.value = response.data || []
-    console.log('Loaded tokens:', tokens.value)
+    tokens.value = response.data?.records || []
   } catch (error: any) {
     console.error('Load tokens error:', error)
     errorMessage.value = t('serverToken.loadFailed') + ': ' + (error.message || '')
@@ -60,20 +56,16 @@ function handleCreate() {
 
 function handleEdit(token: ServerToken) {
   isEditing.value = true
-  formData.tokenId = token.tokenId
-  formData.tokenName = token.tokenName
-  formData.description = token.description || ''
-  formData.tags = token.tags || ''
-  formData.status = token.status
+  formData.id = token.id
+  formData.name = token.name
+  formData.remark = token.remark || ''
   dialogVisible.value = true
 }
 
 function resetForm() {
-  formData.tokenId = null
-  formData.tokenName = ''
-  formData.description = ''
-  formData.tags = ''
-  formData.status = 1
+  formData.id = null
+  formData.name = ''
+  formData.remark = ''
   Object.keys(formErrors).forEach(key => {
     formErrors[key as keyof typeof formErrors] = ''
   })
@@ -82,10 +74,10 @@ function resetForm() {
 function validateForm(): boolean {
   let isValid = true
   
-  if (!formData.tokenName.trim()) {
+  if (!formData.name.trim()) {
     formErrors.tokenName = t('serverToken.tokenNameRequired')
     isValid = false
-  } else if (formData.tokenName.trim().length < 3) {
+  } else if (formData.name.trim().length < 3) {
     formErrors.tokenName = t('serverToken.tokenNameMin')
     isValid = false
   } else {
@@ -100,21 +92,16 @@ async function handleSubmit() {
   
   formLoading.value = true
   try {
-    if (isEditing.value && formData.tokenId) {
-      await serverTokenApi.updateToken({
-        tokenId: formData.tokenId,
-        tokenName: formData.tokenName,
-        description: formData.description,
-        tags: formData.tags,
-        status: formData.status
+    if (isEditing.value && formData.id) {
+      await serverTokenApi.updateToken(formData.id, {
+        name: formData.name,
+        remark: formData.remark
       })
       showSuccessMessage(t('serverToken.updateSuccess'))
     } else {
       await serverTokenApi.createToken({
-        tokenName: formData.tokenName,
-        description: formData.description,
-        tags: formData.tags,
-        status: formData.status
+        name: formData.name,
+        remark: formData.remark
       })
       showSuccessMessage(t('serverToken.createSuccess'))
     }
@@ -132,7 +119,7 @@ async function handleSubmit() {
 async function handleDelete(token: ServerToken) {
   try {
     await ElMessageBox.confirm(
-      t('serverToken.deleteConfirm') + ` "${token.tokenName}"?`,
+      t('serverToken.deleteConfirm') + ` "${token.name}"?`,
       t('common.warning'),
       {
         confirmButtonText: t('common.confirm'),
@@ -142,7 +129,7 @@ async function handleDelete(token: ServerToken) {
     )
     
     loading.value = true
-    await serverTokenApi.deleteToken(token.tokenId)
+    await serverTokenApi.deleteToken(token.id)
     showSuccessMessage(t('serverToken.deleteSuccess'))
     loadTokens()
   } catch (error: any) {
@@ -158,7 +145,7 @@ async function handleDelete(token: ServerToken) {
 async function handleToggleStatus(token: ServerToken) {
   try {
     const newStatus = token.status === 1 ? 0 : 1
-    await serverTokenApi.toggleTokenStatus(token.tokenId, newStatus as 0 | 1)
+    await serverTokenApi.toggleTokenStatus(token.id, newStatus as 0 | 1)
     token.status = newStatus
     showSuccessMessage(t('serverToken.statusUpdateSuccess'))
   } catch (error: any) {
@@ -180,18 +167,12 @@ async function handleRegenerateSecret(token: ServerToken) {
     )
     
     loading.value = true
-    const response = await serverTokenApi.regenerateSecret(token.tokenId)
-    const newToken = response.data
-    
-    const index = tokens.value.findIndex(t => t.tokenId === token.tokenId)
-    if (index !== -1) {
-      tokens.value[index] = newToken
-    }
-    
+    await serverTokenApi.regenerateToken(token.id)
     showSuccessMessage(t('serverToken.regenerateSuccess'))
+    loadTokens()
   } catch (error: any) {
     if (error !== 'cancel') {
-      console.error('Regenerate secret error:', error)
+      console.error('Regenerate token error:', error)
       showErrorMessage(t('serverToken.regenerateFailed') + ': ' + (error.message || ''))
     }
   } finally {
@@ -199,21 +180,14 @@ async function handleRegenerateSecret(token: ServerToken) {
   }
 }
 
-async function copyToClipboard(text: string, tokenId: number, type: 'token' | 'secret') {
+async function copyToClipboard(text: string, id: number) {
   try {
     await navigator.clipboard.writeText(text)
     
-    if (type === 'token') {
-      copyingTokenId.value = tokenId
-      setTimeout(() => {
-        copyingTokenId.value = null
-      }, 2000)
-    } else {
-      copyingSecretId.value = tokenId
-      setTimeout(() => {
-        copyingSecretId.value = null
-      }, 2000)
-    }
+    copyingTokenId.value = id
+    setTimeout(() => {
+      copyingTokenId.value = null
+    }, 2000)
     
     ElMessage.success(t('common.copiedToClipboard'))
   } catch (error) {
@@ -233,11 +207,6 @@ function showErrorMessage(message: string) {
   setTimeout(() => {
     errorMessage.value = ''
   }, 5000)
-}
-
-function maskSecret(secret: string): string {
-  if (secret.length <= 8) return '*'.repeat(secret.length)
-  return secret.substring(0, 4) + '*'.repeat(secret.length - 8) + secret.substring(secret.length - 4)
 }
 
 function formatDate(dateStr: string): string {
@@ -286,116 +255,105 @@ function formatDate(dateStr: string): string {
 
     <!-- Tokens Table -->
     <div class="bg-[var(--bg-raised)] rounded-lg border border-[var(--border-default)] overflow-hidden">
-      <el-table
-        :data="tokens"
-        style="width: 100%"
-        :empty-text="t('common.noData')"
-        row-key="tokenId"
-        class="!border-none"
-      >
-        <el-table-column prop="tokenName" :label="t('serverToken.tokenName')" min-width="150">
-          <template #default="{ row }">
-            <div class="font-medium text-[var(--text-default)]">{{ row.tokenName }}</div>
-            <div v-if="row.description" class="text-xs text-[var(--text-secondary)] mt-1">
-              {{ row.description }}
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="t('serverToken.tokenKey')" min-width="180">
-          <template #default="{ row }">
-            <div class="flex items-center gap-2">
-              <code class="bg-[var(--bg-surface)] px-2 py-1 rounded text-xs font-mono text-[var(--text-default)]">
-                {{ row.tokenKey.substring(0, 8) }}...{{ row.tokenKey.substring(row.tokenKey.length - 4) }}
-              </code>
-              <WkButton
-                variant="ghost"
-                size="sm"
-                :icon="copyingTokenId === row.tokenId ? 'i-tabler-check' : 'i-tabler-copy'"
-                @click="copyToClipboard(row.tokenKey, row.tokenId, 'token')"
-              />
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="t('serverToken.tags')" min-width="150">
-          <template #default="{ row }">
-            <div class="flex flex-wrap gap-1">
-              <el-tag
-                v-for="tag in row.tags.split(',')"
-                :key="tag"
-                v-show="tag"
-                size="small"
-              >
-                {{ tag.trim() }}
-              </el-tag>
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="t('serverToken.status')" width="100">
-          <template #default="{ row }">
-            <el-tag
-              :type="row.status === 1 ? 'success' : 'info'"
-              size="small"
-              effect="plain"
-            >
-              {{ row.status === 1 ? t('common.enabled') : t('common.disabled') }}
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="t('serverToken.createTime')" width="180">
-          <template #default="{ row }">
-            <span class="text-sm text-[var(--text-secondary)]">
-              {{ formatDate(row.createTime) }}
-            </span>
-          </template>
-        </el-table-column>
-
-        <el-table-column :label="t('common.actions')" align="center" width="220" fixed="right">
-          <template #default="{ row }">
-            <div class="flex items-center gap-1">
-              <WkButton
-                variant="ghost"
-                size="sm"
-                icon="i-tabler-key"
-                :title="t('serverToken.regenerateSecret')"
-                @click="handleRegenerateSecret(row)"
-              />
-              <WkButton
-                variant="ghost"
-                size="sm"
-                :icon="row.status === 1 ? 'i-tabler-ban' : 'i-tabler-check'"
-                @click="handleToggleStatus(row)"
-              />
-              <WkButton
-                variant="ghost"
-                size="sm"
-                icon="i-tabler-edit"
-                @click="handleEdit(row)"
-              />
-              <WkButton
-                variant="danger"
-                size="sm"
-                icon="i-tabler-trash"
-                @click="handleDelete(row)"
-              />
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-[var(--bg-surface)] border-b border-[var(--border-default)]">
+            <tr>
+              <th class="px-6 py-3 text-left text-sm font-medium text-[var(--text-secondary)]">{{ t('serverToken.tokenName') }}</th>
+              <th class="px-6 py-3 text-left text-sm font-medium text-[var(--text-secondary)]">{{ t('serverToken.tokenKey') }}</th>
+              <th class="px-6 py-3 text-left text-sm font-medium text-[var(--text-secondary)]">{{ t('serverToken.remark') }}</th>
+              <th class="px-6 py-3 text-left text-sm font-medium text-[var(--text-secondary)]">{{ t('serverToken.status') }}</th>
+              <th class="px-6 py-3 text-left text-sm font-medium text-[var(--text-secondary)]">{{ t('serverToken.createTime') }}</th>
+              <th class="px-6 py-3 text-center text-sm font-medium text-[var(--text-secondary)]">{{ t('common.actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="tokens.length === 0" class="border-b border-[var(--border-default)]">
+              <td colspan="6" class="px-6 py-8 text-center text-[var(--text-secondary)]">
+                {{ t('common.noData') }}
+              </td>
+            </tr>
+            <tr v-for="token in tokens" :key="token.id" class="border-b border-[var(--border-default)] hover:bg-[var(--bg-surface)]">
+              <td class="px-6 py-3">
+                <div class="font-medium text-[var(--text-default)]">{{ token.name }}</div>
+                <div v-if="token.remark" class="text-xs text-[var(--text-secondary)] mt-1">
+                  {{ token.remark }}
+                </div>
+              </td>
+              <td class="px-6 py-3">
+                <div class="flex items-center gap-2">
+                  <code class="bg-[var(--bg-surface)] px-2 py-1 rounded text-xs font-mono text-[var(--text-default)]">
+                    {{ token.tokenValue ? token.tokenValue.substring(0, 8) + '...' + token.tokenValue.substring(token.tokenValue.length - 4) : 'N/A' }}
+                  </code>
+                  <WkButton
+                    v-if="token.tokenValue"
+                    variant="ghost"
+                    size="sm"
+                    :icon="copyingTokenId === token.id ? 'i-tabler-check' : 'i-tabler-copy'"
+                    @click="copyToClipboard(token.tokenValue, token.id)"
+                  />
+                </div>
+              </td>
+              <td class="px-6 py-3">
+                <div class="text-sm text-[var(--text-default)]">
+                  {{ token.remark || '-' }}
+                </div>
+              </td>
+              <td class="px-6 py-3">
+                <el-tag
+                  :type="token.status === 1 ? 'success' : 'info'"
+                  size="small"
+                  effect="plain"
+                >
+                  {{ token.status === 1 ? t('common.enabled') : t('common.disabled') }}
+                </el-tag>
+              </td>
+              <td class="px-6 py-3 text-sm text-[var(--text-secondary)]">
+                {{ formatDate(token.createTime) }}
+              </td>
+              <td class="px-6 py-3">
+                <div class="flex items-center justify-center gap-1">
+                  <WkButton
+                    variant="ghost"
+                    size="sm"
+                    icon="i-tabler-key"
+                    :title="t('serverToken.regenerateSecret')"
+                    @click="handleRegenerateSecret(token)"
+                  />
+                  <WkButton
+                    variant="ghost"
+                    size="sm"
+                    :icon="token.status === 1 ? 'i-tabler-ban' : 'i-tabler-check'"
+                    @click="handleToggleStatus(token)"
+                  />
+                  <WkButton
+                    variant="ghost"
+                    size="sm"
+                    icon="i-tabler-edit"
+                    @click="handleEdit(token)"
+                  />
+                  <WkButton
+                    variant="danger"
+                    size="sm"
+                    icon="i-tabler-trash"
+                    @click="handleDelete(token)"
+                  />
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Create/Edit Dialog -->
     <WkDialog v-model="dialogVisible" :title="isEditing ? t('serverToken.editToken') : t('serverToken.createToken')" size="md">
-      <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
             {{ t('serverToken.tokenName') }} <span class="text-red-500">*</span>
           </label>
           <WkInput
-            v-model="formData.tokenName"
+            v-model="formData.name"
             :placeholder="t('serverToken.tokenNamePlaceholder')"
             :error="formErrors.tokenName"
           />
@@ -403,42 +361,15 @@ function formatDate(dateStr: string): string {
 
         <div>
           <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-            {{ t('serverToken.description') }}
+            {{ t('serverToken.remark') }}
           </label>
           <el-input
-            v-model="formData.description"
+            v-model="formData.remark"
             type="textarea"
             :rows="3"
-            :placeholder="t('serverToken.descriptionPlaceholder')"
+            :placeholder="t('serverToken.remarkPlaceholder')"
           />
         </div>
-
-        <div>
-          <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-            {{ t('serverToken.tags') }}
-          </label>
-          <WkInput
-            v-model="formData.tags"
-            :placeholder="t('serverToken.tagsPlaceholder')"
-          />
-          <p class="text-xs text-[var(--text-secondary)] mt-1">
-            {{ t('serverToken.tagsHint') }}
-          </p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-            {{ t('serverToken.status') }}
-          </label>
-          <select
-            v-model.number="formData.status"
-            class="w-full px-3 py-2 border border-[var(--border-default)] rounded-lg bg-[var(--bg-surface)] text-[var(--text-default)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-default)]"
-          >
-            <option :value="1">{{ t('common.enabled') }}</option>
-            <option :value="0">{{ t('common.disabled') }}</option>
-          </select>
-        </div>
-      </form>
 
       <template #footer>
         <WkButton variant="ghost" @click="dialogVisible = false">{{ t('common.cancel') }}</WkButton>

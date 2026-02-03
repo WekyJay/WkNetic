@@ -5,73 +5,80 @@ import api from './axios'
  */
 
 export interface ServerToken {
-  tokenId: number
-  tokenName: string
-  tokenKey: string
-  tokenSecret: string
-  description?: string
-  tags: string
+  id: number
+  name: string
+  tokenValue: string
+  remark?: string
   status: 0 | 1  // 0: 禁用, 1: 启用
-  lastUsedTime?: string
+  lastLoginIp?: string
+  lastLoginTime?: string
   createTime: string
   updateTime: string
 }
 
 export interface CreateServerTokenRequest {
-  tokenName: string
-  description?: string
-  tags: string
-  status: number
+  name: string
+  remark?: string
 }
 
 export interface UpdateServerTokenRequest {
-  tokenId: number
-  tokenName: string
-  description?: string
-  tags: string
-  status: number
+  name: string
+  remark?: string
+}
+
+export interface PageResult<T> {
+  records: T[]
+  total: number
+  size: number
+  current: number
+  pages: number
 }
 
 export const serverTokenApi = {
   /**
-   * 获取所有服务器Token列表
+   * 获取所有服务器Token列表（分页）
    */
-  getTokenList() {
-    return api.get<ServerToken[]>('/api/v1/admin/server-tokens')
+  getTokenList(page = 1, size = 10, name?: string, status?: number) {
+    return api.get<PageResult<ServerToken>>('/api/v1/admin/server-token/list', {
+      params: { page, size, name, status }
+    })
   },
 
   /**
    * 创建新的服务器Token
    */
   createToken(data: CreateServerTokenRequest) {
-    return api.post<ServerToken>('/api/v1/admin/server-tokens', data)
+    return api.post<ServerToken>('/api/v1/admin/server-token/create', data)
   },
 
   /**
    * 更新服务器Token
    */
-  updateToken(token: UpdateServerTokenRequest) {
-    return api.put<ServerToken>('/api/v1/admin/server-tokens', token)
+  updateToken(id: number, data: UpdateServerTokenRequest) {
+    return api.put<void>(`/api/v1/admin/server-token/update/${id}`, data)
   },
 
   /**
    * 删除服务器Token
    */
-  deleteToken(tokenId: number) {
-    return api.delete(`/api/v1/admin/server-tokens/${tokenId}`)
+  deleteToken(id: number) {
+    return api.delete(`/api/v1/admin/server-token/delete/${id}`)
   },
 
   /**
    * 切换Token状态（启用/禁用）
    */
-  toggleTokenStatus(tokenId: number, status: 0 | 1) {
-    return api.patch(`/api/v1/admin/server-tokens/${tokenId}/status`, { status })
+  toggleTokenStatus(id: number, status: 0 | 1) {
+    return api.put<void>(`/api/v1/admin/server-token/status/${id}`, null, {
+      params: { status }
+    })
   },
 
   /**
-   * 重新生成Token Secret
+   * 重新生成Token值
    */
-  regenerateSecret(tokenId: number) {
-    return api.post<ServerToken>(`/api/v1/admin/server-tokens/${tokenId}/regenerate`)
+  regenerateToken(id: number) {
+    return api.post<string>(`/api/v1/admin/server-token/regenerate/${id}`)
   }
 }
+
