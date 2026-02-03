@@ -30,15 +30,14 @@ public class ServerStatusListener implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
-            String channel = new String(message.getChannel());
             String msg = new String(message.getBody());
 
             JsonNode statusData = objectMapper.readTree(msg);
-            String token = statusData.has("token") ? statusData.get("token").asText() : "";
+            String sessionId = statusData.has("sessionId") ? statusData.get("sessionId").asText() : "";
 
             messagingTemplate.convertAndSend("/topic/server/monitor", msg);
             
-            log.debug("推送服务器状态到前端: {}", token);
+            log.debug("推送服务器状态到前端 [sessionId: {}]", sessionId);
         } catch (Exception e) {
             log.error("处理服务器状态更新失败", e);
         }

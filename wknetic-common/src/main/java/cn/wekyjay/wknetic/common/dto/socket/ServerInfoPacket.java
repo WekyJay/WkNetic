@@ -22,9 +22,14 @@ public class ServerInfoPacket implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 服务器Token
+     * 服务器Token（仅用于兼容旧版本）
      */
     private String token;
+
+    /**
+     * 会话ID（用于标识服务器连接）
+     */
+    private String sessionId;
 
     /**
      * 服务器名称

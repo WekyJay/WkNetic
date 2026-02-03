@@ -29,9 +29,9 @@
     <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-5">
       <div
         v-for="server in onlineServers"
-        :key="server.token"
+        :key="server.sessionId"
         class="bg-bg-raised rounded-3 cursor-pointer transition-all duration-200 card hover:(-translate-y-1 shadow-lg)"
-        @click="goToDetail(server.token)"
+        @click="goToDetail(server.sessionId)"
       >
         <div class="flex justify-between items-center mb-2">
           <h3 class="text-lg font-semibold m-0 text-gray-900 dark:text-gray-100">
@@ -125,7 +125,7 @@ const getMemoryColor = (ratio: number) => {
   return '#4caf50'
 }
 
-const goToDetail = (token: string) => {
-  router.push(`/admin/server-monitor/${token}`)
+const goToDetail = (sessionId: string) => {
+  router.push(`/admin/server-monitor/${sessionId}`)
 }
 </script>

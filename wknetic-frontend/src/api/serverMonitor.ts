@@ -19,7 +19,8 @@ export interface CreateTokenRequest {
 }
 
 export interface ServerInfo {
-  token: string
+  token: string // 保留为可选，兼容旧版本
+  sessionId: string // 会话ID，用于标识服务器连接
   serverName: string
   motd: string
   onlinePlayers: number
@@ -48,7 +49,8 @@ export interface PluginInfo {
 }
 
 export interface SendCommandRequest {
-  token: string
+  sessionId: string // 会话ID
+  token?: string // 兼容旧版本
   commandType: 'KICK' | 'BAN' | 'COMMAND' | 'MESSAGE'
   targetPlayer?: string
   command?: string

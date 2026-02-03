@@ -38,6 +38,8 @@ declare module 'vue' {
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
+    ElText: typeof import('element-plus/es')['ElText']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     ExtensionSlot: typeof import('./src/components/ExtensionSlot.vue')['default']
     FollowButton: typeof import('./src/components/user/FollowButton.vue')['default']
     ForCreatorsSection: typeof import('./src/components/home/ForCreatorsSection.vue')['default']

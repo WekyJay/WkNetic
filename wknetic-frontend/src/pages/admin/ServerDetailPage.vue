@@ -17,7 +17,7 @@
         <div class="card flex items-center gap-4">
           <i class="i-carbon-user text-4xl text-blue-500 dark:text-blue-400" />
           <div>
-            <div class="text-2xl font-semibold text-text">{{ server.onlinePlayers }} / {{ server.maxPlayers }}</div>
+            <div class="text-xl font-semibold text-text">{{ server.onlinePlayers }} / {{ server.maxPlayers }}</div>
             <div class="text-sm text-text-secondary mt-1">在线玩家</div>
           </div>
         </div>
@@ -25,7 +25,7 @@
         <div class="card flex items-center gap-4">
           <i class="i-carbon-dashboard text-4xl text-green-500 dark:text-green-400" />
           <div>
-            <div class="text-2xl font-semibold text-text">{{ server.tps?.toFixed(2) || 'N/A' }}</div>
+            <div class="text-xl font-semibold text-text">{{ server.tps?.toFixed(2) || 'N/A' }}</div>
             <div class="text-sm text-text-secondary mt-1">TPS</div>
           </div>
         </div>
@@ -33,7 +33,7 @@
         <div class="card flex items-center gap-4">
           <i class="i-carbon-chip text-4xl text-purple-500 dark:text-purple-400" />
           <div>
-            <div class="text-2xl font-semibold text-text">
+            <div class="text-xl font-semibold text-text">
               {{ formatMemory(server.ramUsage) }} / {{ formatMemory(server.maxRam) }}
             </div>
             <div class="text-sm text-text-secondary mt-1">内存使用</div>
@@ -41,9 +41,9 @@
         </div>
 
         <div class="card flex items-center gap-4">
-          <i class="i-carbon-plugin text-4xl text-orange-500 dark:text-orange-400" />
+          <i class="i-carbon-plug text-4xl text-orange-500 dark:text-orange-400" />
           <div>
-            <div class="text-2xl font-semibold text-text">{{ server.pluginList?.length || 0 }}</div>
+            <div class="text-xl font-semibold text-text">{{ server.pluginList?.length || 0 }}</div>
             <div class="text-sm text-text-secondary mt-1">插件数量</div>
           </div>
         </div>
@@ -92,86 +92,148 @@
       <!-- 在线玩家 -->
       <div v-show="activeTab === 'players'" class="card">
         <div v-if="!server.playerList || server.playerList.length === 0" class="flex-col-center py-15">
-          <p class="text-text-secondary">暂无在线玩家</p>
+          <el-empty description="暂无在线玩家">
+            <template #image>
+              <i class="i-carbon-user-multiple text-6xl text-text-secondary" />
+            </template>
+          </el-empty>
         </div>
-        <div v-else class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-bg-raised">
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">玩家名称</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">UUID</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">延迟</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">世界</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">游戏模式</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="player in server.playerList" :key="player.uuid" class="hover:bg-bg-hover transition-colors">
-                <td class="px-3 py-3 text-sm text-text border-b border-border">{{ player.name }}</td>
-                <td class="px-3 py-3 text-sm text-text-secondary border-b border-border">
-                  <code class="px-2 py-1 bg-bg-raised rounded text-xs font-mono">{{ player.uuid.substring(0, 8) }}...</code>
-                </td>
-                <td class="px-3 py-3 text-sm text-text border-b border-border">{{ player.ping }}ms</td>
-                <td class="px-3 py-3 text-sm text-text border-b border-border">{{ player.world }}</td>
-                <td class="px-3 py-3 text-sm text-text border-b border-border">{{ player.gameMode }}</td>
-                <td class="px-3 py-3 text-sm border-b border-border">
-                  <button 
-                    class="px-3 py-1 mr-2 border border-blue-500 dark:border-blue-400 bg-transparent text-blue-500 dark:text-blue-400 rounded cursor-pointer text-xs hover:(bg-blue-500 dark:bg-blue-400 text-white) transition-colors"
-                    @click="kickPlayer(player.name)"
-                  >
-                    踢出
-                  </button>
-                  <button 
-                    class="px-3 py-1 border border-red-500 dark:border-red-400 bg-transparent text-red-500 dark:text-red-400 rounded cursor-pointer text-xs hover:(bg-red-500 dark:bg-red-400 text-white) transition-colors"
-                    @click="banPlayer(player.name)"
-                  >
-                    封禁
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-else>
+          <el-table :data="server.playerList" stripe style="width: 100%">
+            <el-table-column prop="name" label="玩家名称" fixed="left" min-width="120">
+              <template #default="{ row }">
+                <div class="flex items-center gap-2">
+                  <i class="i-carbon-user-avatar text-lg text-blue-500" />
+                  <span class="font-medium">{{ row.name }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="uuid" label="UUID" min-width="220">
+              <template #default="{ row }">
+                <el-tag size="small" type="info">{{row.uuid}}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="ping" label="延迟" width="100">
+              <template #default="{ row }">
+                <div class="flex items-center gap-1">
+                  <i 
+                    :class="[
+                      'i-carbon-wifi',
+                      row.ping < 50 ? 'text-green-500' : row.ping < 100 ? 'text-yellow-500' : 'text-red-500'
+                    ]"
+                  />
+                  <span>{{ row.ping }}ms</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="world" label="世界" width="150">
+              <template #default="{ row }">
+                <div class="flex items-center gap-1">
+                  <i class="i-carbon-earth text-green-500" />
+                  <span>{{ row.world }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="gameMode" label="游戏模式" width="150">
+              <template #default="{ row }">
+                <el-tag 
+                  size="small" 
+                  :type="getGameModeType(row.gameMode)"
+                >
+                  {{ row.gameMode }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" min-width="160" fixed="right">
+              <template #default="{ row }">
+                <el-button 
+                  text
+                  type="primary" 
+                  @click="kickPlayer(row.name)"
+                >
+                  踢出
+                </el-button>
+                <el-button 
+                  text
+                  type="danger" 
+                  @click="banPlayer(row.name)"
+                >
+                  封禁
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
       </div>
 
       <!-- 插件列表 -->
       <div v-show="activeTab === 'plugins'" class="card">
         <div v-if="!server.pluginList || server.pluginList.length === 0" class="flex-col-center py-15">
-          <p class="text-text-secondary">暂无插件</p>
+          <el-empty description="暂无插件">
+            <template #image>
+              <i class="i-carbon-plug text-6xl text-text-secondary" />
+            </template>
+          </el-empty>
         </div>
-        <div v-else class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr class="bg-bg-raised">
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">插件名称</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">版本</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">状态</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">作者</th>
-                <th class="px-3 py-3 text-left text-sm font-semibold text-text border-b border-border">描述</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="plugin in server.pluginList" :key="plugin.name" class="hover:bg-bg-hover transition-colors">
-                <td class="px-3 py-3 text-sm font-semibold text-text border-b border-border">{{ plugin.name }}</td>
-                <td class="px-3 py-3 text-sm text-text border-b border-border">{{ plugin.version }}</td>
-                <td class="px-3 py-3 text-sm border-b border-border">
-                  <span 
-                    :class="[
-                      'badge',
-                      plugin.enabled 
-                        ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
-                        : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                    ]"
+        <div v-else>
+          <el-table :data="server.pluginList" stripe style="width: 100%">
+            <el-table-column prop="name" label="插件名称" min-width="150">
+              <template #default="{ row }">
+                <div class="flex items-center gap-2">
+                  <i class="i-carbon-cube text-lg text-purple-500" />
+                  <span class="font-semibold">{{ row.name }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column prop="version" label="版本" min-width="150">
+              <template #default="{ row }">
+                <el-text>{{ row.version || '-' }}</el-text>
+              </template>
+            </el-table-column>
+            <el-table-column prop="enabled" label="状态" width="120">
+              <template #default="{ row }">
+                <el-tag 
+                  size="small" 
+                  :type="row.enabled ? 'success' : 'danger'"
+                >
+                  <i :class="row.enabled ? 'i-carbon-checkmark-filled' : 'i-carbon-close-filled'" class="mr-1" />
+                  {{ row.enabled ? '启用' : '禁用' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="author" label="作者" min-width="200">
+              <template #default="{ row }">
+                <div v-if="row.author" class="flex flex-wrap gap-1">
+                  <el-tag 
+                    v-for="author in parseAuthors(row.author)" 
+                    :key="author"
+                    size="small"
+                    type="info"
                   >
-                    {{ plugin.enabled ? '启用' : '禁用' }}
-                  </span>
-                </td>
-                <td class="px-3 py-3 text-sm text-text-secondary border-b border-border">{{ plugin.author || '-' }}</td>
-                <td class="px-3 py-3 text-sm text-text-secondary border-b border-border">{{ plugin.description || '-' }}</td>
-              </tr>
-            </tbody>
-          </table>
+                    <i class="i-carbon-user mr-1" />
+                    {{ author }}
+                  </el-tag>
+                </div>
+                <span v-else class="text-text-secondary">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="description" label="描述" min-width="250">
+              <template #default="{ row }">
+                <el-tooltip 
+                  v-if="row.description" 
+                  :content="row.description" 
+                  placement="top"
+                  :show-after="500"
+                >
+                  <div class="truncate text-text-secondary">
+                    <i class="i-carbon-information mr-1" />
+                    {{ row.description }}
+                  </div>
+                </el-tooltip>
+                <span v-else class="text-text-secondary">-</span>
+              </template>
+            </el-table-column>
+          </el-table>
         </div>
       </div>
 
@@ -208,13 +270,14 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useServerMonitor } from '@/composables/useServerMonitor'
 import { sendCommand } from '@/api/serverMonitor'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const route = useRoute()
 const router = useRouter()
-const { getServerByToken } = useServerMonitor()
+const { getServerBySessionId } = useServerMonitor()
 
-const token = route.params.token as string
-const server = computed(() => getServerByToken(token))
+const sessionId = route.params.sessionId as string
+const server = computed(() => getServerBySessionId(sessionId))
 
 const activeTab = ref('players')
 const commandInput = ref('')
@@ -230,57 +293,110 @@ const goBack = () => {
   router.push('/admin/server-monitor')
 }
 
-const kickPlayer = async (playerName: string) => {
-  if (!confirm(`确定要踢出玩家 ${playerName} 吗？`)) return
+// 解析作者信息，过滤掉链接
+const parseAuthors = (authorString: string) => {
+  if (!authorString) return []
+  
+  // 按分号分割
+  const authors = authorString.split(/[,]/).map(item => item.trim()).filter(Boolean)
+  
+  // 过滤掉链接（包含http、www等）
+  return authors.filter(author => {
+    const lowerAuthor = author.toLowerCase()
+    return !lowerAuthor.includes('http://') && 
+           !lowerAuthor.includes('https://') && 
+           !lowerAuthor.includes('www.') &&
+           !lowerAuthor.startsWith('//') &&
+           !/^[a-z0-9-]+\.[a-z]{2,}/.test(lowerAuthor) // 过滤域名格式
+  })
+}
 
+// 获取游戏模式对应的标签类型
+const getGameModeType = (gameMode: string) => {
+  const modeMap: Record<string, any> = {
+    'SURVIVAL': 'success',
+    'CREATIVE': 'warning',
+    'ADVENTURE': 'primary',
+    'SPECTATOR': 'info'
+  }
+  return modeMap[gameMode?.toUpperCase()] || ''
+}
+
+const kickPlayer = async (playerName: string) => {
   try {
+    await ElMessageBox.confirm(
+      `确定要踢出玩家 ${playerName} 吗？`,
+      '确认踢出',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
     await sendCommand({
-      token,
+      sessionId,
       commandType: 'KICK',
       targetPlayer: playerName,
       reason: '管理员踢出'
     })
-    alert('命令已发送')
+    ElMessage.success('命令已发送')
   } catch (error) {
+    if (error === 'cancel') return
     console.error('发送命令失败:', error)
-    alert('操作失败')
+    ElMessage.error('操作失败')
   }
 }
 
 const banPlayer = async (playerName: string) => {
-  if (!confirm(`确定要封禁玩家 ${playerName} 吗？`)) return
-
-  const reason = prompt('封禁原因:')
-  if (!reason) return
-
   try {
+    const { value: reason } = await ElMessageBox.prompt(
+      `确定要封禁玩家 ${playerName} 吗？`,
+      '封禁玩家',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入封禁原因',
+        inputValidator: (value) => {
+          if (!value || !value.trim()) {
+            return '封禁原因不能为空'
+          }
+          return true
+        }
+      }
+    )
+
     await sendCommand({
-      token,
+      sessionId,
       commandType: 'BAN',
       targetPlayer: playerName,
       reason
     })
-    alert('命令已发送')
+    ElMessage.success('命令已发送')
   } catch (error) {
+    if (error === 'cancel') return
     console.error('发送命令失败:', error)
-    alert('操作失败')
+    ElMessage.error('操作失败')
   }
 }
 
 const executeCommand = async () => {
-  if (!commandInput.value.trim()) return
+  if (!commandInput.value.trim()) {
+    ElMessage.warning('请输入命令')
+    return
+  }
 
   try {
     await sendCommand({
-      token,
+      sessionId,
       commandType: 'COMMAND',
       command: commandInput.value
     })
-    alert('命令已发送')
+    ElMessage.success('命令已发送')
     commandInput.value = ''
   } catch (error) {
     console.error('发送命令失败:', error)
-    alert('操作失败')
+    ElMessage.error('操作失败')
   }
 }
 </script>

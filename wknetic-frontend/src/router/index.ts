@@ -207,7 +207,7 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
-                    path: 'server-monitor/:token',
+                    path: 'server-monitor/:sessionId',
                     name: 'admin-server-detail',
                     component: () => import('@/pages/admin/ServerDetailPage.vue'),
                     meta: {

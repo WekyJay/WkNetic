@@ -35,6 +35,7 @@
     "@iconify-json/tabler": "^1.2.26",
     "@iconify/utils": "^3.1.0",
     "@types/node": "^24.10.1",
+    "@types/sockjs-client": "^1.5.4",
     "@unocss/preset-wind3": "^66.6.0",
     "@unocss/reset": "^66.6.0",
     "@vitejs/plugin-vue": "^6.0.1",

@@ -19,11 +19,10 @@ import java.io.Serializable;
 @AllArgsConstructor
 public class AdminCommandPacket implements Serializable {
     private static final long serialVersionUID = 1L;
-
     /**
-     * 目标服务器Token
+     * 会话ID（用于标识目标服务器连接）
      */
-    private String token;
+    private String sessionId;
 
     /**
      * 命令类型：KICK, BAN, COMMAND, MESSAGE

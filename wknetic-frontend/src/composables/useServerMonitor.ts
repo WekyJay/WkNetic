@@ -4,7 +4,6 @@ import SockJS from 'sockjs-client'
 import type { ServerInfo } from '@/api/serverMonitor'
 import { useAuthStore } from '@/stores/auth'
 import { storageManager } from '@/utils/storage'
-import type { get } from '@vueuse/core'
 
 interface ServerStatus extends ServerInfo {
   isOnline: boolean
@@ -29,6 +28,7 @@ export function useServerMonitor() {
       return
     }
 
+    // TODO: 根据实际环境配置WebSocket URL，确定DOCKER容器部署时的地址
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
     const wsUrl = baseUrl + '/ws-connect'
 
@@ -91,7 +91,7 @@ export function useServerMonitor() {
 
   // 更新服务器状态
   const updateServerStatus = (info: ServerInfo) => {
-    const token = info.token
+    const sessionId = info.sessionId
     const now = Date.now()
 
     const status: ServerStatus = {
@@ -100,13 +100,13 @@ export function useServerMonitor() {
       lastUpdate: now
     }
 
-    servers.value.set(token, status)
+    servers.value.set(sessionId, status)
   }
 
   // 定时检查离线服务器
   const checkOfflineServers = () => {
     const now = Date.now()
-    servers.value.forEach((server, token) => {
+    servers.value.forEach((server, sessionId) => {
       if (now - server.lastUpdate > OFFLINE_THRESHOLD) {
         server.isOnline = false
       }
@@ -118,15 +118,15 @@ export function useServerMonitor() {
     return Array.from(servers.value.values()).filter(s => s.isOnline)
   }
 
-  // 获取指定Token的服务器信息
-  const getServerByToken = (token: string) => {
-    return servers.value.get(token)
+  // 获取指定SessionId的服务器信息
+  const getServerBySessionId = (sessionId: string) => {
+    return servers.value.get(sessionId)
   }
 
   // 使用引用计数管理连接生命周期
   onMounted(() => {
     connectionRefCount.value++
-    console.log('组件挂载，连接计数:', connectionRefCount.value)
+    console.debug('组件挂载，连接计数:', connectionRefCount.value)
     
     // 只在第一个组件挂载时建立连接
     if (connectionRefCount.value === 1) {
@@ -137,7 +137,7 @@ export function useServerMonitor() {
 
   onUnmounted(() => {
     connectionRefCount.value--
-    console.log('组件卸载，连接计数:', connectionRefCount.value)
+    console.debug('组件卸载，连接计数:', connectionRefCount.value)
     
     // 只在最后一个组件卸载时断开连接
     if (connectionRefCount.value === 0) {
@@ -153,6 +153,6 @@ export function useServerMonitor() {
     connect,
     disconnect,
     getOnlineServers,
-    getServerByToken
+    getServerBySessionId
   }
 }

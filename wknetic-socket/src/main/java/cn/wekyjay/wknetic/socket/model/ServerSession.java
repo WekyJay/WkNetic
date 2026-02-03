@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * 服务器会话信息
@@ -24,7 +25,13 @@ import java.util.List;
 public class ServerSession {
     
     /**
-     * Token
+     * 会话ID（用于日志和查询，避免暴露token）
+     */
+    @Builder.Default
+    private String sessionId = UUID.randomUUID().toString();
+    
+    /**
+     * Token（仅用于认证，不出现在日志中）
      */
     private String token;
     

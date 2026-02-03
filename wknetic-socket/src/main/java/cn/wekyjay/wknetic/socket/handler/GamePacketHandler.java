@@ -77,10 +77,6 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
                 case AUTH_REQUEST:
                 case HANDSHAKE:
                 case RECONNECT_REQUEST:
-                case RECONNECT_SUCCESS:
-                    handleLogin(ctx, json);
-                    break;
-
                 case SERVER_LOGIN:
                     handleServerLogin(ctx, json);
                     break;
@@ -168,10 +164,10 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             // 更新数据库中的最后登录信息
             serverTokenMapper.updateLastLogin(token, loginIp);
 
-            // 发送成功响应
-            sendServerResponse(ctx, PacketType.SERVER_LOGIN_RESP, true, "登录成功");
+            // 发送成功响应（包含sessionId）
+            sendServerLoginResponse(ctx, session.getSessionId(), true, "登录成功");
             
-            log.info("游戏服务器登录成功: {} ({})", loginPacket.getServerName(), token);
+            log.info("游戏服务器登录成功: {} [sessionId: {}]", loginPacket.getServerName(), session.getSessionId());
         } catch (Exception e) {
             log.error("处理服务器登录失败", e);
             sendServerResponse(ctx, PacketType.SERVER_LOGIN_RESP, false, "登录处理异常");
@@ -218,30 +214,18 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             channelManager.updateSession(ctx.channel(), session);
 
             // 发布到Redis，供管理后台推送到前端
-            // 设置token字段（确保前端能正确识别服务器）
-            infoPacket.setToken(session.getToken());
-            String redisKey = SERVER_STATUS_TOPIC + ":" + session.getToken();
+            // 设置sessionId字段（确保前端能正确识别服务器）
+            infoPacket.setSessionId(session.getSessionId());
+            String redisKey = SERVER_STATUS_TOPIC + ":" + session.getSessionId();
             stringRedisTemplate.convertAndSend(redisKey, objectMapper.writeValueAsString(infoPacket));
             
-            log.debug("服务器状态更新: {} - 在线玩家: {}/{}", session.getServerName(), 
-                      infoPacket.getOnlinePlayers(), infoPacket.getMaxPlayers());
+            log.debug("服务器状态更新: {} [sessionId: {}] - 在线玩家: {}/{}", session.getServerName(), 
+                      session.getSessionId(), infoPacket.getOnlinePlayers(), infoPacket.getMaxPlayers());
         } catch (Exception e) {
             log.error("处理服务器信息失败", e);
         }
     }
 
-    /**
-     * 处理游戏登录（兼容旧版）
-     */
-    private void handleLogin(ChannelHandlerContext ctx, JsonNode json) {
-        String token = json.has("token") ? json.get("token").asText() : "";
-        boolean isValid = true; 
-
-        if (isValid) {
-            channelManager.addChannel(token, ctx.channel());
-            sendJson(ctx, 100, "Login Success");
-        }
-    }
 
     /**
      * 处理游戏聊天
@@ -272,6 +256,19 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
     }
 
     /**
+     * 发送服务器登录响应（包含sessionId）
+     */
+    private void sendServerLoginResponse(ChannelHandlerContext ctx, String sessionId, boolean success, String message) {
+        ObjectNode resp = objectMapper.createObjectNode();
+        resp.put("type", PacketType.SERVER_LOGIN_RESP.getId());
+        resp.put("success", success);
+        resp.put("message", message);
+        resp.put("sessionId", sessionId);
+        resp.put("timestamp", System.currentTimeMillis());
+        ctx.writeAndFlush(resp.toString());
+    }
+
+    /**
      * 发送服务器响应
      */
     private void sendServerResponse(ChannelHandlerContext ctx, PacketType type, boolean success, String message) {
@@ -283,15 +280,6 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
         ctx.writeAndFlush(resp.toString());
     }
 
-    /**
-     * 发送JSON响应（兼容旧版）
-     */
-    private void sendJson(ChannelHandlerContext ctx, int code, String msg) {
-        ObjectNode resp = objectMapper.createObjectNode();
-        resp.put("code", code);
-        resp.put("msg", msg);
-        ctx.writeAndFlush(resp.toString());
-    }
 
     /**
      * 获取客户端IP

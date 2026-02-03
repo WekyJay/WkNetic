@@ -42,7 +42,7 @@ public class ServerMonitorController {
     public Result<Void> sendCommand(@Valid @RequestBody SendCommandRequest request) {
         try {
             AdminCommandPacket command = AdminCommandPacket.builder()
-                    .token(request.getToken())
+                    .sessionId(request.getSessionId())
                     .commandType(request.getCommandType())
                     .targetPlayer(request.getTargetPlayer())
                     .command(request.getCommand())
@@ -53,7 +53,7 @@ public class ServerMonitorController {
             String json = objectMapper.writeValueAsString(command);
             stringRedisTemplate.convertAndSend(ADMIN_COMMAND_TOPIC, json);
 
-            log.info("发送管理命令: {} - {}", request.getCommandType(), request.getToken());
+            log.info("发送管理命令: {} [sessionId: {}]", request.getCommandType(), request.getSessionId());
             return Result.success();
         } catch (Exception e) {
             log.error("发送命令失败", e);
@@ -63,8 +63,8 @@ public class ServerMonitorController {
 
     @Data
     public static class SendCommandRequest {
-        @NotBlank(message = "服务器Token不能为空")
-        private String token;
+        @NotBlank(message = "服务器SessionId不能为空")
+        private String sessionId;
 
         @NotBlank(message = "命令类型不能为空")
         private String commandType; // KICK, BAN, COMMAND, MESSAGE
