@@ -77,17 +77,23 @@ graph TD
 - [x] **Netty Server**: 实现 WebSocket 服务端与心跳检测
 - [x] **Spigot Client**: 编写 Minecraft 插件端的 Netty Client
 - [x] **Protocol**: 定义消息协议与序列化规范
-- [ ] **Chat Sync**: 实现【网页 <-> 游戏】双向聊天互通 `In Progress`
+- [x] **Chat Sync**: 实现【网页 <-> 游戏】双向聊天互通
+- [x] **Server Token**: 基于 Token 的服务器认证系统
+- [x] **Server Monitor**: 服务器远程监控与命令执行
 - [ ] **Player Sync**: 玩家登录/登出状态同步
-- [ ] **Data Stream**: 实时数据流与元数据同步 (Redis Pub/Sub)
+- [x] **Data Stream**: 实时数据流与元数据同步 (Redis Pub/Sub)
 
 ### Phase 4: 社区与体验 (Community & Extension)
 
 - [x] **Plugin System**: 用户插件管理系统基础架构
-- [ ] **Extension Slot**: Vue3 插件扩展点与动态组件加载
-- [ ] **Admin Panel**: 后台管理面板 (用户/角色/配置/日志管理)
+- [x] **Extension Slot**: Vue3 插件扩展点与动态组件加载
+- [x] **Admin Panel**: 后台管理面板 (用户/角色/配置/日志/服务器管理)
+- [x] **Forum System**: 论坛核心功能 (帖子/评论/话题/标签)
+- [x] **Social Features**: 社交互动 (点赞/收藏/关注/通知系统)
+- [x] **Content Moderation**: 内容审核与举报系统
+- [x] **Search Engine**: Elasticsearch 全文搜索集成
 - [ ] **SPI Loader**: 完整的插件生命周期管理
-- [ ] **Theming**: `tokens.css` 设计系统与像素风主题适配
+- [x] **Theming**: `theme.css` 设计系统与像素风主题适配
 
 ### Phase 5: 交付 (Delivery)
 
@@ -107,6 +113,47 @@ graph TD
 | **Style**    | UnoCSS                      | 原子化 CSS，方便主题定制   |
 | **Database** | MySQL 8 / Redis             | 持久化与高速缓存           |
 | **DevOps**   | Docker Compose              | 一键开箱即用               |
+
+## 🎯 已实现的核心功能 | Implemented Features
+
+### 🔐 系统与认证
+- ✅ JWT 认证与自动续签
+- ✅ RBAC 角色权限系统 (Admin/Moderator/VIP/User/Banned)
+- ✅ 动态系统配置管理
+- ✅ 基于 AOP 的操作日志记录
+- ✅ 服务器 Token 认证与管理
+
+### 💬 论坛社区
+- ✅ 帖子发布、编辑、审核工作流
+- ✅ 嵌套评论与回复系统
+- ✅ 话题分类与标签管理
+- ✅ 点赞、收藏、关注功能
+- ✅ 内容举报与审核系统
+- ✅ 实时通知推送
+- ✅ Elasticsearch 全文搜索
+
+### 🔌 服务器互通
+- ✅ Netty WebSocket 双向通信
+- ✅ 游戏内聊天与网页实时同步
+- ✅ 服务器远程监控面板
+- ✅ 远程命令执行
+- ✅ 心跳检测与自动重连
+
+### 🎨 前端体验
+- ✅ Vue3 + Pinia 状态管理
+- ✅ UnoCSS 原子化样式系统
+- ✅ 暗黑/像素双主题切换
+- ✅ 用户插件扩展系统
+- ✅ Markdown 编辑器与实时预览
+
+### 🛠️ 后台管理
+- ✅ 用户管理 (CRUD + 批量操作)
+- ✅ 角色权限管理
+- ✅ 话题与标签管理
+- ✅ 帖子审核工作台
+- ✅ 服务器 Token 管理
+- ✅ 系统配置中心
+- ✅ 操作日志查询
 
 ## 🤝 参与贡献 | Contributing
 
