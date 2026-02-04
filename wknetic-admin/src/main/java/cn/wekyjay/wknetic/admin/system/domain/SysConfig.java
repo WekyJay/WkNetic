@@ -40,6 +40,9 @@ public class SysConfig implements Serializable {
     /** 是否系统内置（0否 1是，系统内置不可删除） */
     private Integer isSystem;
 
+    /** 是否公开（0私有仅管理员 1公开可被前端读取） */
+    private Integer isPublic;
+
     /** 排序 */
     private Integer sortOrder;
 

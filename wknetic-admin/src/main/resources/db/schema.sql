@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `sys_config` (
   `config_label` varchar(100) DEFAULT '' COMMENT '配置标签（用于前端显示）',
   `config_desc` varchar(500) DEFAULT '' COMMENT '配置描述',
   `is_system` tinyint(1) DEFAULT 0 COMMENT '是否系统内置（0否 1是，系统内置不可删除）',
+  `is_public` tinyint(1) DEFAULT 0 COMMENT '是否公开（0私有仅管理员 1公开可被前端读取）',
   `sort_order` int(11) DEFAULT 0 COMMENT '排序',
   `status` tinyint(1) DEFAULT 1 COMMENT '状态（0停用 1启用）',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -40,19 +41,19 @@ CREATE TABLE IF NOT EXISTS `sys_config` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统配置表';
 
 -- 初始化系统配置数据
-INSERT IGNORE INTO `sys_config` (`config_key`, `config_value`, `config_type`, `config_group`, `config_label`, `config_desc`, `is_system`, `sort_order`) VALUES
-('site.name', 'WkNetic', 'string', 'site', '站点名称', '网站的名称', 1, 1),
-('site.logo', '/assets/logo.png', 'image', 'site', '站点Logo', '网站的Logo图片地址', 1, 2),
-('site.favicon', '/favicon.ico', 'image', 'site', '网站图标', '浏览器标签页图标', 1, 3),
-('site.keywords', 'WkNetic,社区,论坛', 'string', 'site', 'SEO关键词', '网站SEO关键词', 1, 4),
-('site.description', 'WkNetic社区平台', 'string', 'site', 'SEO描述', '网站SEO描述', 1, 5),
-('site.copyright', '© 2026 WkNetic. All rights reserved.', 'string', 'site', '版权信息', '网站底部版权信息', 1, 6),
-('site.icp', '', 'string', 'site', 'ICP备案号', '网站ICP备案号', 1, 7),
-('system.upload.max_size', '10485760', 'number', 'upload', '上传文件大小限制', '单位：字节，默认10MB', 1, 10),
-('system.upload.allowed_types', 'jpg,jpeg,png,gif,pdf,doc,docx', 'string', 'upload', '允许上传的文件类型', '多个类型用逗号分隔', 1, 11),
-('security.captcha.type', 'simple', 'string', 'security', '验证码类型', 'simple-简易验证码, cloudflare-Cloudflare Turnstile, none-无验证', 1, 20),
-('security.captcha.cloudflare.site_key', '', 'string', 'security', 'Cloudflare Site Key', 'Cloudflare Turnstile 站点密钥', 0, 21),
-('security.captcha.cloudflare.secret_key', '', 'string', 'security', 'Cloudflare Secret Key', 'Cloudflare Turnstile 密钥', 0, 22);
+INSERT IGNORE INTO `sys_config` (`config_key`, `config_value`, `config_type`, `config_group`, `config_label`, `config_desc`, `is_system`, `is_public`, `sort_order`) VALUES
+('site.name', 'WkNetic', 'string', 'site', '站点名称', '网站的名称', 1, 1, 1),
+('site.logo', '/assets/logo.png', 'image', 'site', '站点Logo', '网站的Logo图片地址', 1, 1, 2),
+('site.favicon', '/favicon.ico', 'image', 'site', '网站图标', '浏览器标签页图标', 1, 1, 3),
+('site.keywords', 'WkNetic,社区,论坛', 'string', 'site', 'SEO关键词', '网站SEO关键词', 1, 1, 4),
+('site.description', 'WkNetic社区平台', 'string', 'site', 'SEO描述', '网站SEO描述', 1, 1, 5),
+('site.copyright', '© 2026 WkNetic. All rights reserved.', 'string', 'site', '版权信息', '网站底部版权信息', 1, 1, 6),
+('site.icp', '', 'string', 'site', 'ICP备案号', '网站ICP备案号', 1, 1, 7),
+('system.upload.max_size', '10485760', 'number', 'upload', '上传文件大小限制', '单位：字节，默认10MB', 1, 0, 10),
+('system.upload.allowed_types', 'jpg,jpeg,png,gif,pdf,doc,docx', 'string', 'upload', '允许上传的文件类型', '多个类型用逗号分隔', 1, 0, 11),
+('security.captcha.type', 'simple', 'string', 'security', '验证码类型', 'simple-简易验证码, cloudflare-Cloudflare Turnstile, none-无验证', 1, 1, 20),
+('security.captcha.cloudflare.site_key', '', 'string', 'security', 'Cloudflare Site Key', 'Cloudflare Turnstile 站点密钥', 0, 1, 21),
+('security.captcha.cloudflare.secret_key', '', 'string', 'security', 'Cloudflare Secret Key', 'Cloudflare Turnstile 密钥', 0, 0, 22);
 
 -- ----------------------------
 -- Table structure for sys_user

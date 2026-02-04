@@ -53,6 +53,17 @@ public class ConfigController {
     }
 
     /**
+     * 获取公开配置（公开接口，无需登录）
+     * 返回所有标记为公开的配置，包括站点信息、主题设置等
+     */
+    @Operation(summary = "获取公开配置", description = "获取所有标记为公开的系统配置，无需登录")
+    @GetMapping("/config/public")
+    public Result<Map<String, String>> getPublicConfigs() {
+        Map<String, String> configs = configService.getPublicConfigs();
+        return Result.success(configs);
+    }
+
+    /**
      * 获取所有配置（需要管理员权限）
      */
     @PreAuthorize("hasRole('ADMIN')")

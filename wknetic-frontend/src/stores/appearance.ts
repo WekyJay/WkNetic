@@ -98,28 +98,25 @@ export const useAppearanceStore = defineStore('appearance', () => {
    */
   async function loadSystemConfig() {
     try {
-      const response = await configApi.getAllConfigs()
-      const configs = response.data || []
+      const response = await configApi.getPublicConfigs()
+      const configs = response.data || {}
       
       // 读取默认主题
-      const defaultThemeConfig = configs.find(c => c.configKey === 'theme.default')
-      if (defaultThemeConfig && defaultThemeConfig.configValue) {
-        systemDefaultTheme.value = defaultThemeConfig.configValue
+      if (configs['theme.default']) {
+        systemDefaultTheme.value = configs['theme.default']
         console.log('[Theme] 系统默认主题:', systemDefaultTheme.value)
       }
       
       // 读取用户是否可以切换主题
-      const changeableConfig = configs.find(c => c.configKey === 'theme.user_changeable')
-      if (changeableConfig) {
-        userCanChangeTheme.value = changeableConfig.configValue === '1'
+      if (configs['theme.user_changeable'] !== undefined) {
+        userCanChangeTheme.value = configs['theme.user_changeable'] === '1'
         console.log('[Theme] 用户可切换主题:', userCanChangeTheme.value)
       }
       
       // 读取自定义主题列表
-      const customThemesConfig = configs.find(c => c.configKey === 'theme.custom_themes')
-      if (customThemesConfig && customThemesConfig.configValue) {
+      if (configs['theme.custom_themes']) {
         try {
-          const themes = JSON.parse(customThemesConfig.configValue)
+          const themes = JSON.parse(configs['theme.custom_themes'])
           if (Array.isArray(themes)) {
             customThemes.value = themes
             console.log('[Theme] 自定义主题数量:', themes.length)

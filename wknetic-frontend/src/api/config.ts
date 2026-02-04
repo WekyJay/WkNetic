@@ -13,6 +13,7 @@ export interface SysConfig {
   configLabel: string
   configDesc: string
   isSystem: number
+  isPublic: number
   sortOrder: number
   status: number
   createTime: string
@@ -27,14 +28,21 @@ export interface ConfigGroup {
 
 export const configApi = {
   /**
-   * 获取所有配置
+   * 获取公开配置（无需登录）
+   */
+  getPublicConfigs() {
+    return api.get<Record<string, string>>('/api/v1/config/public')
+  },
+
+  /**
+   * 获取所有配置（管理员）
    */
   getAllConfigs() {
     return api.get<SysConfig[]>('/api/v1/admin/config/list')
   },
 
   /**
-   * 根据配置组获取配置
+   * 根据配置组获取配置（管理员）
    */
   getConfigsByGroup(group: string) {
     return api.get<SysConfig[]>(`/api/v1/admin/config/group/${group}`)
