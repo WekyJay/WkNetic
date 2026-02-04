@@ -5,7 +5,7 @@ import cn.wekyjay.wknetic.common.dto.socket.PlayerInfoDto;
 import cn.wekyjay.wknetic.common.dto.socket.PluginInfoDto;
 import cn.wekyjay.wknetic.common.dto.socket.ServerInfoPacket;
 import cn.wekyjay.wknetic.common.dto.socket.ServerLoginPacket;
-import cn.wekyjay.wknetic.common.enums.PacketType;
+import cn.wekyjay.wknetic.api.enums.PacketType;
 import cn.wekyjay.wknetic.common.mapper.SysServerTokenMapper;
 import cn.wekyjay.wknetic.socket.manager.ChannelManager;
 import cn.wekyjay.wknetic.socket.model.ServerSession;

@@ -1,7 +1,7 @@
 package cn.wekyjay.wknetic.socket.listener;
 
 import cn.wekyjay.wknetic.common.dto.socket.AdminCommandPacket;
-import cn.wekyjay.wknetic.common.enums.PacketType;
+import cn.wekyjay.wknetic.api.enums.PacketType;
 import cn.wekyjay.wknetic.socket.manager.ChannelManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;

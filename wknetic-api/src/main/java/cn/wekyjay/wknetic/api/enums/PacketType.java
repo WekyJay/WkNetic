@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.common.enums;
+package cn.wekyjay.wknetic.api.enums;
 
 public enum PacketType {
     // 基础连接/鉴权 (0-9)

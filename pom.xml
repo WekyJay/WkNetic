@@ -49,6 +49,7 @@
         <module>wknetic-community</module>
         <module>wknetic-sync</module>
         <module>wknetic-socket</module>
+        <module>wknetic-api</module>
     </modules>
 
     <dependencies>

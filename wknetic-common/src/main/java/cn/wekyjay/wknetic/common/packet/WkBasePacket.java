@@ -1,6 +1,6 @@
 package cn.wekyjay.wknetic.common.packet;
 
-import cn.wekyjay.wknetic.common.enums.PacketType;
+import cn.wekyjay.wknetic.api.enums.PacketType;
 import lombok.Getter;
 import lombok.Setter;
 
