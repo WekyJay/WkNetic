@@ -93,6 +93,12 @@ const chartLabels = computed(() => {
   })
 })
 
+const brandColor = getComputedStyle(document.documentElement)
+    .getPropertyValue('--brand-default')
+    .trim();
+
+console.log('Brand color:', brandColor)
+
 // Chart dataset for vue-data-ui
 const chartDataset = computed<VueUiXyDatasetItem[]>(() => {
   if (!postTrends.value || !Array.isArray(postTrends.value) || postTrends.value.length === 0) return []
@@ -103,7 +109,7 @@ const chartDataset = computed<VueUiXyDatasetItem[]>(() => {
       name: t('dashboard.posts'),
       series: validTrends.map(item => Number(item.postCount) || 0),
       type: 'bar',
-      // color: '#8A8A8A',
+      color: brandColor,
       // color: 'var(--brand-default)'
     }
   ]
@@ -112,7 +118,8 @@ const chartDataset = computed<VueUiXyDatasetItem[]>(() => {
 
 
 // Chart configuration for vue-data-ui VueUiXy
-const chartConfig = computed(() => ({
+const chartConfig = computed(():VueUiXyConfig => ({
+  theme: "dark",
   chart: {
     backgroundColor: 'transparent',
     color: '#CCCCCC',
@@ -120,19 +127,15 @@ const chartConfig = computed(() => ({
       show: false
     },
     height: 500,
-    highlighter: {
-      color: '#FFFFFF',
-      opacity: 0.5
-    },
     grid: {
       stroke: '#3A3A3A',
       showVerticalLines: false,
       labels: {
         color: '#888888',
-        show: false,
+        show: true,
         fontSize: 16,
         yAxis: {
-          showBaseline: false
+          showBaseline: true
         },
         xAxis: {
           showBaseline: true
@@ -153,11 +156,10 @@ const chartConfig = computed(() => ({
       }
     },
     title: {
-      show: false
+      show: true
     },
-
     legend: {
-      show: false
+      show: true
     },
     tooltip: {
       show: true,
