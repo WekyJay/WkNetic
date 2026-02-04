@@ -1,5 +1,9 @@
 {
   "welcome": "欢迎回来，以下是今天的动态。",
+  "welcome_back": "欢迎回来",
+  "post_trend_overview": "发帖趋势概览",
+  "recent_activity": "最近活动",
+  "quick_actions": "快捷入口",
   "login": "登录",
   "dashboard": "仪表板",
   "menu": {
@@ -116,7 +120,25 @@
     "top_projects": "热门项目",
     "recent_activities": "最近活动",
     "download_chart": "下载图表",
-    "user_growth": "用户增长"
+    "user_growth": "用户增长",
+    "total_users": "总用户数",
+    "online_users": "当前在线",
+    "total_posts": "总发帖数",
+    "pending_audit": "待审核数",
+    "now": "实时"
+  },
+  "dashboard": {
+    "7_days": "7天",
+    "30_days": "30天",
+    "posts": "帖子",
+    "no_data": "暂无数据",
+    "total_this_period": "本期总计",
+    "failed": "失败",
+    "available_quick_actions": "可用快捷入口",
+    "just_now": "刚刚",
+    "min_ago": "{n} 分钟前",
+    "hour_ago": "{n} 小时前",
+    "day_ago": "{n} 天前"
   },
   "register": {
     "title": "创建账户",

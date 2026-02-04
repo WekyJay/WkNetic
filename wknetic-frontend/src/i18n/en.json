@@ -1,5 +1,9 @@
 {
   "welcome": "Welcome back, here's what's happening today.",
+  "welcome_back": "Welcome back",
+  "post_trend_overview": "Post Trend Overview",
+  "recent_activity": "Recent Activity",
+  "quick_actions": "Quick Actions",
   "login": "Login",
   "dashboard": "Dashboard",
   "menu": {
@@ -115,7 +119,25 @@
     "top_projects": "Top Projects",
     "recent_activities": "Recent Activities",
     "download_chart": "Download Chart",
-    "user_growth": "User Growth"
+    "user_growth": "User Growth",
+    "total_users": "Total Users",
+    "online_users": "Online Now",
+    "total_posts": "Total Posts",
+    "pending_audit": "Pending Audit",
+    "now": "Now"
+  },
+  "dashboard": {
+    "7_days": "7 Days",
+    "30_days": "30 Days",
+    "posts": "posts",
+    "no_data": "No data available",
+    "total_this_period": "Total this period",
+    "failed": "Failed",
+    "available_quick_actions": "Available quick actions",
+    "just_now": "Just now",
+    "min_ago": "{n} min ago",
+    "hour_ago": "{n} hour ago | {n} hours ago",
+    "day_ago": "{n} day ago | {n} days ago"
   },
   "register": {
     "title": "Create Account",

@@ -435,3 +435,23 @@ CREATE TABLE IF NOT EXISTS `sys_server_token` (
     KEY `idx_status` (`status`),
     KEY `idx_create_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='服务器Token表';
+
+-- ----------------------------
+-- Table structure for user_quick_action
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `user_quick_action` (
+  `action_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '快捷入口ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `action_key` varchar(50) NOT NULL COMMENT '快捷入口标识（如：post_list, audit_pending）',
+  `action_name` varchar(100) NOT NULL COMMENT '快捷入口名称',
+  `action_url` varchar(255) NOT NULL COMMENT '快捷入口URL路径',
+  `icon` varchar(50) DEFAULT NULL COMMENT '图标（Font Awesome或自定义）',
+  `sort_order` tinyint(4) DEFAULT 1 COMMENT '显示排序（1-4）',
+  `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`action_id`),
+  KEY `idx_user_id_sort` (`user_id`, `sort_order`),
+  KEY `idx_status` (`status`),
+  CONSTRAINT `fk_quick_action_user` FOREIGN KEY (`user_id`) REFERENCES `sys_user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户快捷入口表';

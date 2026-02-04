@@ -1,106 +1,226 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { WkCard, WkButton, WkBadge } from '@/components/common'
+import { 
+  getDashboardStatistics, 
+  getPostTrend, 
+  getRecentActivities, 
+  getUserQuickActions,
+  getAvailableQuickActions,
+  saveUserQuickActions,
+  type DashboardStatistics,
+  type PostTrendItem,
+  type RecentActivity,
+  type QuickAction,
+  type AvailableQuickActionOption
+} from '@/api/dashboard'
 
 const { t } = useI18n()
 
-// 统计卡片数据
-const getStats = () => [
-  { 
-    label: t('pages.total_projects'),
-    value: '12,847',
-    change: '+12.5%',
-    trend: 'up',
-    icon: 'i-tabler-folders',
-    color: 'brand'
-  },
-  { 
-    label: t('pages.active_users'),
-    value: '845.2K',
-    change: '+8.2%',
-    trend: 'up',
-    icon: 'i-tabler-users',
-    color: 'blue'
-  },
-  { 
-    label: t('pages.downloads_today'),
-    value: '2.4M',
-    change: '+23.1%',
-    trend: 'up',
-    icon: 'i-tabler-download',
-    color: 'purple'
-  },
-  { 
-    label: t('pages.pending_reviews'),
-    value: '156',
-    change: '-5.4%',
-    trend: 'down',
-    icon: 'i-tabler-clock',
-    color: 'orange'
-  },
-]
+// Loading states
+const loading = ref(true)
+const trendLoading = ref(false)
+const activityLoading = ref(false)
 
-const stats = ref(getStats())
+// Data refs
+const statistics = ref<DashboardStatistics | null>(null)
+const postTrends = ref<PostTrendItem[]>([])
+const recentActivities = ref<RecentActivity[]>([])
+const quickActions = ref<QuickAction[]>([])
+const availableQuickActions = ref<AvailableQuickActionOption[]>([])
 
-// 最近活动数据
-const recentActivities = ref([
-  { 
-    type: 'project',
-    icon: 'i-tabler-package',
-    title: 'New mod submitted',
-    description: 'Sodium Extra v0.5.4 submitted for review',
-    time: '5 min ago',
-    user: 'FlashyReese'
-  },
-  { 
-    type: 'user',
-    icon: 'i-tabler-user-plus',
-    title: 'New user registered',
-    description: 'minecraft_lover_2024 joined WkNetic',
-    time: '12 min ago',
-    user: null
-  },
-  { 
-    type: 'report',
-    icon: 'i-tabler-flag',
-    title: 'Content reported',
-    description: 'Project "FakeMod" flagged for malware',
-    time: '28 min ago',
-    user: 'ModReviewer'
-  },
-  { 
-    type: 'update',
-    icon: 'i-tabler-refresh',
-    title: 'Project updated',
-    description: 'Fabric API released version 0.92.0',
-    time: '1 hour ago',
-    user: 'modmuss50'
-  },
-  { 
-    type: 'verified',
-    icon: 'i-tabler-circle-check',
-    title: 'Project verified',
-    description: 'Create mod verified and published',
-    time: '2 hours ago',
-    user: 'simibubi'
-  },
-])
+// Trend days filter
+const trendDays = ref(7)
 
-// 热门项目数据
-const topProjects = ref([
-  { name: 'Sodium', downloads: '45.2M', category: 'Optimization', growth: '+15%' },
-  { name: 'Fabric API', downloads: '38.7M', category: 'Library', growth: '+12%' },
-  { name: 'Iris Shaders', downloads: '28.4M', category: 'Shaders', growth: '+18%' },
-  { name: 'Lithium', downloads: '22.1M', category: 'Optimization', growth: '+8%' },
-  { name: 'Create', downloads: '19.8M', category: 'Technology', growth: '+22%' },
-])
+// Stats cards computed
+const statsCards = computed(() => {
+  if (!statistics.value) return []
+  
+  return [
+    { 
+      label: t('pages.total_users'),
+      value: statistics.value.totalUserCount.toLocaleString(),
+      change: `${statistics.value.totalUserChangeRate > 0 ? '+' : ''}${statistics.value.totalUserChangeRate.toFixed(2)}%`,
+      trend: statistics.value.totalUserChangeRate >= 0 ? 'up' : 'down',
+      icon: 'i-tabler-users',
+      color: 'brand'
+    },
+    { 
+      label: t('pages.online_users'),
+      value: statistics.value.onlineUserCount.toLocaleString(),
+      change: t('pages.now'),
+      trend: 'stable',
+      icon: 'i-tabler-user-check',
+      color: 'blue'
+    },
+    { 
+      label: t('pages.total_posts'),
+      value: statistics.value.totalPostCount.toLocaleString(),
+      change: `${statistics.value.totalPostChangeRate > 0 ? '+' : ''}${statistics.value.totalPostChangeRate.toFixed(2)}%`,
+      trend: statistics.value.totalPostChangeRate >= 0 ? 'up' : 'down',
+      icon: 'i-tabler-file-text',
+      color: 'purple'
+    },
+    { 
+      label: t('pages.pending_audit'),
+      value: statistics.value.pendingAuditCount.toLocaleString(),
+      change: `${statistics.value.pendingAuditChangeRate > 0 ? '+' : ''}${statistics.value.pendingAuditChangeRate.toFixed(2)}%`,
+      trend: statistics.value.pendingAuditChangeRate <= 0 ? 'up' : 'down',
+      icon: 'i-tabler-clock',
+      color: 'orange'
+    },
+  ]
+})
 
-// 图表数据（简化展示）
-const chartData = ref({
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-  downloads: [2.1, 2.4, 2.2, 2.8, 3.1, 2.9, 2.4],
-  users: [12, 15, 13, 18, 22, 19, 14],
+// Chart data
+const chartData = computed(() => {
+  if (postTrends.value.length === 0) {
+    return { labels: [], data: [] }
+  }
+  
+  return {
+    labels: postTrends.value.map(item => {
+      const date = new Date(item.date)
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }),
+    data: postTrends.value.map(item => item.postCount)
+  }
+})
+
+// Max value for chart scaling
+const maxChartValue = computed(() => {
+  if (chartData.value.data.length === 0) return 1
+  return Math.max(...chartData.value.data) * 1.2
+})
+
+// Fetch all dashboard data
+const loadDashboardData = async () => {
+  try {
+    loading.value = true
+    
+    // Fetch statistics
+    const statsResponse = await getDashboardStatistics()
+    statistics.value = statsResponse.data
+    
+    // Fetch post trends
+    await loadPostTrends()
+    
+    // Fetch recent activities
+    await loadRecentActivities()
+    
+    // Fetch user quick actions
+    await loadQuickActions()
+    
+    // Fetch available quick actions options
+    const availableResponse = await getAvailableQuickActions()
+    availableQuickActions.value = availableResponse.data
+  } catch (error) {
+    console.error('Failed to load dashboard data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Load post trends
+const loadPostTrends = async () => {
+  try {
+    trendLoading.value = true
+    const response = await getPostTrend(trendDays.value)
+    postTrends.value = response.data
+  } catch (error) {
+    console.error('Failed to load post trends:', error)
+  } finally {
+    trendLoading.value = false
+  }
+}
+
+// Load recent activities
+const loadRecentActivities = async () => {
+  try {
+    activityLoading.value = true
+    const response = await getRecentActivities(10)
+    recentActivities.value = response.data
+  } catch (error) {
+    console.error('Failed to load recent activities:', error)
+  } finally {
+    activityLoading.value = false
+  }
+}
+
+// Load quick actions
+const loadQuickActions = async () => {
+  try {
+    const response = await getUserQuickActions()
+    quickActions.value = response.data
+  } catch (error) {
+    console.error('Failed to load quick actions:', error)
+  }
+}
+
+// Handle trend days change
+const changeTrendDays = async (days: number) => {
+  trendDays.value = days
+  await loadPostTrends()
+}
+
+// Handle quick action click (navigate to action URL)
+const handleQuickAction = (action: QuickAction) => {
+  if (action.actionUrl) {
+    window.location.href = action.actionUrl
+  }
+}
+
+// Activity type icon mapping
+const getActivityIcon = (businessType: number): string => {
+  const iconMap: { [key: number]: string } = {
+    1: 'i-tabler-plus', // Add
+    2: 'i-tabler-pencil', // Edit
+    3: 'i-tabler-trash', // Delete
+    4: 'i-tabler-check', // Approve
+    5: 'i-tabler-download', // Export
+    6: 'i-tabler-upload', // Import
+  }
+  return iconMap[businessType] || 'i-tabler-help'
+}
+
+// Activity type color mapping
+const getActivityColor = (businessType: number): string => {
+  const colorMap: { [key: number]: string } = {
+    1: 'bg-blue-500/15 text-blue-500', // Add
+    2: 'bg-purple-500/15 text-purple-500', // Edit
+    3: 'bg-red-500/15 text-red-500', // Delete
+    4: 'bg-green-500/15 text-green-500', // Approve
+    5: 'bg-yellow-500/15 text-yellow-500', // Export
+    6: 'bg-indigo-500/15 text-indigo-500', // Import
+  }
+  return colorMap[businessType] || 'bg-gray-500/15 text-gray-500'
+}
+
+// Format time for display
+const formatTime = (dateTimeStr: string): string => {
+  try {
+    const date = new Date(dateTimeStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    
+    if (diffMins < 1) return t('dashboard.just_now')
+    if (diffMins < 60) return t('dashboard.min_ago', { n: diffMins })
+    if (diffHours < 24) return t('dashboard.hour_ago', { n: diffHours })
+    if (diffDays < 7) return t('dashboard.day_ago', { n: diffDays })
+    
+    return date.toLocaleDateString()
+  } catch {
+    return dateTimeStr
+  }
+}
+
+// Lifecycle
+onMounted(() => {
+  loadDashboardData()
 })
 </script>
 
@@ -110,22 +230,22 @@ const chartData = ref({
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 class="text-2xl font-bold text-[var(--text-default)]">{{ $t('dashboard') }}</h1>
-          <p class="text-[var(--text-secondary)] mt-1">{{ $t('welcome') }}</p>
+          <p class="text-[var(--text-secondary)] mt-1">{{ t('welcome_back') }}</p>
         </div>
         <div class="flex items-center gap-2">
-          <WkButton variant="secondary" size="sm" icon="i-tabler-download">
-            {{ t('pages.export') }}
-          </WkButton>
-          <WkButton variant="primary" size="sm" icon="i-tabler-plus">
-            {{ t('pages.new_project') }}
+          <WkButton variant="secondary" size="sm" icon="i-tabler-refresh" @click="loadDashboardData" :disabled="loading">
+            {{ t('refresh') }}
           </WkButton>
         </div>
       </div>
 
-      <!-- Stats cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Loading skeleton or Stats cards -->
+      <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div v-for="i in 4" :key="i" class="h-32 bg-[var(--bg-surface)] rounded-lg animate-pulse"></div>
+      </div>
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <WkCard 
-          v-for="stat in stats"
+          v-for="stat in statsCards"
           :key="stat.label"
           :hoverable="true"
         >
@@ -142,9 +262,13 @@ const chartData = ref({
               <span :class="stat.icon" class="text-xl"></span>
             </div>
             <WkBadge 
+              v-if="stat.trend !== 'stable'"
               :variant="stat.trend === 'up' ? 'success' : 'danger'"
               size="sm"
             >
+              {{ stat.change }}
+            </WkBadge>
+            <WkBadge v-else variant="default" size="sm">
               {{ stat.change }}
             </WkBadge>
           </div>
@@ -157,176 +281,144 @@ const chartData = ref({
 
       <!-- Charts and Activity row -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Downloads chart -->
+        <!-- Posts trend chart -->
         <WkCard class="lg:col-span-2">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-semibold text-[var(--text-default)]">Downloads Overview</h2>
+            <h2 class="text-lg font-semibold text-[var(--text-default)]">{{ t('post_trend_overview') }}</h2>
             <div class="flex items-center gap-2">
-              <WkButton variant="primary" size="sm">7 Days</WkButton>
-              <WkButton variant="ghost" size="sm">30 Days</WkButton>
-              <WkButton variant="ghost" size="sm">90 Days</WkButton>
+              <WkButton 
+                :variant="trendDays === 7 ? 'primary' : 'ghost'"
+                size="sm"
+                @click="changeTrendDays(7)"
+                :disabled="trendLoading"
+              >
+                {{ t('dashboard.7_days') }}
+              </WkButton>
+              <WkButton 
+                :variant="trendDays === 30 ? 'primary' : 'ghost'"
+                size="sm"
+                @click="changeTrendDays(30)"
+                :disabled="trendLoading"
+              >
+                {{ t('dashboard.30_days') }}
+              </WkButton>
             </div>
           </div>
-          <!-- Simple bar chart visualization -->
-          <div class="h-64 flex items-end justify-between gap-4 px-4">
+          
+          <!-- Chart -->
+          <div v-if="trendLoading" class="h-64 bg-[var(--bg-surface)] rounded animate-pulse"></div>
+          <div v-else-if="chartData.data.length > 0" class="h-64 flex items-end justify-between gap-3 px-4">
             <div 
-              v-for="(value, index) in chartData.downloads"
+              v-for="(value, index) in chartData.data"
               :key="index"
-              class="flex-1 flex flex-col items-center gap-2"
+              class="flex-1 flex flex-col items-center gap-2 group"
             >
               <div 
-                class="w-full bg-[var(--brand-default)]/80 rounded-t-lg transition-all hover:bg-[var(--brand-default)]"
-                :style="{ height: `${(value / 3.5) * 100}%` }"
-              ></div>
+                class="w-full bg-[var(--brand-default)]/80 rounded-t-lg transition-all group-hover:bg-[var(--brand-default)] cursor-pointer relative"
+                :style="{ height: `${(value / maxChartValue) * 100}%` }"
+                :title="`${chartData.labels[index]}: ${value} ${t('dashboard.posts')}`"
+              >
+                <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[var(--text-default)] text-[var(--bg-default)] text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  {{ value }}
+                </div>
+              </div>
               <span class="text-xs text-[var(--text-muted)]">{{ chartData.labels[index] }}</span>
             </div>
           </div>
+          <div v-else class="h-64 flex items-center justify-center text-[var(--text-secondary)]">
+            {{ t('dashboard.no_data') }}
+          </div>
+          
+          <!-- Stats -->
           <div class="mt-4 pt-4 border-t border-[var(--border-default)] flex items-center justify-between text-sm">
-            <span class="text-[var(--text-secondary)]">Total this week: <span class="text-[var(--text-default)] font-medium">17.9M downloads</span></span>
-            <WkBadge variant="success">+15.3% vs last week</WkBadge>
+            <span class="text-[var(--text-secondary)]">
+              {{ t('dashboard.total_this_period') }}: 
+              <span class="text-[var(--text-default)] font-medium">{{ postTrends.reduce((sum, item) => sum + item.postCount, 0) }} {{ t('dashboard.posts') }}</span>
+            </span>
           </div>
         </WkCard>
 
         <!-- Recent activity -->
         <WkCard>
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-[var(--text-default)]">Recent Activity</h2>
-            <WkButton variant="text" size="sm">View all</WkButton>
+            <h2 class="text-lg font-semibold text-[var(--text-default)]">{{ t('recent_activity') }}</h2>
+            <WkButton variant="text" size="sm" @click="loadRecentActivities">{{ t('refresh') }}</WkButton>
           </div>
-          <div class="space-y-4">
+          <div v-if="activityLoading" class="space-y-4">
+            <div v-for="i in 5" :key="i" class="h-12 bg-[var(--bg-surface)] rounded animate-pulse"></div>
+          </div>
+          <div v-else class="space-y-3 max-h-96 overflow-y-auto">
             <div 
-              v-for="activity in recentActivities"
-              :key="activity.title"
-              class="flex gap-3"
+              v-for="activity in recentActivities.slice(0, 8)"
+              :key="activity.logId"
+              class="flex gap-3 pb-3 border-b border-[var(--border-default)] last:border-0 last:pb-0"
             >
               <div 
                 :class="[
                   'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-                  activity.type === 'project' ? 'bg-[var(--brand-default)]/15 text-[var(--brand-default)]' :
-                  activity.type === 'user' ? 'bg-blue-500/15 text-blue-500' :
-                  activity.type === 'report' ? 'bg-red-500/15 text-red-500' :
-                  activity.type === 'verified' ? 'bg-[var(--brand-default)]/15 text-[var(--brand-default)]' :
-                  'bg-purple-500/15 text-purple-500'
+                  getActivityColor(activity.businessType)
                 ]"
               >
-                <span :class="activity.icon" class="text-lg"></span>
+                <span :class="getActivityIcon(activity.businessType)" class="text-lg"></span>
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-[var(--text-default)] truncate">{{ activity.title }}</p>
-                <p class="text-xs text-[var(--text-secondary)] truncate">{{ activity.description }}</p>
-                <p class="text-xs text-[var(--text-muted)] mt-1">{{ activity.time }}</p>
+                <div class="flex items-center gap-2 mt-1">
+                  <p class="text-xs text-[var(--text-secondary)]">{{ activity.operName }}</p>
+                  <span class="text-xs text-[var(--text-muted)]">•</span>
+                  <p class="text-xs text-[var(--text-muted)]">{{ formatTime(activity.operTime) }}</p>
+                </div>
+                <WkBadge v-if="activity.status === 0" variant="danger" size="sm" class="mt-1">
+                  {{ t('dashboard.failed') }}
+                </WkBadge>
               </div>
             </div>
           </div>
         </WkCard>
       </div>
 
-      <!-- Bottom row -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Top projects table -->
+      <!-- Quick actions -->
+      <div class="grid grid-cols-1 gap-6">
         <WkCard>
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-semibold text-[var(--text-default)]">Top Projects</h2>
-            <WkButton variant="text" size="sm">View all</WkButton>
+          <h2 class="text-lg font-semibold text-[var(--text-default)] mb-4">{{ t('quick_actions') }}</h2>
+          
+          <!-- Quick action buttons -->
+          <div v-if="quickActions.length > 0" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-6">
+            <div 
+              v-for="action in quickActions"
+              :key="action.actionId"
+              @click="handleQuickAction(action)"
+              class="group cursor-pointer"
+            >
+              <WkCard 
+                :hoverable="true"
+                :padding="'md'"
+                class="h-full"
+              >
+                <div v-if="action.icon" :class="['w-10 h-10 rounded-lg flex items-center justify-center mb-3', 'bg-[var(--brand-default)]/15 text-[var(--brand-default)]']">
+                <span :class="[action.icon, 'text-xl']"></span>
+                </div>
+                <p class="font-medium text-[var(--text-default)] truncate">{{ action.actionName }}</p>
+                <p class="text-xs text-[var(--text-secondary)] truncate mt-1">{{ action.actionUrl }}</p>
+              </WkCard>
+            </div>
           </div>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="text-left text-sm text-[var(--text-secondary)] border-b border-[var(--border-default)]">
-                  <th class="pb-3 font-medium">Project</th>
-                  <th class="pb-3 font-medium">Category</th>
-                  <th class="pb-3 font-medium text-right">Downloads</th>
-                  <th class="pb-3 font-medium text-right">Growth</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr 
-                  v-for="project in topProjects"
-                  :key="project.name"
-                  class="border-b border-[var(--border-default)] last:border-0 hover:bg-[var(--bg-surface)]/50"
-                >
-                  <td class="py-3">
-                    <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-lg bg-[var(--bg-surface)] flex items-center justify-center">
-                        <span class="i-tabler-package text-[var(--text-muted)]"></span>
-                      </div>
-                      <span class="font-medium text-[var(--text-default)]">{{ project.name }}</span>
-                    </div>
-                  </td>
-                  <td class="py-3">
-                    <WkBadge variant="default" size="sm">
-                      {{ project.category }}
-                    </WkBadge>
-                  </td>
-                  <td class="py-3 text-right text-[var(--text-default)]">{{ project.downloads }}</td>
-                  <td class="py-3 text-right">
-                    <WkBadge variant="success" size="sm">{{ project.growth }}</WkBadge>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </WkCard>
 
-        <!-- Quick actions -->
-        <WkCard>
-          <h2 class="text-lg font-semibold text-[var(--text-default)] mb-4">Quick Actions</h2>
-          <div class="grid grid-cols-2 gap-3">
-            <WkCard 
-              :hoverable="true"
-              :padding="'md'"
-              class="cursor-pointer"
-            >
-              <div class="w-10 h-10 rounded-lg bg-[var(--brand-default)]/15 text-[var(--brand-default)] flex items-center justify-center mb-3">
-                <span class="i-tabler-shield-check text-xl"></span>
+          <!-- All available actions -->
+          <div v-if="availableQuickActions.length > 0" class="pt-4 border-t border-[var(--border-default)]">
+            <p class="text-sm text-[var(--text-secondary)] mb-3">{{ t('dashboard.available_quick_actions') }}:</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div 
+                v-for="action in availableQuickActions"
+                :key="action.actionKey"
+                class="p-3 rounded-lg border border-[var(--border-default)] hover:border-[var(--brand-default)]/50 cursor-pointer transition-colors"
+              >
+                <div :class="['w-8 h-8 rounded flex items-center justify-center mb-2', 'bg-[var(--brand-default)]/10 text-[var(--brand-default)]']">
+                  <span :class="[action.icon, 'text-base']"></span>
+                </div>
+                <p class="text-xs font-medium text-[var(--text-default)] truncate">{{ action.actionName }}</p>
               </div>
-              <p class="font-medium text-[var(--text-default)]">Review Queue</p>
-              <div class="flex items-center gap-2 mt-1">
-                <p class="text-sm text-[var(--text-secondary)]">23 pending</p>
-              </div>
-            </WkCard>
-            
-            <WkCard 
-              :hoverable="true"
-              :padding="'md'"
-              class="cursor-pointer"
-            >
-              <div class="w-10 h-10 rounded-lg bg-red-500/15 text-red-500 flex items-center justify-center mb-3">
-                <span class="i-tabler-flag text-xl"></span>
-              </div>
-              <p class="font-medium text-[var(--text-default)]">Reports</p>
-              <div class="flex items-center gap-2 mt-1">
-                <p class="text-sm text-[var(--text-secondary)]">5 new</p>
-              </div>
-            </WkCard>
-            
-            <WkCard 
-              :hoverable="true"
-              :padding="'md'"
-              class="cursor-pointer"
-            >
-              <div class="w-10 h-10 rounded-lg bg-blue-500/15 text-blue-500 flex items-center justify-center mb-3">
-                <span class="i-tabler-users text-xl"></span>
-              </div>
-              <p class="font-medium text-[var(--text-default)]">User Management</p>
-              <div class="flex items-center gap-2 mt-1">
-                <p class="text-sm text-[var(--text-secondary)]">845K users</p>
-              </div>
-            </WkCard>
-            
-            <WkCard 
-              :hoverable="true"
-              :padding="'md'"
-              class="cursor-pointer"
-            >
-              <div class="w-10 h-10 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center mb-3">
-                <span class="i-tabler-settings text-xl"></span>
-              </div>
-              <p class="font-medium text-[var(--text-default)]">Settings</p>
-              <div class="flex items-center gap-2 mt-1">
-                <p class="text-sm text-[var(--text-secondary)]">Configure</p>
-              </div>
-            </WkCard>
+            </div>
           </div>
         </WkCard>
       </div>
