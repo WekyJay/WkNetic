@@ -183,7 +183,18 @@ const loadAllPlugins = async (pluginIds: string[]) => {
 export const fetchInstalledPlugins = async (): Promise<string[]> => {
   try {
     const { pluginApi } = await import('@/api/plugin');
-    const enabledPlugins = await pluginApi.getEnabledPlugins();
+    const response = await pluginApi.getEnabledPlugins();
+    
+    // axios拦截器已经解包了数据，response.data就是后端返回的数据
+    const enabledPlugins = response.data;
+    
+    // 类型检查：确保返回的是数组
+    if (!Array.isArray(enabledPlugins)) {
+      console.error('[Manager] API返回的数据不是数组:', enabledPlugins);
+      console.warn('[Manager] 使用默认插件列表');
+      return ['wk-checkin', 'wk-pure-js'];
+    }
+    
     console.log(`[Manager] 从数据库获取到 ${enabledPlugins.length} 个已启用的插件`);
     return enabledPlugins;
   } catch (error) {

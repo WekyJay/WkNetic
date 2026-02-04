@@ -1,5 +1,11 @@
 package cn.wekyjay.wknetic.admin.forum.document;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +28,7 @@ import java.util.List;
 @AllArgsConstructor
 @Document(indexName = "post_index")
 @Setting(settingPath = "elasticsearch/post-index-settings.json")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PostDocument {
     
     /**
@@ -123,18 +130,27 @@ public class PostDocument {
     /**
      * 创建时间（用于过滤和排序）
      */
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss||epoch_millis")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime createTime;
     
     /**
      * 更新时间（用于排序）
      */
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss||epoch_millis")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime updateTime;
     
     /**
      * 最后评论时间（用于排序）
      */
-    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss||epoch_millis")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonSerialize(using = LocalDateTimeSerializer.class)
+    @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     private LocalDateTime lastCommentTime;
 }

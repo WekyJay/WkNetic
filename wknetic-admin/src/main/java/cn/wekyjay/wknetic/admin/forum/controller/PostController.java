@@ -159,11 +159,10 @@ public class PostController {
     /**
      * 热门搜索词 - 获取最近热门的搜索关键词
      */
-    @Operation(summary = "热门搜索词", description = "获取最近7天的热门搜索关键词Top 10")
+    @Operation(summary = "热门搜索词", description = "获取最近热门的搜索关键词 Top 10，基于帖子标签统计）")
     @GetMapping("/search/hot")
     public Result<List<String>> getHotSearchKeywords() {
-        // TODO: 实现热门搜索词统计逻辑
-        List<String> hotKeywords = List.of("Java", "Spring Boot", "Elasticsearch", "Vue", "Docker");
+        List<String> hotKeywords = elasticsearchService.getHotKeywords(10);
         return Result.success(hotKeywords);
     }
 }

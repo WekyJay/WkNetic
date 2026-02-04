@@ -5,10 +5,13 @@ import { useAuthStore } from '@/stores/auth'
 // import { usePermission } from '@/composables/usePermission'
 import { useTheme } from '@/composables/useTheme'
 import { useI18n } from 'vue-i18n'
+import { useSearchStore } from '@/stores/useSearchStore'
+import { getSearchSuggestions } from '@/api/search'
 import LoginModal from '@/components/LoginModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const searchStore = useSearchStore()
 // const { userRoleLabel, userRoleColor } = usePermission()
 const { themeMode, isDark, toggleTheme } = useTheme()
 const { locale } = useI18n()
@@ -49,16 +52,24 @@ function closeAllMenus(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', closeAllMenus)
+  document.addEventListener('keydown', handleKeydown)
 })
 
 onUnmounted(() => {
   document.removeEventListener('click', closeAllMenus)
+  document.removeEventListener('keydown', handleKeydown)
 })
 
 const isMenuOpen = ref(false)
 const isSearchOpen = ref(false)
 const isLoginModalOpen = ref(false)
 const isUserMenuOpen = ref(false)
+
+// 搜索相关
+const searchQuery = ref('')
+const searchQueryMobile = ref('')
+const searchInputRef = ref<HTMLInputElement | null>(null)
+const searchInputRefMobile = ref<HTMLInputElement | null>(null)
 
 const navCategories = [
   { name: 'Home', icon: 'i-tabler-home', href: '/' },
@@ -106,6 +117,70 @@ function goToSettings() {
   isUserMenuOpen.value = false
   router.push('/settings')
 }
+
+// 搜索功能
+const fetchSuggestions = async (queryString: string, cb: (suggestions: any[]) => void) => {
+  if (!queryString.trim()) {
+    cb([])
+    return
+  }
+  
+  try {
+    const response = await getSearchSuggestions(queryString)
+    const suggestions = response.data.map((item: string) => ({ value: item }))
+    cb(suggestions)
+  } catch (error) {
+    console.error('获取搜索建议失败:', error)
+    cb([])
+  }
+}
+
+const handleSearch = async (query?: string) => {
+  const keyword = query || searchQuery.value
+  if (!keyword.trim()) return
+  
+  const trimmedKeyword = keyword.trim()
+  
+  // 立即清空搜索框，防止重复触发
+  searchQuery.value = ''
+  searchQueryMobile.value = ''
+  isSearchOpen.value = false
+  
+  // 保存搜索历史
+  searchStore.addSearchHistory(trimmedKeyword)
+  
+  // 导航到搜索页面
+  await router.push(`/search?q=${encodeURIComponent(trimmedKeyword)}`)
+}
+
+const handleSelect = (item: { value: string }) => {
+  handleSearch(item.value)
+}
+
+// 快捷键：按 / 键聚焦搜索框
+const handleKeydown = (event: KeyboardEvent) => {
+  // 检查是否按下 / 键
+  if (event.key === '/') {
+    // 排除在输入框、文本域、可编辑元素中的情况
+    const target = event.target as HTMLElement
+    const tagName = target.tagName.toLowerCase()
+    const isEditable = target.isContentEditable || 
+                      tagName === 'input' || 
+                      tagName === 'textarea' || 
+                      tagName === 'select'
+    
+    if (!isEditable) {
+      event.preventDefault()
+      // 优先聚焦桌面端搜索框
+      if (searchInputRef.value) {
+        searchInputRef.value.focus()
+      } else if (searchInputRefMobile.value) {
+        isSearchOpen.value = true
+        setTimeout(() => searchInputRefMobile.value?.focus(), 100)
+      }
+    }
+  }
+}
 </script>
 
 <template>
@@ -135,13 +210,26 @@ function goToSettings() {
         <!-- 搜索栏 - 桌面端 -->
         <div class="hidden md:flex flex-1 max-w-xl mx-8">
           <div class="relative w-full">
-            <span class="i-tabler-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
-            <input
-                type="text"
+            <span class="i-tabler-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none"></span>
+            <el-autocomplete
+                ref="searchInputRef"
+                v-model="searchQuery"
+                :fetch-suggestions="fetchSuggestions"
                 placeholder="Search mods, plugins, and more..."
-                class="w-full input-base pl-10 pr-4"
-            />
-            <kbd class="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-bg-surface rounded text-xs text-text-muted border border-border">
+                class="w-full search-autocomplete"
+                :trigger-on-focus="false"
+                clearable
+                @select="handleSelect"
+                @keyup.enter="handleSearch()"
+            >
+              <template #default="{ item }">
+                <div class="flex items-center gap-2">
+                  <span class="i-tabler-search text-sm text-text-muted"></span>
+                  <span>{{ item.value }}</span>
+                </div>
+              </template>
+            </el-autocomplete>
+            <kbd class="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-bg-surface rounded text-xs text-text-muted border border-border pointer-events-none z-10">
               /
             </kbd>
           </div>
@@ -333,13 +421,25 @@ function goToSettings() {
     <!-- 移动端搜索框 -->
     <div v-if="isSearchOpen" class="md:hidden border-t border-border p-4 bg-bg">
       <div class="relative">
-        <span class="i-tabler-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"></span>
-        <input
-            type="text"
+        <span class="i-tabler-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none"></span>
+        <el-autocomplete
+            ref="searchInputRefMobile"
+            v-model="searchQueryMobile"
+            :fetch-suggestions="fetchSuggestions"
             placeholder="Search..."
-            class="w-full input-base pl-10"
-            autofocus
-        />
+            class="w-full search-autocomplete-mobile"
+            :trigger-on-focus="false"
+            clearable
+            @select="handleSelect"
+            @keyup.enter="() => handleSearch(searchQueryMobile)"
+        >
+          <template #default="{ item }">
+            <div class="flex items-center gap-2">
+              <span class="i-tabler-search text-sm text-text-muted"></span>
+              <span>{{ item.value }}</span>
+            </div>
+          </template>
+        </el-autocomplete>
       </div>
     </div>
 
@@ -380,5 +480,27 @@ function goToSettings() {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* 搜索框样式 */
+.search-autocomplete :deep(.el-input__wrapper) {
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.search-autocomplete :deep(.el-input__inner) {
+  padding-left: 0;
+}
+
+.search-autocomplete-mobile :deep(.el-input__wrapper) {
+  padding-left: 2.5rem;
+  border-radius: 0.5rem;
+  box-shadow: none;
+}
+
+.search-autocomplete-mobile :deep(.el-input__inner) {
+  padding-left: 0;
 }
 </style>

@@ -40,7 +40,7 @@ const sortOptions = [
 ]
 
 // 执行搜索
-const doSearch = async () => {
+const doSearch = async (updateUrl = true) => {
   if (!searchParams.keyword || !searchParams.keyword.trim()) {
     ElMessage.warning('请输入搜索关键词')
     return
@@ -50,21 +50,25 @@ const doSearch = async () => {
   
   try {
     const result = await searchPosts(searchParams)
-    searchResults.value = result.data.records
-    total.value = result.data.total
+    // 后端返回的是 Result<IPage<PostSearchVO>>，所以数据在 result.data.data 中
+    const pageData = result.data
+    searchResults.value = pageData.records
+    total.value = pageData.total
     
     // 添加到搜索历史
     searchStore.addSearchHistory(searchParams.keyword)
     
-    // 更新 URL 查询参数
-    router.push({
-      query: {
-        q: searchParams.keyword,
-        topic: searchParams.topicId,
-        sortBy: searchParams.sortBy,
-        page: searchParams.page
-      }
-    })
+    // 更新 URL 查询参数（仅在需要时更新，避免循环触发）
+    if (updateUrl) {
+      router.replace({
+        query: {
+          q: searchParams.keyword,
+          topic: searchParams.topicId,
+          sortBy: searchParams.sortBy,
+          page: searchParams.page
+        }
+      })
+    }
   } catch (error) {
     console.error('搜索失败:', error)
     ElMessage.error('搜索失败，请稍后重试')

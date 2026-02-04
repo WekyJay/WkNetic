@@ -15,6 +15,7 @@ declare module 'vue' {
     AppLayout: typeof import('./src/components/layout/AppLayout.vue')['default']
     BookmarkDialog: typeof import('./src/components/forum/BookmarkDialog.vue')['default']
     CommentTree: typeof import('./src/components/forum/CommentTree.vue')['default']
+    ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElButtonGroup: typeof import('element-plus/es')['ElButtonGroup']

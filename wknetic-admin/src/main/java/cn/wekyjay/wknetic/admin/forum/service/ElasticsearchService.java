@@ -76,6 +76,7 @@ public class ElasticsearchService {
     /**
      * 搜索帖子（高级搜索，支持多字段、过滤、排序、高亮）
      */
+    @SuppressWarnings("null")
     public Page<PostDocument> searchPosts(
         String keyword,
         Long topicId,
@@ -181,15 +182,27 @@ public class ElasticsearchService {
             
             Highlight highlight = Highlight.of(h -> h.fields(highlightFields));
             
+            // 构建排序 - _score 需要特殊处理
+            final String finalSortField = sortField;
+            final SortOrder finalOrder = order;
+            
             // 执行搜索
-            SearchRequest searchRequest = SearchRequest.of(s -> s
-                .index("post_index")
-                .query(query)
-                .from(page * size)
-                .size(size)
-                .sort(sort -> sort.field(f -> f.field(sortField).order(order)))
-                .highlight(highlight)
-            );
+            SearchRequest searchRequest = SearchRequest.of(s -> {
+                s.index("post_index")
+                    .query(query)
+                    .from(page * size)
+                    .size(size)
+                    .highlight(highlight);
+                
+                // _score 排序需要使用 score() 方法
+                if ("_score".equals(finalSortField)) {
+                    s.sort(sort -> sort.score(sc -> sc.order(finalOrder)));
+                } else {
+                    s.sort(sort -> sort.field(f -> f.field(finalSortField).order(finalOrder)));
+                }
+                
+                return s;
+            });
             
             SearchResponse<PostDocument> response = elasticsearchClient.search(
                 searchRequest, 
@@ -202,15 +215,16 @@ public class ElasticsearchService {
                 PostDocument doc = hit.source();
                 if (doc != null) {
                     // 处理高亮
-                    if (hit.highlight() != null && !hit.highlight().isEmpty()) {
-                        Map<String, List<String>> highlights = hit.highlight();
-                        // 可以在这里将高亮信息存储到文档中（需要添加字段）
-                    }
+                    // Map<String, List<String>> highlights = hit.highlight();
+                    // 可以在这里将高亮信息存储到文档中（需要添加字段）
                     documents.add(doc);
                 }
             }
             
-            long total = response.hits().total() != null ? response.hits().total().value() : 0;
+            long total = 0;
+            if (response.hits().total() != null) {
+                total = response.hits().total().value();
+            }
             Pageable pageable = PageRequest.of(page, size);
             
             return new PageImpl<>(documents, pageable, total);
@@ -224,6 +238,7 @@ public class ElasticsearchService {
     /**
      * 搜索建议（根据前缀匹配标题）
      */
+    @SuppressWarnings("null")
     public List<String> getSuggestions(String prefix, int limit) {
         try {
             Query query = Query.of(q -> q
@@ -254,6 +269,55 @@ public class ElasticsearchService {
         } catch (Exception e) {
             log.error("获取搜索建议失败: prefix={}", prefix, e);
             return Collections.emptyList();
+        }
+    }
+    
+    /**
+     * 获取热门搜索关键词（基于最近的帖子标签统计）
+     */
+    public List<String> getHotKeywords(int limit) {
+        try {
+            // 构建查询：只查询已发布的帖子
+            Query query = Query.of(q -> q
+                .bool(b -> b
+                    .filter(f -> f.term(t -> t.field("status").value(1))) // status=1 表示已发布
+                )
+            );
+            
+            // 构建聚合：统计tags字段出现次数最多的关键词
+            SearchRequest searchRequest = SearchRequest.of(s -> s
+                .index("post_index")
+                .query(query)
+                .size(0) // 不需要返回文档，只需要聚合结果
+                .aggregations("hot_keywords", a -> a
+                    .terms(t -> t
+                        .field("tags")
+                        .size(limit)
+                    )
+                )
+            );
+            
+            SearchResponse<PostDocument> response = elasticsearchClient.search(
+                searchRequest,
+                PostDocument.class
+            );
+            
+            // 提取聚合结果
+            if (response.aggregations() != null && response.aggregations().containsKey("hot_keywords")) {
+                var aggregation = response.aggregations().get("hot_keywords");
+                if (aggregation.isSterms()) {
+                    return aggregation.sterms().buckets().array().stream()
+                        .map(bucket -> bucket.key().stringValue())
+                        .collect(Collectors.toList());
+                }
+            }
+            
+            // 如果没有统计结果，返回默认关键词
+            return List.of("Minecraft", "Forge", "Fabric", "Plugin", "Mod");
+            
+        } catch (Exception e) {
+            log.error("获取热门关键词失败", e);
+            return List.of("Minecraft", "Forge", "Fabric", "Plugin", "Mod");
         }
     }
     

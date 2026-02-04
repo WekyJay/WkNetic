@@ -148,7 +148,7 @@ function toggleSidebar() {
     >
       <!-- Logo -->
       <div class="h-16 flex items-center justify-between px-4 border-b border-border">
-        <router-link to="/admin/dashboard" class="flex items-center gap-3">
+        <router-link to="/admin/" class="flex items-center gap-3">
           <div class="w-10 h-10 flex-center flex-shrink-0">
             <img src="/wknetic.svg" alt="WkNetic Logo" class="object-contain w-8 h-8" />
           </div>

@@ -75,7 +75,7 @@ const goToPost = () => {
       <!-- 时间 -->
       <span class="flex items-center gap-1">
         <span class="i-tabler-clock w-4 h-4"></span>
-        {{ formatTime(post.createTime) }}
+        {{ formatTime(post.updateTime) }}
       </span>
       
       <!-- 分隔符 -->

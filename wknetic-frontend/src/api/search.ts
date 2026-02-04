@@ -48,19 +48,19 @@ export interface SearchResultPage {
  * 搜索帖子
  */
 export function searchPosts(params: SearchPostDTO) {
-  return request.post<SearchResultPage>('/post/search', params)
+  return request.post<SearchResultPage>('/api/v1/post/search', params)
 }
 
 /**
  * 获取搜索建议
  */
 export function getSearchSuggestions(prefix: string) {
-  return request.get<string[]>('/post/search/suggest', { params: { prefix } })
+  return request.get<string[]>('/api/v1/post/search/suggest', { params: { prefix } })
 }
 
 /**
  * 获取热门搜索词
  */
 export function getHotSearchKeywords() {
-  return request.get<string[]>('/post/search/hot')
+  return request.get<string[]>('/api/v1/post/search/hot')
 }
