@@ -2,6 +2,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useAppTheme } from '@/composables/useTheme'
 import { userApi } from '@/api/user'
 import type { UpdateProfileRequest, Gender } from '@/types/user'
 import WkButton from '@/components/common/WkButton.vue'
@@ -13,6 +14,7 @@ import UserAvatar from '@/components/user/UserAvatar.vue'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const theme = useAppTheme()
 
 const activeTab = ref('profile')
 const loading = ref(false)
@@ -124,7 +126,7 @@ onMounted(() => {
                 :class="[
                   'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left',
                   activeTab === tab.key
-                    ? 'bg-brand/10 text-brand font-medium'
+                    ? 'bg-brand/10 font-medium'
                     : 'text-text-secondary hover:bg-bg-hover hover:text-text'
                 ]"
                 @click="activeTab = tab.key"
@@ -315,6 +317,170 @@ onMounted(() => {
             </div>
             
             <!-- 其他标签页（占位） -->
+            <div v-else-if="activeTab === 'preferences'" class="space-y-8">
+              <div>
+                <h2 class="text-xl font-semibold text-text mb-4">{{ t('settings.appearance.title') }}</h2>
+                <p class="text-sm text-text-secondary mb-6">
+                  {{ t('settings.appearance.subtitle') }}
+                </p>
+              </div>
+
+              <!-- 如果用户不能切换主题，显示提示 -->
+              <div v-if="!theme.userCanChangeTheme.value" class="bg-bg-raised rounded-lg p-6 border border-border">
+                <div class="flex items-start gap-4">
+                  <i class="i-tabler-lock text-3xl text-text-secondary flex-shrink-0 mt-1" />
+                  <div>
+                    <h4 class="text-base font-semibold text-text mb-2">
+                      {{ t('settings.appearance.themeChangeLocked') }}
+                    </h4>
+                    <p class="text-sm text-text-secondary mb-3">
+                      {{ t('settings.appearance.themeChangeLockedDesc') }}
+                    </p>
+                    <p class="text-sm text-text-muted">
+                      {{ t('settings.appearance.currentTheme') }}: 
+                      <span class="font-medium text-text">{{ theme.currentTheme.value.displayName }}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 颜色主题选择 -->
+              <div v-else>
+                <h3 class="text-lg font-medium text-text mb-4">
+                  {{ t('settings.appearance.colorTheme') }}
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    v-for="themeOption in theme.availableThemes.value"
+                    :key="themeOption.id"
+                    :class="[
+                      'relative p-6 rounded-xl border-2 transition-all text-left',
+                      'hover:shadow-lg',
+                      theme.colorTheme.value === themeOption.id
+                        ? 'border-brand shadow-lg'
+                        : 'border-border hover:border-brand/50'
+                    ]"
+                    @click="theme.setColorTheme(themeOption.id)"
+                  >
+                    <!-- 选中标识 -->
+                    <div
+                      v-if="theme.colorTheme.value === themeOption.id"
+                      class="absolute top-4 right-4 w-6 h-6 bg-brand text-white rounded-full flex items-center justify-center"
+                    >
+                      <i class="i-tabler-check text-sm" />
+                    </div>
+
+                    <!-- 主题名称 -->
+                    <div class="mb-4">
+                      <h4 class="text-base font-semibold text-text mb-1">
+                        {{ themeOption.displayName }}
+                      </h4>
+                      <p class="text-sm text-text-secondary">
+                        {{ t(`settings.appearance.themes.${themeOption.id}.desc`) }}
+                      </p>
+                    </div>
+
+                    <!-- 颜色预览 -->
+                    <div class="flex gap-2">
+                      <div
+                        class="w-12 h-12 rounded-lg border border-border"
+                        :style="{ backgroundColor: themeOption.preview?.primary }"
+                        :title="t('settings.appearance.primaryColor')"
+                      />
+                      <div
+                        class="w-12 h-12 rounded-lg border border-border"
+                        :style="{ backgroundColor: themeOption.preview?.background }"
+                        :title="t('settings.appearance.backgroundColor')"
+                      />
+                      <div
+                        class="w-12 h-12 rounded-lg border border-border flex items-center justify-center"
+                        :style="{
+                          backgroundColor: themeOption.preview?.background,
+                          color: themeOption.preview?.text
+                        }"
+                        :title="t('settings.appearance.textColor')"
+                      >
+                        <span class="text-xl font-bold">Aa</span>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div class="pt-6 border-t border-border">
+                <h3 class="text-lg font-medium text-text mb-4">
+                  {{ t('settings.appearance.darkMode') }}
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <button
+                    :class="[
+                      'p-4 rounded-lg border-2 transition-all text-center',
+                      'hover:shadow-md',
+                      theme.darkMode.value === 'light'
+                        ? 'border-brand bg-brand/5'
+                        : 'border-border hover:border-brand/50'
+                    ]"
+                    @click="theme.setDarkMode('light')"
+                  >
+                    <i class="i-tabler-sun text-3xl mb-2" :class="theme.darkMode.value === 'light' ? 'text-text' : 'text-text-secondary'" />
+                    <div class="font-medium text-text">{{ t('settings.appearance.lightMode') }}</div>
+                  </button>
+
+                  <button
+                    :class="[
+                      'p-4 rounded-lg border-2 transition-all text-center',
+                      'hover:shadow-md',
+                      theme.darkMode.value === 'dark'
+                        ? 'border-brand bg-brand/5'
+                        : 'border-border hover:border-brand/50'
+                    ]"
+                    @click="theme.setDarkMode('dark')"
+                  >
+                    <i class="i-tabler-moon text-3xl mb-2" :class="theme.darkMode.value === 'dark' ? 'text-text' : 'text-text-secondary'" />
+                    <div class="font-medium text-text">{{ t('settings.appearance.darkModeLabel') }}</div>
+                  </button>
+
+                  <button
+                    :class="[
+                      'p-4 rounded-lg border-2 transition-all text-center',
+                      'hover:shadow-md',
+                      theme.darkMode.value === 'auto'
+                        ? 'border-brand bg-brand/5'
+                        : 'border-border hover:border-brand/50'
+                    ]"
+                    @click="theme.setDarkMode('auto')"
+                  >
+                    <i class="i-tabler-device-laptop text-3xl mb-2" :class="theme.darkMode.value === 'auto' ? 'text-text' : 'text-text-secondary'" />
+                    <div class="font-medium text-text">{{ t('settings.appearance.autoMode') }}</div>
+                  </button>
+                </div>
+                <p class="text-sm text-text-muted mt-3">
+                  {{ t('settings.appearance.autoModeDesc') }}
+                </p>
+              </div>
+
+              <!-- 自定义主题提示 -->
+              <div class="pt-6 border-t border-border">
+                <div class="bg-bg-raised rounded-lg p-6">
+                  <div class="flex items-start gap-4">
+                    <i class="i-tabler-palette text-3xl text-brand flex-shrink-0 mt-1" />
+                    <div class="flex-1">
+                      <h4 class="text-base font-semibold text-text mb-2">
+                        {{ t('settings.appearance.customTheme.title') }}
+                      </h4>
+                      <p class="text-sm text-text-secondary mb-4">
+                        {{ t('settings.appearance.customTheme.desc') }}
+                      </p>
+                      <div class="text-xs text-text-muted">
+                        <i class="i-tabler-info-circle inline mr-1" />
+                        {{ t('settings.appearance.customTheme.adminOnly') }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div v-else class="text-center py-12 text-text-secondary">
               <i class="i-tabler-settings text-5xl mb-4" />
               <p class="text-lg">{{ tabs.find(t => t.key === activeTab)?.label }}</p>

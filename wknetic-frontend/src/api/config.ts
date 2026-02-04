@@ -59,6 +59,7 @@ export const configApi = {
 export const CONFIG_GROUP_LABELS: Record<string, string> = {
   site: '站点设置',
   system: '系统设置',
+  appearance: '外观设置',
   upload: '上传设置',
   security: '安全设置',
   email: '邮件设置',

@@ -16,8 +16,8 @@ import './styles/element-plus.css'
 import '@unocss/reset/tailwind-compat.css'
 // 3. UnoCSS 核心样式
 import 'virtual:uno.css'
-// 4. 自定义主题样式
-import './styles/theme.css'
+// 4. 自定义主题样式 - 将由主题系统动态加载
+// import './styles/theme.css' // 注释掉静态导入
 
 
 // ---------- SDK初始化 ---------------
@@ -74,6 +74,12 @@ app.use(router)         // 注册路由
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate) // 使用持久化插件
 app.use(pinia)         // 注册 Pinia
+
+// 初始化主题系统
+import { useAppearanceStore } from './stores/appearance'
+const appearanceStore = useAppearanceStore()
+appearanceStore.initialize()
+
 app.use(i18n)           // 使用 i18n
 app.use(hljsVuePlugin) // 注册代码高亮插件
 

@@ -206,7 +206,38 @@
     "title": "Settings",
     "subtitle": "Manage your site preferences",
     "saveAll": "Save",
-    "noChanges": "No changes detected"
+    "noChanges": "No changes detected",
+    "appearance": {
+      "title": "Appearance",
+      "subtitle": "Customize your theme and display preferences",
+      "colorTheme": "Color Theme",
+      "darkMode": "Display Mode",
+      "lightMode": "Light",
+      "darkModeLabel": "Dark",
+      "autoMode": "Auto",
+      "autoModeDesc": "Automatically switch between light and dark mode based on system settings",
+      "primaryColor": "Primary Color",
+      "backgroundColor": "Background",
+      "textColor": "Text",
+      "themes": {
+        "default": {
+          "desc": "Classic persimmon orange color scheme"
+        },
+        "grass": {
+          "desc": "Green theme inspired by Minecraft grass block"
+        }
+      },
+      "themeChangeLocked": "Theme Locked",
+      "themeChangeLockedDesc": "Theme switching has been disabled by administrator. The system theme is in use",
+      "currentTheme": "Current Theme",
+      "customTheme": {
+        "title": "Custom Theme",
+        "desc": "Administrators can upload custom themes in backend settings to provide more personalization options for the site",
+        "create": "Create Custom Theme",
+        "comingSoon": "Coming Soon",
+        "adminOnly": "Custom themes are managed by administrators in backend settings"
+      }
+    }
   },
   "user": {
     "profile": "Profile",

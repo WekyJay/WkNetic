@@ -1,4 +1,5 @@
 import { ref, watchEffect, computed } from 'vue'
+import { useAppearanceStore } from '@/stores/appearance'
 
 // 定义三种模式类型
 type ThemeMode = 'light' | 'dark' | 'auto'
@@ -7,6 +8,10 @@ type ThemeMode = 'light' | 'dark' | 'auto'
 const themeMode = ref<ThemeMode>('auto')
 const isDark = ref(false)
 
+/**
+ * @deprecated 使用 useAppTheme 代替
+ * 这个函数保留用于向后兼容
+ */
 export function useTheme() {
     // 1. 获取系统偏好
     const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -61,5 +66,38 @@ export function useTheme() {
         isDark,    // 当前实际表现是否是暗色 (true/false)
         setTheme,  // 手动设置模式
         toggleTheme // 循环切换
+    }
+}
+
+/**
+ * 新版主题系统 Hook - 推荐使用
+ * 集成了颜色主题和明暗模式的完整管理
+ */
+export function useAppTheme() {
+    const appearanceStore = useAppearanceStore()
+    
+    return {
+        // 颜色主题
+        colorTheme: computed(() => appearanceStore.colorTheme),
+        setColorTheme: appearanceStore.setColorTheme,
+        currentTheme: computed(() => appearanceStore.currentTheme),
+        availableThemes: computed(() => appearanceStore.availableThemes),
+        
+        // 明暗模式
+        darkMode: computed(() => appearanceStore.darkMode),
+        isDarkMode: computed(() => appearanceStore.isDarkMode),
+        setDarkMode: appearanceStore.setDarkMode,
+        toggleDarkMode: appearanceStore.toggleDarkMode,
+        
+        // 权限和系统配置
+        userCanChangeTheme: computed(() => appearanceStore.userCanChangeTheme),
+        systemDefaultTheme: computed(() => appearanceStore.systemDefaultTheme),
+        
+        // 自定义主题
+        registerCustomTheme: appearanceStore.registerCustomTheme,
+        removeCustomTheme: appearanceStore.removeCustomTheme,
+        
+        // 初始化
+        initialize: appearanceStore.initialize
     }
 }

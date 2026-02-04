@@ -207,7 +207,38 @@
     "title": "设置",
     "subtitle": "管理您的站点偏好设置",
     "saveAll": "保存",
-    "noChanges": "没有检测到更改"
+    "noChanges": "没有检测到更改",
+    "appearance": {
+      "title": "外观设置",
+      "subtitle": "自定义您的主题和显示偏好",
+      "colorTheme": "配色主题",
+      "darkMode": "显示模式",
+      "lightMode": "浅色模式",
+      "darkModeLabel": "深色模式",
+      "autoMode": "跟随系统",
+      "autoModeDesc": "跟随系统设置自动切换明暗模式",
+      "primaryColor": "主题色",
+      "backgroundColor": "背景色",
+      "textColor": "文字色",
+      "themes": {
+        "default": {
+          "desc": "经典的柿红橙配色方案"
+        },
+        "grass": {
+          "desc": "灵感来自Minecraft草方块的绿色主题"
+        }
+      },
+      "themeChangeLocked": "主题已锁定",
+      "themeChangeLockedDesc": "管理员已禁用主题切换功能，当前使用统一的系统主题",
+      "currentTheme": "当前主题",
+      "customTheme": {
+        "title": "自定义主题",
+        "desc": "管理员可以在后台设置中上传自定义主题，为站点提供更多个性化选择",
+        "create": "创建自定义主题",
+        "comingSoon": "即将推出",
+        "adminOnly": "自定义主题由管理员在后台设置中管理"
+      }
+    }
   },
   "user": {
     "profile": "个人资料",
