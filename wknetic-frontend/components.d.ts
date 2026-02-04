@@ -69,6 +69,7 @@ declare module 'vue' {
     WkBadge: typeof import('./src/components/common/WkBadge.vue')['default']
     WkButton: typeof import('./src/components/common/WkButton.vue')['default']
     WkCard: typeof import('./src/components/common/WkCard.vue')['default']
+    WkChart: typeof import('./src/components/common/WkChart.vue')['default']
     WkConfirmModal: typeof import('./src/components/common/WkConfirmModal.vue')['default']
     WkDialog: typeof import('./src/components/common/WkDialog.vue')['default']
     WkInput: typeof import('./src/components/common/WkInput.vue')['default']

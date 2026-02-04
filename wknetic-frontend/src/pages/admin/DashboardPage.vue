@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { WkCard, WkButton, WkBadge } from '@/components/common'
+import { VueUiXy, type VueUiXyDatasetItem, type VueUiXyConfig } from 'vue-data-ui'
+import 'vue-data-ui/style.css'
 import { 
   getDashboardStatistics, 
   getPostTrend, 
@@ -73,26 +75,110 @@ const statsCards = computed(() => {
   ]
 })
 
-// Chart data
-const chartData = computed(() => {
-  if (postTrends.value.length === 0) {
-    return { labels: [], data: [] }
-  }
-  
-  return {
-    labels: postTrends.value.map(item => {
+const selectedXIndex = ref<number | undefined>(undefined)
+
+// Chart labels
+const chartLabels = computed(() => {
+  if (!postTrends.value || !Array.isArray(postTrends.value) || postTrends.value.length === 0) return []
+  // 遍历日期
+  const validTrends = postTrends.value.filter(item => item && item.date)
+  if (validTrends.length === 0) return []
+  return validTrends.map(item => {
+    try {
       const date = new Date(item.date)
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    }),
-    data: postTrends.value.map(item => item.postCount)
-  }
+    } catch {
+      return ''
+    }
+  })
 })
 
-// Max value for chart scaling
-const maxChartValue = computed(() => {
-  if (chartData.value.data.length === 0) return 1
-  return Math.max(...chartData.value.data) * 1.2
+// Chart dataset for vue-data-ui
+const chartDataset = computed<VueUiXyDatasetItem[]>(() => {
+  if (!postTrends.value || !Array.isArray(postTrends.value) || postTrends.value.length === 0) return []
+  const validTrends = postTrends.value.filter(item => item && item.date && item.postCount != null)
+  if (validTrends.length === 0) return []
+  return [
+    {
+      name: t('dashboard.posts'),
+      series: validTrends.map(item => Number(item.postCount) || 0),
+      type: 'bar',
+      // color: '#8A8A8A',
+      // color: 'var(--brand-default)'
+    }
+  ]
 })
+
+
+
+// Chart configuration for vue-data-ui VueUiXy
+const chartConfig = computed(() => ({
+  chart: {
+    backgroundColor: 'transparent',
+    color: '#CCCCCC',
+    userOptions: {
+      show: false
+    },
+    height: 500,
+    highlighter: {
+      color: '#FFFFFF',
+      opacity: 0.5
+    },
+    grid: {
+      stroke: '#3A3A3A',
+      showVerticalLines: false,
+      labels: {
+        color: '#888888',
+        show: false,
+        fontSize: 16,
+        yAxis: {
+          showBaseline: false
+        },
+        xAxis: {
+          showBaseline: true
+        },
+        xAxisLabels:{
+          color: '#cccccc',
+          values: chartLabels.value
+        }
+      }
+    },
+    bar: {
+      borderRadius: 16,
+      useGradient: true,
+      labels: {
+        show: true,
+        color: '#cccccc',
+        offsetY: -6,
+      }
+    },
+    title: {
+      show: false
+    },
+
+    legend: {
+      show: false
+    },
+    tooltip: {
+      show: true,
+      backgroundColor: '#1F1F1F',
+      color: '#FFFFFF',
+      fontSize: 12,
+      borderRadius: 6,
+      borderColor: '#3A3A3A',
+      borderWidth: 1
+    },
+    zoom: {
+      show: false
+    },
+    padding: {
+      top: 24,
+      right: 24,
+      bottom: 48,
+      left: 48
+    }
+  }
+}))
 
 // Fetch all dashboard data
 const loadDashboardData = async () => {
@@ -101,7 +187,7 @@ const loadDashboardData = async () => {
     
     // Fetch statistics
     const statsResponse = await getDashboardStatistics()
-    statistics.value = statsResponse.data
+    statistics.value = statsResponse.data || null
     
     // Fetch post trends
     await loadPostTrends()
@@ -113,10 +199,21 @@ const loadDashboardData = async () => {
     await loadQuickActions()
     
     // Fetch available quick actions options
-    const availableResponse = await getAvailableQuickActions()
-    availableQuickActions.value = availableResponse.data
+    try {
+      const availableResponse = await getAvailableQuickActions()
+      availableQuickActions.value = Array.isArray(availableResponse.data) ? availableResponse.data : []
+    } catch (e) {
+      console.error('Failed to load available quick actions:', e)
+      availableQuickActions.value = []
+    }
   } catch (error) {
     console.error('Failed to load dashboard data:', error)
+    // Reset all data to safe defaults
+    statistics.value = null
+    postTrends.value = []
+    recentActivities.value = []
+    quickActions.value = []
+    availableQuickActions.value = []
   } finally {
     loading.value = false
   }
@@ -127,9 +224,11 @@ const loadPostTrends = async () => {
   try {
     trendLoading.value = true
     const response = await getPostTrend(trendDays.value)
-    postTrends.value = response.data
+    postTrends.value = response.data ?? []
+
   } catch (error) {
     console.error('Failed to load post trends:', error)
+    postTrends.value = []
   } finally {
     trendLoading.value = false
   }
@@ -140,9 +239,10 @@ const loadRecentActivities = async () => {
   try {
     activityLoading.value = true
     const response = await getRecentActivities(10)
-    recentActivities.value = response.data
+    recentActivities.value = response.data || []
   } catch (error) {
     console.error('Failed to load recent activities:', error)
+    recentActivities.value = []
   } finally {
     activityLoading.value = false
   }
@@ -152,9 +252,10 @@ const loadRecentActivities = async () => {
 const loadQuickActions = async () => {
   try {
     const response = await getUserQuickActions()
-    quickActions.value = response.data
+    quickActions.value = response.data || []
   } catch (error) {
     console.error('Failed to load quick actions:', error)
+    quickActions.value = []
   }
 }
 
@@ -229,7 +330,7 @@ onMounted(() => {
       <!-- Page header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-[var(--text-default)]">{{ $t('dashboard') }}</h1>
+          <h1 class="text-2xl font-bold text-[var(--text-default)]">{{ $t('menu.dashboard') }}</h1>
           <p class="text-[var(--text-secondary)] mt-1">{{ t('welcome_back') }}</p>
         </div>
         <div class="flex items-center gap-2">
@@ -307,23 +408,14 @@ onMounted(() => {
           
           <!-- Chart -->
           <div v-if="trendLoading" class="h-64 bg-[var(--bg-surface)] rounded animate-pulse"></div>
-          <div v-else-if="chartData.data.length > 0" class="h-64 flex items-end justify-between gap-3 px-4">
-            <div 
-              v-for="(value, index) in chartData.data"
-              :key="index"
-              class="flex-1 flex flex-col items-center gap-2 group"
-            >
-              <div 
-                class="w-full bg-[var(--brand-default)]/80 rounded-t-lg transition-all group-hover:bg-[var(--brand-default)] cursor-pointer relative"
-                :style="{ height: `${(value / maxChartValue) * 100}%` }"
-                :title="`${chartData.labels[index]}: ${value} ${t('dashboard.posts')}`"
-              >
-                <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 bg-[var(--text-default)] text-[var(--bg-default)] text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  {{ value }}
-                </div>
-              </div>
-              <span class="text-xs text-[var(--text-muted)]">{{ chartData.labels[index] }}</span>
-            </div>
+          <div v-else-if="(chartDataset?.length ?? 0) > 0 && (chartLabels?.length ?? 0) > 0" class="h-80">
+            <VueUiXy 
+              v-if="chartDataset && chartDataset.length"
+              :dataset="chartDataset || []" 
+              :config="chartConfig"
+              :selectedXIndex="selectedXIndex"
+            />
+            <div v-else>Loading charts...</div>
           </div>
           <div v-else class="h-64 flex items-center justify-center text-[var(--text-secondary)]">
             {{ t('dashboard.no_data') }}
@@ -333,7 +425,7 @@ onMounted(() => {
           <div class="mt-4 pt-4 border-t border-[var(--border-default)] flex items-center justify-between text-sm">
             <span class="text-[var(--text-secondary)]">
               {{ t('dashboard.total_this_period') }}: 
-              <span class="text-[var(--text-default)] font-medium">{{ postTrends.reduce((sum, item) => sum + item.postCount, 0) }} {{ t('dashboard.posts') }}</span>
+              <span class="text-[var(--text-default)] font-medium">{{ (postTrends ?? []).reduce((sum, item) => sum + item.postCount, 0) }} {{ t('dashboard.posts') }}</span>
             </span>
           </div>
         </WkCard>
