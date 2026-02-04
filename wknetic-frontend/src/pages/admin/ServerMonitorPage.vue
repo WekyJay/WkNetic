@@ -12,12 +12,12 @@
           ]" />
           {{ isConnected ? '已连接' : '未连接' }}
         </div>
-        <div class="text-sm text-gray-600 dark:text-gray-400 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-2">
+        <!-- <div class="text-sm text-gray-600 dark:text-gray-400 px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-2">
           连接计数: <span class="font-semibold text-brand">{{ connectionRefCount }}</span>
           上次连接：<span class="font-semibold text-brand">
             {{ lastMessageTime ? new Date(lastMessageTime).toLocaleTimeString() : '无消息' }}
           </span>
-        </div>
+        </div> -->
       </div>
     </div>
 

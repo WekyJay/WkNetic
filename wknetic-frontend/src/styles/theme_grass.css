@@ -1,0 +1,182 @@
+/* src/styles/theme_grass.css */
+/* Minecraft 草方块绿色主题 */
+
+:root {
+    /* ==============================================
+       亮色模式 (Light Mode)
+       绿色主题搭配白色背景
+    ============================================== */
+
+    /* --- 背景层 --- */
+    --bg-default: #ffffff;
+    --bg-raised: #f9fdf7;
+    --bg-surface: #ffffff;
+    --bg-hover: #f0f5ed;
+    --bg-input: #f5f9f2;
+    --bg-black: #1e1e1e;
+
+    /* --- 品牌色 (Minecraft 草绿) --- */
+    /* 主色：Minecraft 草方块绿 */
+    --brand-default: #6DB02C;
+    /* 悬停：深绿 */
+    --brand-hover: #5A9020;
+    /* 浅色：叶子绿 */
+    --brand-light: #8BC34A;
+    /* 深色：深草绿 */
+    --brand-dark: #4A7018;
+
+    /* --- 文字 (Text) --- */
+    /* 亮色背景下的深色文字 */
+    --text-default: #1a3a1a;
+    --text-secondary: #4a5f48;
+    --text-muted: #7a8f78;
+    --text-disabled: #c2d1bf;
+
+    /* --- 边框 (Border) --- */
+    --border-default: #d4e3cc;
+    --border-light: #e8f2e2;
+    --border-dark: #b8cdb0;
+
+    /* --- 圆角 (Radius) --- */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    /* --- 性别标识颜色 --- */
+    --gender-male: #3b82f6;
+    --gender-male-bg: rgba(59, 130, 246, 0.1);
+    --gender-female: #ec4899;
+    --gender-female-bg: rgba(236, 72, 153, 0.1);
+    --gender-other: #a855f7;
+    --gender-other-bg: rgba(168, 85, 247, 0.1);
+    --gender-unspecified: #6b7280;
+    --gender-unspecified-bg: rgba(107, 114, 128, 0.1);
+
+    /* --- 交互组件高度 --- */
+    --component-height-sm: 32px;
+    --component-height-md: 42px;
+    --component-height-lg: 52px;
+}
+
+/* ==============================================
+   暗黑模式 (Dark Mode)
+   深色背景搭配亮绿色
+============================================== */
+html.dark {
+    /* --- 背景层 --- */
+    --bg-default: #0f1f0f;
+    --bg-raised: #1a2a1a;
+    --bg-surface: #1e2e1e;
+    --bg-hover: #2a3a2a;
+    --bg-input: #0d1a0d;
+    --bg-black: #0a0f0a;
+
+    /* --- 品牌色 (更亮的绿色用于深色背景) --- */
+    /* 主色：亮绿 */
+    --brand-default: #8BC34A;
+    /* 悬停：更亮的绿 */
+    --brand-hover: #9DCD3C;
+    /* 浅色：非常亮的黄绿 */
+    --brand-light: #ADDB47;
+    /* 深色：深绿 */
+    --brand-dark: #7BA830;
+
+    /* --- 文字 --- */
+    --text-default: #e8f5e0;
+    --text-secondary: #b8d4b0;
+    --text-muted: #88a880;
+    --text-disabled: #5a6d5a;
+
+    /* --- 边框 --- */
+    --border-default: #3a5a32;
+    --border-light: #4a6a42;
+    --border-dark: #2a4a22;
+
+    /* --- 性别标识颜色 (深色模式调整) --- */
+    --gender-male: #60a5fa;
+    --gender-male-bg: rgba(96, 165, 250, 0.15);
+    --gender-female: #f472b6;
+    --gender-female-bg: rgba(244, 114, 182, 0.15);
+    --gender-other: #c084fc;
+    --gender-other-bg: rgba(192, 132, 252, 0.15);
+    --gender-unspecified: #9ca3af;
+    --gender-unspecified-bg: rgba(156, 163, 175, 0.15);
+}
+
+/* ==============================================
+   全局滚动条样式
+============================================== */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: transparent;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #a8c995;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #8bc34a;
+}
+
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+html.dark ::-webkit-scrollbar {
+    background: #0f1f0f;
+    border-radius: 5px;
+}
+
+html.dark ::-webkit-scrollbar-track {
+    background: #0f1f0f;
+    border-radius: 5px;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #4a6a42;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #6a9a62;
+}
+
+html.dark ::-webkit-scrollbar-corner {
+    background: #0f1f0f;
+}
+
+/* Firefox 滚动条样式 */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--text-secondary) transparent;
+}
+
+html.dark * {
+    scrollbar-color: #4a6a42 transparent;
+}
+
+/* ==============================================
+   按钮默认样式
+============================================== */
+button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    margin: 0;
+    transition: all 0.2s ease-in-out;
+}

@@ -6,48 +6,48 @@ const sortBy = ref('Relevance')
 
 const mockResults = [
   {
-    name: 'Leave My Bars Alone',
-    author: 'Fuzs',
-    description: 'Makes your food and experience bars visible when riding on a horse.',
-    platforms: ['Fabric', 'Forge', 'NeoForge'],
-    downloads: '2.03M',
-    followers: '672',
-    updated: 'last month',
-    icon: '🐴'
+    name: 'Starter Town Walkthrough',
+    author: 'Build Guild',
+    description: 'A clear build guide for starter towns with palette tips and layout grids.',
+    platforms: ['Guide'],
+    downloads: '12.4k',
+    followers: '1.3k',
+    updated: 'last week',
+    icon: '🏘️'
   },
   {
-    name: 'Leave My Hotbar Alone!',
-    author: 'MiladMoro88',
-    description: 'Reverts the hotbar textures from any GUI modification resourcepacks.',
+    name: 'Aurora SMP Recruiting',
+    author: 'Aurora SMP',
+    description: 'Looking for builders, organizers, and event hosts for Season 5.',
+    platforms: ['Server'],
+    downloads: '2.1k',
+    followers: '412',
+    updated: '2 days ago',
+    icon: '🌌'
+  },
+  {
+    name: 'Medieval Resource Kit',
+    author: 'CraftWorks',
+    description: 'Shared resource pack and schematic bundle for medieval city builds.',
     platforms: ['Resource Pack'],
-    downloads: '1,224',
-    followers: '2',
-    updated: 'last month',
-    icon: '🎨'
-  },
-  {
-    name: 'Leave Bind!',
-    author: 'TutlaMC',
-    description: 'LeaveBind! Lets you leave a server with a keybind',
-    platforms: ['Fabric'],
-    downloads: '501',
-    followers: '19',
-    updated: '2 months ago',
-    icon: '⌨️'
+    downloads: '6.7k',
+    followers: '980',
+    updated: '3 days ago',
+    icon: '🏰'
   },
 ]
 
 const notifications = [
-  { project: 'Caelesti Fenestra', message: 'Version 1.1.2 has been released for 1.21.8', time: '21 hours ago', icon: '🌌' },
-  { project: 'Bloom and Doom', message: 'Version 1.0.3 has been released for 1.21.1', time: '21 hours ago', icon: '🌸' },
-  { project: 'Cannons Revamped', message: 'Version 15.1 has been released for 1.21.11', time: '22 hours ago', icon: '💥' },
+  { project: 'Build Jam Weekend', message: 'Theme announced: Cliffside Ports. Submissions open.', time: '3 hours ago', icon: '🏗️' },
+  { project: 'Survival Hub', message: 'Recruiting builders and story writers for the next season.', time: '8 hours ago', icon: '🧭' },
+  { project: 'Resource Share', message: 'New medieval palette pack and signage kit available.', time: '12 hours ago', icon: '📦' },
 ]
 
 const launchers = [
-  { name: 'WkNetic App', icon: '🟢' },
-  { name: 'ATLauncher', icon: '🔷' },
-  { name: 'MultiMC', icon: '🟣' },
-  { name: 'Prism Launcher', icon: '🔶' },
+  { name: 'Build Guides', icon: '📘' },
+  { name: 'Server Recruiting', icon: '📣' },
+  { name: 'Resource Library', icon: '🧱' },
+  { name: 'Event Calendar', icon: '🗓️' },
 ]
 </script>
 
@@ -58,10 +58,10 @@ const launchers = [
       <div class="text-center mb-16">
         <span class="text-brand font-semibold text-sm uppercase tracking-wider mb-3 block">For Players</span>
         <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-text mb-4">
-          Discover over 75,000 creations
+          Build, join, and share with Minecraft servers
         </h2>
         <p class="text-text-secondary text-lg max-w-2xl mx-auto">
-          From magical biomes to cursed dungeons, you can be sure to find content to bring your gameplay to the next level.
+          Find build tutorials, server recruitment posts, shared resources, and community events in one place.
         </p>
       </div>
 
@@ -70,8 +70,8 @@ const launchers = [
         <!-- 左侧: 搜索演示 -->
         <div class="space-y-6">
           <div>
-            <h3 class="text-xl font-semibold text-text mb-2">Find what you want, quickly and easily</h3>
-            <p class="text-text-secondary">WkNetic's lightning-fast search and powerful filters let you find what you want as you type.</p>
+            <h3 class="text-xl font-semibold text-text mb-2">Find the right server or guide fast</h3>
+            <p class="text-text-secondary">Search tutorials, recruitment posts, resources, and events with smart filters.</p>
           </div>
           
           <!-- 搜索框模拟 -->
@@ -138,8 +138,8 @@ const launchers = [
         <div class="space-y-8">
           <!-- 关注项目通知 -->
           <div>
-            <h3 class="text-xl font-semibold text-text mb-2">Follow projects you love</h3>
-            <p class="text-text-secondary mb-4">Get notified every time your favorite projects update and stay in the loop.</p>
+            <h3 class="text-xl font-semibold text-text mb-2">Follow servers and events you love</h3>
+            <p class="text-text-secondary mb-4">Get notified when servers recruit, guides update, or events go live.</p>
             
             <div class="card p-4">
               <div class="flex items-center gap-2 mb-4">
@@ -167,8 +167,8 @@ const launchers = [
 
           <!-- 启动器支持 -->
           <div>
-            <h3 class="text-xl font-semibold text-text mb-2">Play with your favorite launcher</h3>
-            <p class="text-text-secondary mb-4">WkNetic's open-source API lets launchers add deep integration with WkNetic.</p>
+            <h3 class="text-xl font-semibold text-text mb-2">Everything you need, in one hub</h3>
+            <p class="text-text-secondary mb-4">Jump between build guides, recruitment posts, resources, and event calendars.</p>
             
             <div class="card p-6">
               <div class="flex items-center justify-center">

@@ -210,12 +210,12 @@ const handleKeydown = (event: KeyboardEvent) => {
         <!-- 搜索栏 - 桌面端 -->
         <div class="hidden md:flex flex-1 max-w-xl mx-8">
           <div class="relative w-full">
-            <span class="i-tabler-search absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none"></span>
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted z-10 pointer-events-none"></span>
             <el-autocomplete
                 ref="searchInputRef"
                 v-model="searchQuery"
                 :fetch-suggestions="fetchSuggestions"
-                placeholder="Search mods, plugins, and more..."
+                placeholder="Search posts, users, and more..."
                 class="w-full search-autocomplete"
                 :trigger-on-focus="false"
                 clearable

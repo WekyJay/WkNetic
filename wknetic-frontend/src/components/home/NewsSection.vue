@@ -1,24 +1,24 @@
 <script setup lang="ts">
 const newsItems = [
   {
-    title: 'Streamlined Version Creation',
-    description: 'Version creation is now dramatically more intelligent and easier for creators.',
-    date: 'December 18, 2025',
-    image: '📦',
+    title: 'Server Build Guide Week',
+    description: 'Daily tutorials on spawns, hubs, and economy areas with creator spotlights.',
+    date: 'January 18, 2026',
+    image: '📘',
     gradient: 'from-brand/20 to-blue-500/20',
   },
   {
-    title: 'More Ways to Withdraw',
-    description: 'New withdraw options and a redesigned revenue dashboard',
-    date: 'October 27, 2025',
-    image: '💰',
+    title: 'Recruiting Fair: Season Launch',
+    description: 'Meet new servers, apply to teams, and find long-term builder roles.',
+    date: 'January 27, 2026',
+    image: '📣',
     gradient: 'from-yellow-500/20 to-orange-500/20',
   },
   {
-    title: 'Standing By Our Values',
-    description: 'Keeping LGBTQIA+ content visible despite demands from Russia.',
-    date: 'October 2, 2025',
-    image: '🏳️‍🌈',
+    title: 'Winter Build Cup Finals',
+    description: 'Watch finalists present their cities and vote for the community pick.',
+    date: 'February 2, 2026',
+    image: '🏆',
     gradient: 'from-pink-500/20 to-purple-500/20',
   },
 ]
@@ -31,11 +31,11 @@ const newsItems = [
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-12">
         <div>
           <h2 class="text-2xl md:text-3xl font-bold text-text">
-            Latest news from WkNetic
+            Latest updates from the Minecraft server community
           </h2>
         </div>
         <a href="#" class="btn-secondary text-sm">
-          View all news
+          View all updates
           <span class="i-tabler-arrow-right"></span>
         </a>
       </div>

@@ -1,44 +1,44 @@
 <script setup lang="ts">
 const features = [
   {
-    title: 'Discovery',
-    description: 'Get your project discovered by thousands of users through search, our home page, Discord server, and more ways to come in the future!',
-    icon: 'i-tabler-compass',
+    title: 'Build Tutorials',
+    description: 'Publish step-by-step guides, schematics, and palettes for builders of every level.',
+    icon: 'i-tabler-book',
     color: 'text-brand',
     bgColor: 'bg-brand/10',
   },
   {
-    title: 'Team Management',
-    description: 'Invite your teammates and manage roles and permissions with ease',
+    title: 'Server Recruiting',
+    description: 'Post recruitment listings, manage applications, and grow your server team.',
     icon: 'i-tabler-users-group',
     color: 'text-blue-400',
     bgColor: 'bg-blue-400/10',
   },
   {
-    title: 'Monetization',
-    description: 'Get paid ad revenue from your project pages and withdraw your funds at any time',
-    icon: 'i-tabler-currency-dollar',
+    title: 'Resource Sharing',
+    description: 'Share resource packs, builds, and templates with clear licensing and credits.',
+    icon: 'i-tabler-stack-2',
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-400/10',
   },
   {
-    title: 'Diverse Ecosystem',
-    description: 'Integrate with your build tools through Minotaur for automatic uploads right when you release a new version',
-    icon: 'i-tabler-puzzle',
+    title: 'Event Hosting',
+    description: 'Create build competitions, seasonal events, and community challenges.',
+    icon: 'i-tabler-trophy',
     color: 'text-purple-400',
     bgColor: 'bg-purple-400/10',
   },
   {
-    title: 'Data and Statistics',
-    description: 'Get detailed reports on page views, download counts, and revenue',
+    title: 'Insightful Analytics',
+    description: 'Track guide views, recruitment clicks, and resource downloads.',
     icon: 'i-tabler-chart-line',
     color: 'text-pink-400',
     bgColor: 'bg-pink-400/10',
   },
   {
-    title: 'Constantly Evolving',
-    description: 'Get the best modding experience possible with constant updates from the WkNetic team',
-    icon: 'i-tabler-rocket',
+    title: 'Creator Tools',
+    description: 'Organize projects, update posts quickly, and keep your community informed.',
+    icon: 'i-tabler-tool',
     color: 'text-orange-400',
     bgColor: 'bg-orange-400/10',
   },
@@ -52,10 +52,10 @@ const features = [
       <div class="text-center mb-16">
         <span class="text-brand font-semibold text-sm uppercase tracking-wider mb-3 block">For Creators</span>
         <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-text mb-4">
-          Share your content with the world
+          Build a thriving Minecraft server community
         </h2>
         <p class="text-text-secondary text-lg max-w-2xl mx-auto">
-          Give an online home to your creations and reach a massive audience of dedicated players.
+          Publish tutorials, recruit teammates, share resources, and host events for your server.
         </p>
       </div>
 
@@ -84,7 +84,7 @@ const features = [
       <div class="text-center mt-12">
         <button class="btn-primary text-base px-8 py-3">
           <span class="i-tabler-upload text-lg"></span>
-          Start creating
+          Start building
         </button>
       </div>
     </div>
