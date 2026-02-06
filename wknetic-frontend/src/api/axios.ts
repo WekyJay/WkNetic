@@ -3,6 +3,16 @@ import type { AxiosResponse } from 'axios'
 import { useAuthStore } from '@/stores/auth'
 import { storageManager } from '@/utils/storage'
 
+// 1. 定义类型，防止 TS 报错
+declare global {
+  interface Window {
+    WkConfig: {
+      apiBaseUrl: string;
+      siteName?: string;
+    };
+  }
+}
+
 /**
  * API 响应格式
  */
@@ -13,11 +23,14 @@ export interface ApiResponse<T = any> {
   timestamp: number
 }
 
+// 2. 优先读取 window.WkConfig，如果没有（比如本地开发没加载）则回退到 .env
+const baseURL = window.WkConfig?.apiBaseUrl || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+
 /**
  * 创建 axios 实例
  */
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  baseURL: baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

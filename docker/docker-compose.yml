@@ -1,0 +1,148 @@
+name: wknetic
+services:
+  # -----------------------------------------------------------------------------
+  # MySQL 数据库
+  # -----------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: wknetic-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASS:-123456789} # 读取环境变量或使用默认值
+      MYSQL_DATABASE: wknetic
+      TZ: Asia/Shanghai
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - wknetic-net
+
+  # -----------------------------------------------------------------------------
+  # Redis 缓存
+  # -----------------------------------------------------------------------------
+  redis:
+    image: redis:latest
+    container_name: wknetic-redis
+    restart: always
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-wknetic_secure_pass}"
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - wknetic-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-wknetic_secure_pass}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------------------------------------
+  # Elasticsearch 搜索引擎
+  # -----------------------------------------------------------------------------
+  elasticsearch:
+    image: elasticsearch:8.15.4
+    container_name: wknetic-es
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m" # 限制内存，防止服务器卡死
+      - TZ=Asia/Shanghai
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./data/es/data:/usr/share/elasticsearch/data
+      - ./data/es/plugins:/usr/share/elasticsearch/plugins
+    ports:
+      - "9200:9200"
+    networks:
+      - wknetic-net
+    # 核心逻辑：启动前检查并安装 IK 插件，然后启动 ES
+    command: >
+      bash -c "
+        if [ ! -d 'plugins/analysis-ik' ]; then
+          # 加上 --batch 避免安装时的交互确认导致进程卡死
+          # 使用你找到的高效地址
+          bin/elasticsearch-plugin install --batch https://get.infini.cloud/elasticsearch/analysis-ik/8.15.4
+        fi;
+        # 确保使用绝对路径启动 ES
+        exec /usr/local/bin/docker-entrypoint.sh elasticsearch
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+
+  # -----------------------------------------------------------------------------
+  # 后端服务 (Spring Boot)
+  # -----------------------------------------------------------------------------
+  backend:
+    image: wekyjay/wknetic-server:0.0.1 
+    container_name: wknetic-backend
+    restart: always
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+      elasticsearch:
+        condition: service_healthy
+    
+    ports:
+      - "8081:8081" # 游戏通信 Netty 端口
+    volumes:
+      - ./data/uploads:/app/uploads # 文件上传持久化
+      - ./logs:/app/logs # 日志持久化
+    environment:
+      # --- 核心环境配置 ---
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Shanghai
+      
+      # --- 数据库连接 (host 改为 mysql) ---
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wknetic?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASS:-123456789}
+
+      # --- Redis 连接 (host 改为 redis) ---
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-wknetic_secure_pass}
+      SPRING_DATA_REDIS_DATABASE: 0
+
+      # --- ES 连接 (host 改为 elasticsearch) ---
+      SPRING_ELASTICSEARCH_URIS: http://elasticsearch:9200
+      SPRING_ELASTICSEARCH_CONNECTION_TIMEOUT: 5s
+      
+      # --- JWT 密钥 ---
+      WKNETIC_JWT_SECRET: "WkNeticCoreSecretKeyForSpringSecurityVersion2026MakeItLong"
+      
+      # --- 文件上传路径 ---
+      STORAGE_LOCAL_BASE_PATH: /app/uploads
+      STORAGE_LOCAL_BASE_URL: http://localhost:${WEB_PORT:-80}/uploads
+    networks:
+      - wknetic-net
+
+  # -----------------------------------------------------------------------------
+  # 前端服务 (Nginx)
+  # -----------------------------------------------------------------------------
+  frontend:
+    # 👇 记得改成你自己 Docker Hub 的用户名
+    image: wekyjay/wknetic-ui:0.0.1 
+    container_name: wknetic-frontend
+    restart: always
+    ports:
+      - "${WEB_PORT:-80}:80" # 映射 80 端口到宿主机
+    depends_on:
+      - backend
+    networks:
+      - wknetic-net
+
+# 网络定义
+networks:
+  wknetic-net:
+    driver: bridge

@@ -8,7 +8,6 @@ import UserAvatar from './UserAvatar.vue'
 import FollowButton from './FollowButton.vue'
 import WkCard from '@/components/common/WkCard.vue'
 import WkLoading from '@/components/common/WkLoading.vue'
-import type { E } from 'vue-router/dist/router-CWoNjPRp.mjs'
 
 interface Props {
   /** 用户 ID */

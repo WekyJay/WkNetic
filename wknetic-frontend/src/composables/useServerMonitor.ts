@@ -29,7 +29,7 @@ export function useServerMonitor() {
     }
 
     // TODO: 根据实际环境配置WebSocket URL，确定DOCKER容器部署时的地址
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+    const baseUrl = window.WkConfig?.apiBaseUrl || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
     const wsUrl = baseUrl + '/ws-connect'
 
     const authStore = useAuthStore()

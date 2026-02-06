@@ -1,4 +1,3 @@
-import type { E } from 'vue-router/dist/router-CWoNjPRp.mjs'
 import api from './axios'
 import type { ExtendedUserProfile, UpdateProfileRequest, FollowStatus, UserStats } from '@/types/user'
 

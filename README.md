@@ -10,7 +10,7 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-6DB33F?style=flat-square&logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Vue 3](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![Netty](https://img.shields.io/badge/Netty-High%20Performance-blue?style=flat-square)](https://netty.io/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Docker](https://img.shields.io/badge/Docker-0.0.1-2496ED?style=flat-square&logo=docker&logoColor=white)](https://hub.docker.com/u/wekyjay)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/WekyJay/WkNetic)
 
 ---
@@ -18,7 +18,13 @@
 ### 🚧 Project Status: Active Development (WIP) 🚧
 *目前项目处于早期开发阶段 (Alpha)，欢迎 Star 关注进度！*
 
-![index_preview_02.jpeg](images/index_preview_02.jpeg)
+### 🖼️ 项目预览 | Project Preview
+
+| 暗黑主题 | 白色主题 |
+|------------------------|------------------------|
+| ![暗黑主题](images/index_preview_01.png) | ![白天主题](images/index_preview_01_1.png) |
+| **后台管理面板** | **后台管理面板** |
+| ![后台管理面板](images/index_preview_02_1.png) | ![后台管理面板](images/index_preview_02.png) |
 
 </div>
 
@@ -73,7 +79,7 @@ graph TD
 - [x] **Log**: 基于 AOP + 虚拟线程的异步日志记录
 - [x] **UI**: Vue3 + UnoCSS 登录页实现
 
-### Phase 3: 动能同步核心 (The Kinetic Core) 🚧
+### Phase 3: 动能同步核心 (The Kinetic Core) ✅
 
 - [x] **Netty Server**: 实现 WebSocket 服务端与心跳检测
 - [x] **Spigot Client**: 编写 Minecraft 插件端的 Netty Client
@@ -81,10 +87,10 @@ graph TD
 - [x] **Chat Sync**: 实现【网页 <-> 游戏】双向聊天互通
 - [x] **Server Token**: 基于 Token 的服务器认证系统
 - [x] **Server Monitor**: 服务器远程监控与命令执行
-- [ ] **Player Sync**: 玩家登录/登出状态同步
+- [x] **Player Sync**: 玩家登录/登出状态同步
 - [x] **Data Stream**: 实时数据流与元数据同步 (Redis Pub/Sub)
 
-### Phase 4: 社区与体验 (Community & Extension)
+### Phase 4: 社区与体验 (Community & Extension) ✅
 
 - [x] **Plugin System**: 用户插件管理系统基础架构
 - [x] **Extension Slot**: Vue3 插件扩展点与动态组件加载
@@ -98,7 +104,7 @@ graph TD
 
 ### Phase 5: 交付 (Delivery)
 
-- [ ] **Docker**: 编写 Multi-stage Dockerfile
+- [x] **Docker**: 编写 Multi-stage Dockerfile
 - [ ] **CI/CD**: 配置 GitHub Actions 自动构建
 - [ ] **Release**: 发布 v1.0.0-alpha 版本
 
@@ -115,47 +121,80 @@ graph TD
 | **Database** | MySQL 8 / Redis             | 持久化与高速缓存           |
 | **DevOps**   | Docker Compose              | 一键开箱即用               |
 
-## 🎯 已实现的核心功能 | Implemented Features
+## 🐳 Docker 快速部署
 
-### 🔐 系统与认证
-- ✅ JWT 认证与自动续签
-- ✅ RBAC 角色权限系统 (Admin/Moderator/VIP/User/Banned)
-- ✅ 动态系统配置管理
-- ✅ 基于 AOP 的操作日志记录
-- ✅ 服务器 Token 认证与管理
+WkNetic 提供了完整的 Docker 部署方案，支持一键启动所有服务。
 
-### 💬 论坛社区
-- ✅ 帖子发布、编辑、审核工作流
-- ✅ 嵌套评论与回复系统
-- ✅ 话题分类与标签管理
-- ✅ 点赞、收藏、关注功能
-- ✅ 内容举报与审核系统
-- ✅ 实时通知推送
-- ✅ Elasticsearch 全文搜索
+### 使用 Docker Compose（推荐）
 
-### 🔌 服务器互通
-- ✅ Netty WebSocket 双向通信
-- ✅ 游戏内聊天与网页实时同步
-- ✅ 服务器远程监控面板
-- ✅ 远程命令执行
-- ✅ 心跳检测与自动重连
+```bash
+# 克隆项目
+git clone https://github.com/WekyJay/WkNetic.git
+cd WkNetic
 
-### 🎨 前端体验
-- ✅ Vue3 + Pinia 状态管理
-- ✅ UnoCSS 原子化样式系统
-- ✅ 暗黑/像素双主题切换
-- ✅ 用户插件扩展系统
-- ✅ Markdown 编辑器与实时预览
+# 启动所有服务
+docker-compose up -d
 
-### 🛠️ 后台管理
-- ✅ 用户管理 (CRUD + 批量操作)
-- ✅ 角色权限管理
-- ✅ 话题与标签管理
-- ✅ 帖子审核工作台
-- ✅ 服务器 Token 管理
-- ✅ 系统配置中心
-- ✅ 操作日志查询
+# 查看服务状态
+docker-compose ps
+
+# 停止服务
+docker-compose down
+```
+
+### 使用 Docker Hub 镜像
+
+```bash
+# 拉取最新镜像
+docker pull wekyjay/wknetic-backend:latest
+docker pull wekyjay/wknetic-frontend:latest
+
+# 运行后端服务
+docker run -d \
+  --name wknetic-backend \
+  -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  wekyjay/wknetic-backend:latest
+
+# 运行前端服务
+docker run -d \
+  --name wknetic-frontend \
+  -p 80:80 \
+  wekyjay/wknetic-frontend:latest
+```
+
+### 环境配置
+
+默认配置已包含在 `docker-compose.yml` 中，如需自定义配置：
+
+1. 复制环境变量文件：
+   ```bash
+   cp docker/.env.example docker/.env
+   ```
+
+2. 编辑 `docker/.env` 文件，配置数据库、Redis 等连接信息
+
+3. 启动服务：
+   ```bash
+   docker-compose --env-file docker/.env up -d
+   ```
+
+### 访问服务
+
+- **前端界面**: http://localhost
+- **后端 API**: http://localhost:8080
+- **API 文档**: http://localhost:8080/swagger-ui.html
+
+### 数据持久化
+
+Docker 容器中的数据默认存储在命名卷中：
+- `wknetic_mysql_data`: MySQL 数据库数据
+- `wknetic_redis_data`: Redis 数据
+- `wknetic_elasticsearch_data`: Elasticsearch 数据
 
 ## 🤝 参与贡献 | Contributing
 
 目前项目处于核心搭建期。如果你对 **Java 21**、**Minecraft 插件开发** 或 **Pixel Art UI** 感兴趣，欢迎 Star 并关注我的 Issue 列表。
+
+
+[![Star History Chart](https://api.star-history.com/svg?repos=WekyJay/WkNetic&type=Date)](https://star-history.com/#WekyJay/WkNetic&Date)

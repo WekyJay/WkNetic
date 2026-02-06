@@ -92,10 +92,9 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServerMonitor } from '@/composables/useServerMonitor'
-import { get } from '@vueuse/core'
 
 const router = useRouter()
-const { servers, isConnected, connectionRefCount, lastMessageTime, getOnlineServers } = useServerMonitor()
+const { isConnected, getOnlineServers } = useServerMonitor()
 
 
 
@@ -113,11 +112,6 @@ const formatMemory = (mb: number) => {
   return `${mb} MB`
 }
 
-const getPlayerColor = (ratio: number) => {
-  if (ratio >= 0.8) return '#f44336'
-  if (ratio >= 0.5) return '#ff9800'
-  return '#4caf50'
-}
 
 const getMemoryColor = (ratio: number) => {
   if (ratio >= 0.9) return '#f44336'

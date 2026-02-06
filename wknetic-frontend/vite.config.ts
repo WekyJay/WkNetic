@@ -30,5 +30,15 @@ export default defineConfig({
   // 3. 添加 define 配置，为 SockJS 提供 global 变量
   define: {
     global: 'globalThis'
+  },
+  // 配置代理服务器转发/api到8080端口（后端服务）
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
   }
 })

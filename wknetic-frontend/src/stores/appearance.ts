@@ -25,7 +25,7 @@ const BUILTIN_THEMES: Record<string, ThemeConfig> = {
     id: 'default',
     name: 'default',
     displayName: 'Default Orange',
-    cssFile: '/src/styles/theme.css',
+    cssFile: '/styles/theme.css',
     preview: {
       primary: '#ff6b35',
       background: '#ffffff',
@@ -36,7 +36,7 @@ const BUILTIN_THEMES: Record<string, ThemeConfig> = {
     id: 'grass',
     name: 'grass',
     displayName: 'Minecraft Grass',
-    cssFile: '/src/styles/theme_grass.css',
+    cssFile: '/styles/theme_grass.css',
     preview: {
       primary: '#6DB02C',
       background: '#ffffff',

@@ -312,7 +312,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { WkDialog, WkAlert, WkButton } from '@/components/common'
-import { roleApi, type Role, type RoleFormData, type RoleListParams } from '@/api/role'
+import { roleApi, type Role, type RoleFormData } from '@/api/role'
 import { ElMessage } from 'element-plus'
 
 const { t } = useI18n()
@@ -331,7 +331,6 @@ const total = ref(0)
 const searchQuery = ref('')
 const statusFilter = ref<number | undefined>(undefined)
 
-const roles = ref<Role[]>([])
 const showDialog = ref(false)
 const isEditing = ref(false)
 const submitLoading = ref(false)

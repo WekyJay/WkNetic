@@ -55,6 +55,26 @@ INSERT IGNORE INTO `sys_config` (`config_key`, `config_value`, `config_type`, `c
 ('security.captcha.cloudflare.site_key', '', 'string', 'security', 'Cloudflare Site Key', 'Cloudflare Turnstile 站点密钥', 0, 1, 21),
 ('security.captcha.cloudflare.secret_key', '', 'string', 'security', 'Cloudflare Secret Key', 'Cloudflare Turnstile 密钥', 0, 0, 22);
 
+
+-- ----------------------------
+-- Table structure for sys_role
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS `sys_role` (
+  `role_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '角色ID',
+  `role_code` varchar(50) NOT NULL COMMENT '角色编码（如：ADMIN, MODERATOR, USER, VIP）',
+  `role_name` varchar(100) NOT NULL COMMENT '角色名称',
+  `role_desc` varchar(500) DEFAULT NULL COMMENT '角色描述',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `is_default` tinyint(1) DEFAULT 0 COMMENT '是否默认角色（0否 1是，新用户注册时自动分配）',
+  `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`role_id`),
+  UNIQUE KEY `uk_role_code` (`role_code`),
+  KEY `idx_status` (`status`),
+  KEY `idx_is_default` (`is_default`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统角色表';
+
 -- ----------------------------
 -- Table structure for sys_user
 -- ----------------------------
@@ -87,24 +107,6 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   
 -- 注意：由于外键约束，需要先创建sys_role表，再初始化管理员账号
 
--- ----------------------------
--- Table structure for sys_role
--- ----------------------------
-CREATE TABLE IF NOT EXISTS `sys_role` (
-  `role_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '角色ID',
-  `role_code` varchar(50) NOT NULL COMMENT '角色编码（如：ADMIN, MODERATOR, USER, VIP）',
-  `role_name` varchar(100) NOT NULL COMMENT '角色名称',
-  `role_desc` varchar(500) DEFAULT NULL COMMENT '角色描述',
-  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
-  `is_default` tinyint(1) DEFAULT 0 COMMENT '是否默认角色（0否 1是，新用户注册时自动分配）',
-  `status` tinyint(1) DEFAULT 1 COMMENT '状态（0禁用 1启用）',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`role_id`),
-  UNIQUE KEY `uk_role_code` (`role_code`),
-  KEY `idx_status` (`status`),
-  KEY `idx_is_default` (`is_default`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统角色表';
 
 -- 初始化默认角色
 INSERT IGNORE INTO `sys_role` (`role_code`, `role_name`, `role_desc`, `sort_order`, `is_default`, `status`) VALUES

@@ -27,18 +27,20 @@ export function useTheme() {
     const updateState = () => {
         const systemIsDark = systemDarkQuery.matches
 
-        if (themeMode.value === 'auto') {
-            isDark.value = systemIsDark
-        } else {
-            isDark.value = themeMode.value === 'dark'
-        }
-
         // 应用到 HTML 标签
         if (isDark.value) {
             document.documentElement.classList.add('dark')
         } else {
             document.documentElement.classList.remove('dark')
         }
+
+        if (themeMode.value === 'auto') {
+            isDark.value = systemIsDark
+        } else {
+            isDark.value = themeMode.value === 'dark'
+        }
+
+
     }
 
     // 4. 监听器：当系统外观改变时（比如日落自动变黑），触发更新

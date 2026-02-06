@@ -1,7 +1,3 @@
-Here is the translated English version of your README. It maintains the technical terminology while ensuring the tone is professional and engaging for the international developer community.
-
----
-
 <div align="center">
 
 # ⚡ WkNetic
@@ -10,13 +6,26 @@ Here is the translated English version of your README. It maintains the technica
 
 [English](./README_en.md) | [简体中文](./README.md)
 
+[![Java](https://img.shields.io/badge/Java-21%2B-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.9-6DB33F?style=flat-square&logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Vue 3](https://img.shields.io/badge/Vue.js-3.x-4FC08D?style=flat-square&logo=vue.js&logoColor=white)](https://vuejs.org/)
+[![Netty](https://img.shields.io/badge/Netty-High%20Performance-blue?style=flat-square)](https://netty.io/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/WekyJay/WkNetic)
+
 ---
 
 ### 🚧 Project Status: Active Development (WIP) 🚧
 
 *The project is currently in early-stage development (Alpha). Star us to follow the progress!*
 
-![index_preview_02.jpeg](images/index_preview_02.jpeg)
+### 🖼️ Project Preview
+
+| Modern Theme Interface | Pixel Theme Interface |
+|------------------------|------------------------|
+| ![Dark Theme](images/index_preview_01.png) | ![White Theme](images/index_preview_01_1.png) |
+| **Admin Dashboard** | **Community Forum Interface** |
+| ![Admin Dashboard](images/index_preview_02_1.png) | ![Admin Dashboard](images/index_preview_02.png) |
 
 </div>
 
@@ -73,7 +82,7 @@ My goal is to build a long-term maintained open-source project. The current deve
 * [x] **Log**: Asynchronous logging based on AOP + Virtual Threads
 * [x] **UI**: Login page implementation with Vue3 + UnoCSS
 
-### Phase 3: The Kinetic Core 🚧
+### Phase 3: The Kinetic Core ✅
 
 * [x] **Netty Server**: Implement WebSocket server and heartbeat detection
 * [x] **Spigot Client**: Develop the Netty Client for the Minecraft plugin side
@@ -81,10 +90,10 @@ My goal is to build a long-term maintained open-source project. The current deve
 * [x] **Chat Sync**: Bidirectional chat synchronization between Web and Game
 * [x] **Server Token**: Token-based server authentication system
 * [x] **Server Monitor**: Remote server monitoring and command execution
-* [ ] **Player Sync**: Player login/logout status synchronization
+* [x] **Player Sync**: Player login/logout status synchronization
 * [x] **Data Stream**: Real-time data streaming and metadata sync (Redis Pub/Sub)
 
-### Phase 4: Community & Extension
+### Phase 4: Community & Extension ✅
 
 * [x] **Plugin System**: User plugin management infrastructure
 * [x] **Extension Slot**: Vue3 plugin extension points and dynamic component loading
@@ -93,12 +102,12 @@ My goal is to build a long-term maintained open-source project. The current deve
 * [x] **Social Features**: Social interactions (Likes/Bookmarks/Follow/Notifications)
 * [x] **Content Moderation**: Content review and reporting system
 * [x] **Search Engine**: Elasticsearch full-text search integration
-* [ ] **SPI Loader**: Complete plugin lifecycle management
+* [x] **SPI Loader**: Complete plugin lifecycle management
 * [x] **Theming**: `theme.css` design system and pixel art theme adaptation
 
 ### Phase 5: Delivery
 
-* [ ] **Docker**: Multi-stage Dockerfile configuration
+* [x] **Docker**: Multi-stage Dockerfile configuration
 * [ ] **CI/CD**: Configure GitHub Actions for automated builds
 * [ ] **Release**: Publish v1.0.0-alpha version
 
@@ -114,6 +123,77 @@ My goal is to build a long-term maintained open-source project. The current deve
 | **Style** | UnoCSS | Atomic CSS for easy theme customization. |
 | **Database** | MySQL 8 / Redis | Persistence and high-speed caching. |
 | **DevOps** | Docker Compose | One-click, out-of-the-box deployment. |
+
+## 🐳 Docker Quick Deployment
+
+WkNetic provides a complete Docker deployment solution supporting one-click startup of all services.
+
+### Using Docker Compose (Recommended)
+
+```bash
+# Clone the project
+git clone https://github.com/WekyJay/WkNetic.git
+cd WkNetic
+
+# Start all services
+docker-compose up -d
+
+# Check service status
+docker-compose ps
+
+# Stop services
+docker-compose down
+```
+
+### Using Docker Hub Images
+
+```bash
+# Pull latest images
+docker pull wekyjay/wknetic-backend:latest
+docker pull wekyjay/wknetic-frontend:latest
+
+# Run backend service
+docker run -d \
+  --name wknetic-backend \
+  -p 8080:8080 \
+  -e SPRING_PROFILES_ACTIVE=prod \
+  wekyjay/wknetic-backend:latest
+
+# Run frontend service
+docker run -d \
+  --name wknetic-frontend \
+  -p 80:80 \
+  wekyjay/wknetic-frontend:latest
+```
+
+### Environment Configuration
+
+Default configuration is included in `docker-compose.yml`. For custom configuration:
+
+1. Copy environment file:
+   ```bash
+   cp docker/.env.example docker/.env
+   ```
+
+2. Edit `docker/.env` file to configure database, Redis, etc.
+
+3. Start services:
+   ```bash
+   docker-compose --env-file docker/.env up -d
+   ```
+
+### Access Services
+
+- **Frontend Interface**: http://localhost
+- **Backend API**: http://localhost:8080
+- **API Documentation**: http://localhost:8080/swagger-ui.html
+
+### Data Persistence
+
+Docker container data is stored in named volumes by default:
+- `wknetic_mysql_data`: MySQL database data
+- `wknetic_redis_data`: Redis data
+- `wknetic_elasticsearch_data`: Elasticsearch data
 
 ## 🎯 Implemented Core Features
 
