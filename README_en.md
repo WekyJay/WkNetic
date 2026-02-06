@@ -149,21 +149,21 @@ docker-compose down
 
 ```bash
 # Pull latest images
-docker pull wekyjay/wknetic-backend:latest
-docker pull wekyjay/wknetic-frontend:latest
+docker pull wekyjay/wknetic-server:0.0.1
+docker pull wekyjay/wknetic-ui:0.0.1
 
 # Run backend service
 docker run -d \
-  --name wknetic-backend \
+  --name wknetic-server \
   -p 8080:8080 \
   -e SPRING_PROFILES_ACTIVE=prod \
-  wekyjay/wknetic-backend:latest
+  wekyjay/wknetic-server:0.0.1
 
 # Run frontend service
 docker run -d \
-  --name wknetic-frontend \
+  --name wknetic-ui \
   -p 80:80 \
-  wekyjay/wknetic-frontend:latest
+  wekyjay/wknetic-ui:0.0.1
 ```
 
 ### Environment Configuration
