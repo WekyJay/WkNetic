@@ -239,3 +239,7 @@ Docker container data is stored in named volumes by default:
 ## 🤝 Contributing
 
 The project is currently in the core construction phase. If you are interested in **Java 21**, **Minecraft Plugin Development**, or **Pixel Art UI**, please feel free to Star the repo and follow the Issue list.
+
+## ⭐️ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=WekyJay/WkNetic&type=date&legend=top-left)](https://www.star-history.com/#WekyJay/WkNetic&type=date&legend=top-left)

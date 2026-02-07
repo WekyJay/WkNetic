@@ -196,5 +196,6 @@ Docker 容器中的数据默认存储在命名卷中：
 
 目前项目处于核心搭建期。如果你对 **Java 21**、**Minecraft 插件开发** 或 **Pixel Art UI** 感兴趣，欢迎 Star 并关注我的 Issue 列表。
 
+## ⭐️ Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=WekyJay/WkNetic&type=Date)](https://star-history.com/#WekyJay/WkNetic&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=WekyJay/WkNetic&type=date&legend=top-left)](https://www.star-history.com/#WekyJay/WkNetic&type=date&legend=top-left)
