@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.common.dto.socket;
+package cn.wekyjay.wknetic.api.dto.socket;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

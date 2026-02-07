@@ -1,5 +1,8 @@
 package cn.wekyjay.wknetic.api.enums;
 
+import lombok.ToString;
+
+@ToString
 public enum PacketType {
     // 基础连接/鉴权 (0-9)
     HEARTBEAT              (0),   // 心跳保活

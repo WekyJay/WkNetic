@@ -1,37 +1,39 @@
-package cn.wekyjay.wknetic.socket.model;
+package cn.wekyjay.wknetic.api.model;
 
-import cn.wekyjay.wknetic.common.dto.socket.PlayerInfoDto;
-import cn.wekyjay.wknetic.common.dto.socket.PluginInfoDto;
-import io.netty.channel.Channel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import cn.wekyjay.wknetic.api.dto.socket.PlayerInfoDto;
+import cn.wekyjay.wknetic.api.dto.socket.PluginInfoDto;
+
 /**
- * 服务器会话信息
+ * 服务器会话信息（对外 API 模型）
  * 
  * @author WkNetic
  * @since 2026-02-03
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServerSession {
+public class ServerSessionPacket extends BasePacket {
     
     /**
      * 会话ID（用于日志和查询，避免暴露token）
      */
     @Builder.Default
     private String sessionId = UUID.randomUUID().toString();
-    
+
     /**
-     * Token（仅用于认证，不出现在日志中）
+     * 服务器Token
      */
     private String token;
     
@@ -100,8 +102,4 @@ public class ServerSession {
      */
     private Date lastActiveTime;
     
-    /**
-     * Netty Channel
-     */
-    private transient Channel channel;
 }

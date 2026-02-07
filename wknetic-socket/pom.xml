@@ -28,6 +28,11 @@
             <artifactId>wknetic-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>cn.wekyjay.wknetic</groupId>
+            <artifactId>wknetic-api</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

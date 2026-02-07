@@ -1,14 +1,13 @@
 package cn.wekyjay.wknetic.socket.handler;
 
 import cn.wekyjay.wknetic.common.domain.SysServerToken;
-import cn.wekyjay.wknetic.common.dto.socket.PlayerInfoDto;
-import cn.wekyjay.wknetic.common.dto.socket.PluginInfoDto;
-import cn.wekyjay.wknetic.common.dto.socket.ServerInfoPacket;
-import cn.wekyjay.wknetic.common.dto.socket.ServerLoginPacket;
+import cn.wekyjay.wknetic.api.dto.socket.ServerInfoPacket;
+import cn.wekyjay.wknetic.api.dto.socket.ServerLoginPacket;
 import cn.wekyjay.wknetic.api.enums.PacketType;
 import cn.wekyjay.wknetic.common.mapper.SysServerTokenMapper;
 import cn.wekyjay.wknetic.socket.manager.ChannelManager;
-import cn.wekyjay.wknetic.socket.model.ServerSession;
+import cn.wekyjay.wknetic.api.model.ServerSessionPacket;
+
 
 // 引入 Jackson
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -148,14 +147,13 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             String loginIp = getClientIp(ctx.channel());
 
             // 创建服务器会话
-            ServerSession session = ServerSession.builder()
+            ServerSessionPacket session = ServerSessionPacket.builder()
                     .token(token)
                     .serverName(loginPacket.getServerName())
                     .serverVersion(loginPacket.getServerVersion())
                     .loginIp(loginIp)
                     .loginTime(new Date())
                     .lastActiveTime(new Date())
-                    .channel(ctx.channel())
                     .build();
 
             // 注册连接（单点登录）
@@ -179,7 +177,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
      * 处理服务器心跳
      */
     private void handleServerHeartbeat(ChannelHandlerContext ctx, JsonNode json) {
-        ServerSession session = channelManager.getSession(ctx.channel());
+        ServerSessionPacket session = channelManager.getSession(ctx.channel());
         if (session != null) {
             session.setLastActiveTime(new Date());
             channelManager.updateSession(ctx.channel(), session);
@@ -193,7 +191,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
         try {
             ServerInfoPacket infoPacket = objectMapper.treeToValue(json, ServerInfoPacket.class);
             
-            ServerSession session = channelManager.getSession(ctx.channel());
+            ServerSessionPacket session = channelManager.getSession(ctx.channel());
             if (session == null) {
                 log.warn("收到未认证连接的服务器信息");
                 return;

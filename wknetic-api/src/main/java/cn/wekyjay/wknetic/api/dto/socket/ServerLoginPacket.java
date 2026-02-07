@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.common.dto.socket;
+package cn.wekyjay.wknetic.api.dto.socket;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * 玩家信息DTO
+ * 游戏服务器登录数据包
  * 
  * @author WkNetic
  * @since 2026-02-03
@@ -17,31 +17,26 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlayerInfoDto implements Serializable {
+public class ServerLoginPacket implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 玩家UUID
+     * 服务器Token（用于认证）
      */
-    private String uuid;
+    private String token;
 
     /**
-     * 玩家名称
+     * 服务器名称
      */
-    private String name;
+    private String serverName;
 
     /**
-     * 延迟（ping）
+     * 服务器版本
      */
-    private Integer ping;
+    private String serverVersion;
 
     /**
-     * 所在世界
+     * 服务器IP地址
      */
-    private String world;
-
-    /**
-     * 游戏模式
-     */
-    private String gameMode;
+    private String serverIp;
 }

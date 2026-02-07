@@ -1,11 +1,9 @@
 package cn.wekyjay.wknetic.admin.system.controller;
 
-import cn.wekyjay.wknetic.common.dto.socket.AdminCommandPacket;
-import cn.wekyjay.wknetic.common.enums.ResultCode;
+import cn.wekyjay.wknetic.api.dto.socket.AdminCommandPacket;
 import cn.wekyjay.wknetic.common.model.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

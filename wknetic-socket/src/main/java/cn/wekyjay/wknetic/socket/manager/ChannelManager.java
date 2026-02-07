@@ -1,6 +1,6 @@
 package cn.wekyjay.wknetic.socket.manager;
 
-import cn.wekyjay.wknetic.socket.model.ServerSession;
+import cn.wekyjay.wknetic.api.model.ServerSessionPacket;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class ChannelManager {
     private static final ConcurrentHashMap<String, Channel> sessionChannelMap = new ConcurrentHashMap<>();
     
     // Channel -> ServerSession 映射
-    private static final ConcurrentHashMap<ChannelId, ServerSession> sessionMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<ChannelId, ServerSessionPacket> sessionMap = new ConcurrentHashMap<>();
     
     // ChannelId -> SessionId 反向映射（用于快速移除）
     private static final ConcurrentHashMap<ChannelId, String> idToSessionIdMap = new ConcurrentHashMap<>();
@@ -40,7 +40,7 @@ public class ChannelManager {
      * @param session 服务器会话信息
      * @return 是否成功注册
      */
-    public boolean registerChannel(String token, Channel channel, ServerSession session) {
+    public boolean registerChannel(String token, Channel channel, ServerSessionPacket session) {
         String sessionId = session.getSessionId();
         
         // 检查是否有旧连接（通过token查询）
@@ -77,7 +77,7 @@ public class ChannelManager {
         String sessionId = idToSessionIdMap.remove(channel.id());
         if (sessionId != null) {
             sessionChannelMap.remove(sessionId);
-            ServerSession session = sessionMap.remove(channel.id());
+            ServerSessionPacket session = sessionMap.remove(channel.id());
             if (session != null) {
                 // 移除token映射
                 tokenToSessionIdMap.remove(session.getToken());
@@ -118,7 +118,7 @@ public class ChannelManager {
      * @param channel Netty Channel
      * @return ServerSession
      */
-    public ServerSession getSession(Channel channel) {
+    public ServerSessionPacket getSession(Channel channel) {
         return sessionMap.get(channel.id());
     }
     
@@ -128,7 +128,7 @@ public class ChannelManager {
      * @param sessionId 会话ID
      * @return ServerSession
      */
-    public ServerSession getSessionBySessionId(String sessionId) {
+    public ServerSessionPacket getSessionBySessionId(String sessionId) {
         Channel channel = sessionChannelMap.get(sessionId);
         if (channel != null) {
             return sessionMap.get(channel.id());
@@ -144,7 +144,7 @@ public class ChannelManager {
      * @deprecated 应使用 getSessionBySessionId 替代
      */
     @Deprecated
-    public ServerSession getSessionByToken(String token) {
+    public ServerSessionPacket getSessionByToken(String token) {
         String sessionId = tokenToSessionIdMap.get(token);
         if (sessionId != null) {
             Channel channel = sessionChannelMap.get(sessionId);
@@ -161,7 +161,7 @@ public class ChannelManager {
      * @param channel Netty Channel
      * @param session ServerSession
      */
-    public void updateSession(Channel channel, ServerSession session) {
+    public void updateSession(Channel channel, ServerSessionPacket session) {
         sessionMap.put(channel.id(), session);
     }
     
@@ -170,7 +170,7 @@ public class ChannelManager {
      * 
      * @return 服务器会话列表
      */
-    public List<ServerSession> getAllSessions() {
+    public List<ServerSessionPacket> getAllSessions() {
         return new ArrayList<>(sessionMap.values());
     }
     
