@@ -7,6 +7,7 @@ import cn.wekyjay.wknetic.common.model.dto.UserDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserQueryDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserProfileUpdateDTO;
 import cn.wekyjay.wknetic.common.model.vo.UserProfileVO;
+import cn.wekyjay.wknetic.common.model.vo.MinecraftBindingInfo;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
@@ -132,5 +133,31 @@ public interface ISysUserService extends IService<SysUser> {
      * @return 是否成功
      */
     boolean updateUserProfile(Long userId, UserProfileUpdateDTO profileUpdateDTO);
+
+    /**
+     * 绑定Minecraft账号
+     * 
+     * @param userId 用户ID
+     * @param minecraftUuid Minecraft UUID
+     * @param minecraftUsername Minecraft用户名
+     * @return 是否成功
+     */
+    boolean bindMinecraftAccount(Long userId, String minecraftUuid, String minecraftUsername);
+
+    /**
+     * 解绑Minecraft账号
+     * 
+     * @param userId 用户ID
+     * @return 是否成功
+     */
+    boolean unbindMinecraftAccount(Long userId);
+
+    /**
+     * 获取用户的Minecraft绑定信息
+     * 
+     * @param userId 用户ID
+     * @return Minecraft绑定信息（包含UUID和用户名）
+     */
+    MinecraftBindingInfo getMinecraftBindingInfo(Long userId);
 }
 

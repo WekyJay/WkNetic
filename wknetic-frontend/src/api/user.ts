@@ -82,6 +82,50 @@ export interface MinecraftProfile {
 }
 
 /**
+ * Minecraft绑定信息
+ */
+export interface MinecraftBindingInfo {
+  minecraftUuid?: string
+  minecraftUsername?: string
+  bindTime?: string
+  bound: boolean
+  status: string
+  avatarUrl?: string
+}
+
+/**
+ * Microsoft OAuth配置信息
+ */
+export interface MicrosoftOAuthConfig {
+  enabled: boolean
+  clientIdConfigured: boolean
+  clientSecretConfigured: boolean
+  redirectUri: string
+  scope: string
+}
+
+/**
+ * Microsoft OAuth回调结果
+ */
+export interface MicrosoftOAuthCallbackResult {
+  code: string
+  userId: number
+  message: string
+}
+
+/**
+ * Microsoft账户绑定结果
+ */
+export interface MicrosoftBindResult {
+  success: boolean
+  message: string
+  userId: number
+  warning?: string
+  minecraftUuid?: string
+  minecraftUsername?: string
+}
+
+/**
  * 用户管理 API
  */
 export const userApi = {
@@ -133,7 +177,31 @@ export const userApi = {
    * 验证Minecraft UUID
    */
   validateMinecraftUuid(uuid: string) {
-    return api.get<MinecraftProfile>(`/api/v1/admin/users/validate-mc-uuid/${uuid}`)
+    return api.get<MinecraftProfile>(`/api/v1/user/minecraft/validate/${uuid}`)
+  },
+
+  /**
+   * 绑定Minecraft账号（当前登录用户）
+   */
+  bindMinecraftAccount(minecraftUuid: string, minecraftUsername: string) {
+    return api.post<string>('/api/v1/user/minecraft/bind', {
+      minecraftUuid,
+      minecraftUsername
+    })
+  },
+
+  /**
+   * 解绑Minecraft账号（当前登录用户）
+   */
+  unbindMinecraftAccount() {
+    return api.delete<string>('/api/v1/user/minecraft/unbind')
+  },
+
+  /**
+   * 获取Minecraft绑定信息（当前登录用户）
+   */
+  getMinecraftBindingInfo() {
+    return api.get<MinecraftBindingInfo>('/api/v1/user/minecraft/binding-info')
   },
 
   /**
@@ -186,6 +254,45 @@ export const userApi = {
   getUserFollowers(userId: number, page = 1, size = 20) {
     return api.get<PageResult<ExtendedUserProfile>>(`/api/v1/user/${userId}/followers`, {
       params: { page, size }
+    })
+  },
+
+  /**
+   * 获取Microsoft OAuth授权URL
+   */
+  getMicrosoftAuthorizationUrl() {
+    return api.get<string>('/api/v1/oauth/microsoft/authorize')
+  },
+
+  /**
+   * 获取Microsoft OAuth配置状态
+   */
+  getMicrosoftConfig() {
+    return api.get<MicrosoftOAuthConfig>('/api/v1/oauth/microsoft/config')
+  },
+
+  /**
+   * 绑定Microsoft账户并获取Minecraft信息
+   */
+  bindMicrosoftAccount() {
+    return api.post<MicrosoftBindResult>('/api/v1/oauth/microsoft/bind')
+  },
+
+  /**
+   * 处理Microsoft OAuth回调
+   * @param code 授权码
+   * @param state 状态参数
+   * @param error 错误信息（可选）
+   * @param errorDescription 错误描述（可选）
+   */
+  microsoftOAuthCallback(code: string, state: string, error?: string, errorDescription?: string) {
+    return api.get<MicrosoftOAuthCallbackResult>('/api/v1/oauth/microsoft/callback', {
+      params: {
+        code,
+        state,
+        error,
+        errorDescription
+      }
     })
   }
 }

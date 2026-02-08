@@ -11,6 +11,7 @@ import WkCard from '@/components/common/WkCard.vue'
 import WkLoading from '@/components/common/WkLoading.vue'
 import WkAlert from '@/components/common/WkAlert.vue'
 import UserAvatar from '@/components/user/UserAvatar.vue'
+import MinecraftSettings from '@/components/user/MinecraftSettings.vue'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -316,7 +317,12 @@ onMounted(() => {
               </div>
             </div>
             
-            <!-- 其他标签页（占位） -->
+            <!-- Minecraft设置 -->
+            <div v-else-if="activeTab === 'minecraft'" class="space-y-6">
+              <MinecraftSettings />
+            </div>
+            
+            <!-- 偏好设置 -->
             <div v-else-if="activeTab === 'preferences'" class="space-y-8">
               <div>
                 <h2 class="text-xl font-semibold text-text mb-4">{{ t('settings.appearance.title') }}</h2>

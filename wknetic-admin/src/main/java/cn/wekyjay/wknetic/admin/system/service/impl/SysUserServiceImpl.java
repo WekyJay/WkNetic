@@ -12,12 +12,16 @@ import cn.wekyjay.wknetic.common.model.dto.ResetPasswordBody;
 import cn.wekyjay.wknetic.common.model.dto.UserDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserQueryDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserProfileUpdateDTO;
+import cn.wekyjay.wknetic.common.model.vo.MinecraftBindingInfo;
 import cn.wekyjay.wknetic.common.model.vo.UserProfileVO;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+
+import java.time.LocalDateTime;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -398,5 +402,102 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         }
 
         return this.updateById(user);
+    }
+
+    @Override
+    public boolean bindMinecraftAccount(Long userId, String minecraftUuid, String minecraftUsername) {
+        // 检查用户是否存在
+        SysUser user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        // 检查Minecraft UUID是否已被绑定
+        if (isMinecraftUuidBound(minecraftUuid, userId)) {
+            throw new RuntimeException("该Minecraft账号已被绑定");
+        }
+        
+        // 更新用户信息
+        LambdaUpdateWrapper<SysUser> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(SysUser::getUserId, userId)
+               .set(SysUser::getMinecraftUuid, minecraftUuid)
+               .set(SysUser::getMinecraftUsername, minecraftUsername)
+               .set(SysUser::getUpdateTime, LocalDateTime.now());
+        
+        boolean success = this.update(wrapper);
+        
+        if (success) {
+            log.info("绑定Minecraft账号成功: userId={}, minecraftUuid={}, username={}", 
+                    userId, minecraftUuid, minecraftUsername);
+        }
+        
+        return success;
+    }
+
+    @Override
+    public boolean unbindMinecraftAccount(Long userId) {
+        // 检查用户是否存在
+        SysUser user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        // 检查是否已绑定
+        if (!StringUtils.hasText(user.getMinecraftUuid())) {
+            throw new RuntimeException("用户未绑定Minecraft账号");
+        }
+        
+        // 解绑Minecraft账号
+        LambdaUpdateWrapper<SysUser> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(SysUser::getUserId, userId)
+               .set(SysUser::getMinecraftUuid, null)
+               .set(SysUser::getMinecraftUsername, null)
+               .set(SysUser::getUpdateTime, LocalDateTime.now());
+        
+        boolean success = this.update(wrapper);
+        
+        if (success) {
+            log.info("解绑Minecraft账号成功: userId={}, previousUuid={}", 
+                    userId, user.getMinecraftUuid());
+        }
+        
+        return success;
+    }
+
+    @Override
+    public MinecraftBindingInfo getMinecraftBindingInfo(Long userId) {
+        // 获取用户信息
+        SysUser user = this.getById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        
+        MinecraftBindingInfo info = new MinecraftBindingInfo();
+        
+        // 检查是否已绑定
+        if (StringUtils.hasText(user.getMinecraftUuid())) {
+            info.setBound(true);
+            info.setMinecraftUuid(user.getMinecraftUuid());
+            info.setMinecraftUsername(user.getMinecraftUsername());
+            info.setStatus("已绑定");
+            
+            // 将java.util.Date转换为java.time.LocalDateTime
+            if (user.getUpdateTime() != null) {
+                info.setBindTime(user.getUpdateTime().toInstant()
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDateTime());
+            }
+            
+            // 生成Minecraft头像URL
+            if (StringUtils.hasText(user.getMinecraftUuid())) {
+                String uuid = user.getMinecraftUuid().replace("-", "");
+                info.setAvatarUrl("https://crafatar.com/avatars/" + uuid + "?size=64&overlay");
+            }
+        } else {
+            info.setBound(false);
+            info.setStatus("未绑定");
+        }
+        
+        return info;
     }
 }

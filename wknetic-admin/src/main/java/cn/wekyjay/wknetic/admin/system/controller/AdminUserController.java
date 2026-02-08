@@ -3,8 +3,10 @@ package cn.wekyjay.wknetic.admin.system.controller;
 import cn.wekyjay.wknetic.admin.system.service.ISysUserService;
 import cn.wekyjay.wknetic.common.domain.SysUser;
 import cn.wekyjay.wknetic.common.model.Result;
+import cn.wekyjay.wknetic.common.model.dto.MinecraftBindDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserDTO;
 import cn.wekyjay.wknetic.common.model.dto.UserQueryDTO;
+import cn.wekyjay.wknetic.common.model.vo.MinecraftBindingInfo;
 import cn.wekyjay.wknetic.common.model.vo.MinecraftProfileVO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -149,6 +151,54 @@ public class AdminUserController {
             vo.setValid(false);
             vo.setError("验证失败：" + e.getMessage());
             return Result.success(vo);
+        }
+    }
+
+    /**
+     * 绑定Minecraft账号
+     */
+    @PostMapping("/{userId}/minecraft/bind")
+    public Result<String> bindMinecraftAccount(
+            @PathVariable Long userId,
+            @Valid @RequestBody MinecraftBindDTO bindDTO) {
+        try {
+            boolean success = userService.bindMinecraftAccount(
+                userId, 
+                bindDTO.getMinecraftUuid(), 
+                bindDTO.getMinecraftUsername()
+            );
+            return success ? Result.success("Minecraft账号绑定成功") : Result.error("绑定失败");
+        } catch (RuntimeException e) {
+            log.error("绑定Minecraft账号失败: userId={}", userId, e);
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 解绑Minecraft账号
+     */
+    @DeleteMapping("/{userId}/minecraft/unbind")
+    public Result<String> unbindMinecraftAccount(@PathVariable Long userId) {
+        try {
+            boolean success = userService.unbindMinecraftAccount(userId);
+            return success ? Result.success("Minecraft账号解绑成功") : Result.error("解绑失败");
+        } catch (RuntimeException e) {
+            log.error("解绑Minecraft账号失败: userId={}", userId, e);
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 获取用户的Minecraft绑定信息
+     */
+    @GetMapping("/{userId}/minecraft/binding-info")
+    public Result<MinecraftBindingInfo> getMinecraftBindingInfo(@PathVariable Long userId) {
+        try {
+            MinecraftBindingInfo info = userService.getMinecraftBindingInfo(userId);
+            return Result.success(info);
+        } catch (RuntimeException e) {
+            log.error("获取Minecraft绑定信息失败: userId={}", userId, e);
+            return Result.error(e.getMessage());
         }
     }
 
