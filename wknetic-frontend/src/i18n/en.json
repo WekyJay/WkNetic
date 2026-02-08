@@ -307,5 +307,68 @@
     "regenerateSecret": "Regenerate Token",
     "regenerateFailed": "Failed to regenerate",
     "statusUpdateFailed": "Failed to update status"
+  },
+  "gameChat": {
+    "title": "Game Chat",
+    "subtitle": "Real-time chat with in-game players",
+    "server": "Server",
+    "selectServer": "Select server",
+    "channel": "Channel",
+    "selectChannel": "Select channel",
+    "world": "World",
+    "selectWorld": "Select world",
+    "servers": {
+      "main": "Main Server",
+      "test": "Test Server",
+      "dev": "Development Server"
+    },
+    "channels": {
+      "global": "Global",
+      "world": "World",
+      "party": "Party",
+      "whisper": "Whisper",
+      "staff": "Staff"
+    },
+    "worlds": {
+      "all": "All Worlds",
+      "world": "Main World",
+      "apocalypse": "Apocalypse World",
+      "resource": "Resource World"
+    },
+    "sampleMessages": {
+      "1": "Hello everyone! Welcome to WkNetic server!",
+      "2": "Anyone want to fight the Ender Dragon together?",
+      "3": "I found an elytra in the End, awesome!"
+    },
+    "noMessages": "No chat messages yet",
+    "startChatting": "Start chatting now!",
+    "loginRequired": "You need to login to participate in chat",
+    "login": "Go to Login",
+    "minecraftAccountRequired": "You need to bind a Minecraft account to send messages",
+    "bindAccount": "Bind Account",
+    "replyingTo": "Replying to",
+    "send": "Send",
+    "quickActions": "Quick Commands",
+    "onlinePlayers": "Online Players",
+    "reply": "Reply",
+    "report": "Report",
+    "reportConfirm": "Are you sure you want to report message from {username}?",
+    "reportSuccess": "Report submitted successfully, admin will review it",
+    "placeholders": {
+      "loginRequired": "Please login to send messages",
+      "bindAccountRequired": "Please bind Minecraft account to send messages",
+      "replying": "Replying to @{username}",
+      "default": "Type a message... (Press Enter to send, Shift+Enter for new line)"
+    },
+    "sendHint": "Press Enter to send, Shift+Enter for new line",
+    "errors": {
+      "loadFailed": "Failed to load messages",
+      "sendFailed": "Failed to send message"
+    },
+    "sendSuccess": "Message sent successfully",
+    "quickActions": {
+      "hello": "Hello!",
+      "thanks": "Thanks!"
+    }
   }
 }

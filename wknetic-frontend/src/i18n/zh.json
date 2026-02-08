@@ -64,7 +64,7 @@
   },
   "routes": {
     "home": "首页",
-    "mods": "浏览模组",
+    "gameChat": "游戏聊天室",
     "project": "项目详情",
     "forum": "社区论坛",
     "forumPost": "帖子详情",
@@ -308,5 +308,68 @@
     "regenerateSecret": "重新生成Token",
     "regenerateFailed": "重新生成失败",
     "statusUpdateFailed": "更新状态失败"
+  },
+  "gameChat": {
+    "title": "游戏聊天",
+    "subtitle": "实时与游戏内玩家聊天",
+    "server": "服务器",
+    "selectServer": "选择服务器",
+    "channel": "频道",
+    "selectChannel": "选择频道",
+    "world": "世界",
+    "selectWorld": "选择世界",
+    "servers": {
+      "main": "主服务器",
+      "test": "测试服务器",
+      "dev": "开发服务器"
+    },
+    "channels": {
+      "global": "全局频道",
+      "world": "世界频道",
+      "party": "队伍频道",
+      "whisper": "私聊频道",
+      "staff": "管理频道"
+    },
+    "worlds": {
+      "all": "全部世界",
+      "world": "主世界",
+      "apocalypse": "末日世界",
+      "resource": "资源世界"
+    },
+    "sampleMessages": {
+      "1": "大家好！欢迎来到WkNetic服务器！",
+      "2": "有人一起打末影龙吗？",
+      "3": "我在末地找到了鞘翅，太棒了！"
+    },
+    "noMessages": "暂无聊天消息",
+    "startChatting": "开始聊天吧！",
+    "loginRequired": "需要登录后才能参与聊天",
+    "login": "去登录",
+    "minecraftAccountRequired": "需要绑定Minecraft账户后才能发言",
+    "bindAccount": "绑定账户",
+    "replyingTo": "正在回复",
+    "send": "发送",
+    "quickActions": "快捷指令",
+    "onlinePlayers": "在线玩家",
+    "reply": "回复",
+    "report": "举报",
+    "reportConfirm": "确定要举报玩家 {username} 的消息吗？",
+    "reportSuccess": "举报成功，管理员将会处理",
+    "placeholders": {
+      "loginRequired": "请登录后发送消息",
+      "bindAccountRequired": "请绑定Minecraft账户后发送消息",
+      "replying": "回复 @{username}",
+      "default": "输入消息...（按Enter发送，Shift+Enter换行）"
+    },
+    "sendHint": "按Enter发送消息，Shift+Enter换行",
+    "errors": {
+      "loadFailed": "加载消息失败",
+      "sendFailed": "发送消息失败"
+    },
+    "sendSuccess": "消息发送成功",
+    "quickActions": {
+      "hello": "你好！",
+      "thanks": "谢谢！"
+    }
   }
 }

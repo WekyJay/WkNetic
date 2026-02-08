@@ -1,10 +1,11 @@
 package cn.wekyjay.wknetic.socket.manager;
 
-import cn.wekyjay.wknetic.api.model.ServerSessionPacket;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import cn.wekyjay.wknetic.api.model.packet.ServerSessionPacket;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

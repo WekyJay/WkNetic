@@ -75,6 +75,9 @@ importers:
       '@iconify-json/circle-flags':
         specifier: ^1.2.10
         version: 1.2.10
+      '@iconify-json/ep':
+        specifier: ^1.2.4
+        version: 1.2.4
       '@iconify-json/tabler':
         specifier: ^1.2.26
         version: 1.2.26
@@ -349,6 +352,9 @@ packages:
 
   '@iconify-json/circle-flags@1.2.10':
     resolution: {integrity: sha512-sZRxs689a281RtZvuAiKtV7pQHv8Tk0HkinSM7QvLgdLEK8xgGRCcbDvL09Rq+/KtemmsMzGhS9/qt+r3ca+Ug==}
+
+  '@iconify-json/ep@1.2.4':
+    resolution: {integrity: sha512-dtKOueYp1CRxAUW+GayIiuHqOlELfO0W3QiHOH4NjvKtBn2uxZbByIKQ+7B1Hj+AgZrhWTie3QKYkZn+VQVZrw==}
 
   '@iconify-json/tabler@1.2.26':
     resolution: {integrity: sha512-92G+ZD70AZgeJf07JfQzH+isnai6DwPcMBuF/qL1F+xAxdXCJzGd3w2RmsRvOmB+w1ImmWEEDms50QivQIjd6g==}
@@ -2318,6 +2324,10 @@ snapshots:
       '@iconify/types': 2.0.0
 
   '@iconify-json/circle-flags@1.2.10':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-json/ep@1.2.4':
     dependencies:
       '@iconify/types': 2.0.0
 

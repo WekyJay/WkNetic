@@ -2,7 +2,7 @@
  * 用户相关类型定义
  */
 
-import type { UserInfo } from './auth'
+import type { UserInfo } from '../stores/auth'
 
 /**
  * 性别枚举

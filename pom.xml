@@ -58,6 +58,11 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>cn.wekyjay.wknetic</groupId>
+            <artifactId>wknetic-api</artifactId>
+            <version>0.0.2-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <!-- 依赖版本统一管理 -->

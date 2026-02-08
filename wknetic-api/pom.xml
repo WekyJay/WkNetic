@@ -10,7 +10,7 @@
     <name>WkNetic API</name>
     <description>Common API definitions for WkNetic project</description>
     <url>https://github.com/WekyJay/WkNetic</url>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 
     <licenses>
         <license>
@@ -49,7 +49,30 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.42</version>
+        </dependency>
+        
+        <!-- Validation API (Jakarta) -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+        
+        <!-- Gson for JSON serialization (compatible with Minecraft plugin environment) -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version>
             <scope>provided</scope>
+        </dependency>
+        
+        <!-- Jackson for JSON serialization (optional, for compatibility) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.18.3</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 

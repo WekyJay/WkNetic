@@ -1,6 +1,6 @@
 package cn.wekyjay.wknetic.admin.system.controller;
 
-import cn.wekyjay.wknetic.api.dto.socket.AdminCommandPacket;
+import cn.wekyjay.wknetic.api.model.packet.AdminCommandPacket;
 import cn.wekyjay.wknetic.common.model.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;

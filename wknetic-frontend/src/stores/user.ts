@@ -10,6 +10,12 @@ export interface User {
   role: string
   roles: string[]
   createdAt: string
+  minecraftAccount?: {
+    id: string
+    username: string
+    uuid: string
+    linkedAt: string
+  }
 }
 
 export const useUserStore = defineStore(

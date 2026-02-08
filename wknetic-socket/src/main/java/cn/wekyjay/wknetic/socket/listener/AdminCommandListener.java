@@ -1,7 +1,7 @@
 package cn.wekyjay.wknetic.socket.listener;
 
 import cn.wekyjay.wknetic.api.enums.PacketType;
-import cn.wekyjay.wknetic.api.dto.socket.AdminCommandPacket;
+import cn.wekyjay.wknetic.api.model.packet.AdminCommandPacket;
 import cn.wekyjay.wknetic.socket.manager.ChannelManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -35,7 +35,7 @@ public class AdminCommandListener implements MessageListener {
     public static final String ADMIN_COMMAND_TOPIC = "wknetic:admin:command";
 
     @Override
-    public void onMessage(@NonNull Message message, @Nullable byte[] pattern) {
+    public void onMessage(Message message,byte[] pattern) {
         try {
             String msg = new String(message.getBody());
             log.info("收到管理员命令: {}", msg);

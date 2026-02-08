@@ -1,11 +1,14 @@
-package cn.wekyjay.wknetic.api.dto.socket;
+package cn.wekyjay.wknetic.api.model.packet;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+
+import cn.wekyjay.wknetic.api.enums.PacketType;
 
 /**
  * 游戏服务器登录数据包
@@ -14,26 +17,14 @@ import java.io.Serializable;
  * @since 2026-02-03
  */
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServerLoginPacket implements Serializable {
+public class ServerLoginPacket extends ServerPacket implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    /**
-     * 服务器Token（用于认证）
-     */
-    private String token;
-
-    /**
-     * 服务器名称
-     */
-    private String serverName;
-
-    /**
-     * 服务器版本
-     */
-    private String serverVersion;
+    
+    private PacketType packetType = PacketType.SERVER_LOGIN;
 
     /**
      * 服务器IP地址

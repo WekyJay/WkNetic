@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
 import i18n from '@/i18n'
 
 // 获取 i18n 国际化实例
@@ -87,6 +88,16 @@ const routes: RouteRecordRaw[] = [
                     component: () => import('@/pages/forum/TopicPage.vue'),
                     meta: {
                         title: 'routes.forumTopic'
+                    }
+                },
+                {
+                    path: '/chat',
+                    name: 'game-chat',
+                    component: () => import('@/pages/chat/GameChatPage.vue'),
+                    meta: {
+                        title: 'routes.gameChat',
+                        requiresAuth: true,
+                        requiresMinecraftAccount: true
                     }
                 },
                 {
@@ -302,13 +313,14 @@ router.beforeEach((to, _from, next) => {
     }
     document.title = `${pageTitle} | WkNetic`
 
+    const authStore = useAuthStore()
+    const userStore = useUserStore()
+
+    // 尝试从存储恢复登录状态
+    const isAuthenticated = authStore.checkAuth()
+
     // 检查是否需要登录（管理后台）
     if (to.path.startsWith('/admin')) {
-        const authStore = useAuthStore()
-
-        // 尝试从存储恢复登录状态
-        const isAuthenticated = authStore.checkAuth()
-
         if (!isAuthenticated) {
             // 未登录，跳转到 404 页面（根据需求：强行访问后台显示 404）
             console.warn('未授权访问管理后台，跳转到404页面')
@@ -330,10 +342,32 @@ router.beforeEach((to, _from, next) => {
         }
     }
 
+    // 检查普通页面是否需要认证
+    if (to.meta.requiresAuth && !isAuthenticated) {
+        console.warn('需要登录才能访问此页面')
+        next({
+            path: '/login',
+            query: { redirect: to.fullPath }
+        })
+        return
+    }
+
+    // 检查是否需要Minecraft账户绑定
+    if (to.meta.requiresMinecraftAccount && isAuthenticated) {
+        const hasMinecraftAccount = userStore.user?.minecraftAccount != null
+        if (!hasMinecraftAccount) {
+            console.warn('需要绑定Minecraft账户才能访问此页面')
+            next({
+                path: '/settings',
+                query: { tab: 'account' }
+            })
+            return
+        }
+    }
+
     // 如果已登录，访问登录页则跳转到首页
     if (to.path === '/login') {
-        const authStore = useAuthStore()
-        if (authStore.checkAuth()) {
+        if (isAuthenticated) {
             const redirect = to.query.redirect as string
             next(redirect || '/')
             return

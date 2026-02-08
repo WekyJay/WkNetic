@@ -1,9 +1,10 @@
-package cn.wekyjay.wknetic.api.dto.socket;
+package cn.wekyjay.wknetic.api.model.packet;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
@@ -14,7 +15,7 @@ import java.io.Serializable;
  * @since 2026-02-03
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AdminCommandPacket implements Serializable {

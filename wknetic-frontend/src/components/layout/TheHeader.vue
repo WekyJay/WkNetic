@@ -73,7 +73,8 @@ const searchInputRefMobile = ref<HTMLInputElement | null>(null)
 
 const navCategories = [
   { name: 'Home', icon: 'i-tabler-home', href: '/' },
-  { name: 'Forum', icon: 'i-tabler-message-circle', href: '/forum' }
+  { name: 'Forum', icon: 'i-tabler-message-circle', href: '/forum' },
+  { name: 'Chat', icon: 'i-tabler-chat', href: '/chat' }
 ]
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)

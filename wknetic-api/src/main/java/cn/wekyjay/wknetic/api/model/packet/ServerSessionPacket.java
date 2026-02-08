@@ -1,17 +1,20 @@
-package cn.wekyjay.wknetic.api.model;
+package cn.wekyjay.wknetic.api.model.packet;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import cn.wekyjay.wknetic.api.dto.socket.PlayerInfoDto;
-import cn.wekyjay.wknetic.api.dto.socket.PluginInfoDto;
+import cn.wekyjay.wknetic.api.enums.PacketType;
+import cn.wekyjay.wknetic.api.model.dto.socket.PlayerInfoDto;
+import cn.wekyjay.wknetic.api.model.dto.socket.PluginInfoDto;
 
 /**
  * 服务器会话信息（对外 API 模型）
@@ -21,31 +24,22 @@ import cn.wekyjay.wknetic.api.dto.socket.PluginInfoDto;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServerSessionPacket extends BasePacket {
+
+public class ServerSessionPacket extends ServerPacket implements Serializable {
+    private static final long serialVersionUID = 1L;
     
+
     /**
      * 会话ID（用于日志和查询，避免暴露token）
      */
     @Builder.Default
     private String sessionId = UUID.randomUUID().toString();
-
-    /**
-     * 服务器Token
-     */
-    private String token;
     
-    /**
-     * 服务器名称
-     */
-    private String serverName;
-    
-    /**
-     * 服务器版本
-     */
-    private String serverVersion;
+    @Builder.Default
+    private PacketType type = PacketType.SERVER_INFO;
     
     /**
      * MOTD

@@ -1,12 +1,13 @@
 package cn.wekyjay.wknetic.socket.handler;
 
-import cn.wekyjay.wknetic.common.domain.SysServerToken;
-import cn.wekyjay.wknetic.api.dto.socket.ServerInfoPacket;
-import cn.wekyjay.wknetic.api.dto.socket.ServerLoginPacket;
 import cn.wekyjay.wknetic.api.enums.PacketType;
+import cn.wekyjay.wknetic.api.model.packet.ServerLoginPacket;
+import cn.wekyjay.wknetic.api.model.packet.ServerSessionPacket;
+import cn.wekyjay.wknetic.common.domain.SysServerToken;
+
 import cn.wekyjay.wknetic.common.mapper.SysServerTokenMapper;
 import cn.wekyjay.wknetic.socket.manager.ChannelManager;
-import cn.wekyjay.wknetic.api.model.ServerSessionPacket;
+
 
 
 // 引入 Jackson
@@ -27,9 +28,8 @@ import org.springframework.util.StringUtils;
 import jakarta.annotation.Resource;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+
 
 @Slf4j
 @Component
@@ -189,7 +189,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
      */
     private void handleServerInfo(ChannelHandlerContext ctx, JsonNode json) {
         try {
-            ServerInfoPacket infoPacket = objectMapper.treeToValue(json, ServerInfoPacket.class);
+            ServerSessionPacket infoPacket = objectMapper.treeToValue(json, ServerSessionPacket.class);
             
             ServerSessionPacket session = channelManager.getSession(ctx.channel());
             if (session == null) {
