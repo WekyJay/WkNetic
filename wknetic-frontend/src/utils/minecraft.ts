@@ -52,7 +52,8 @@ export function removeUuidDashes(uuid: string): string {
 export function getMinecraftAvatarUrl(uuid: string, size: number = 64): string {
   if (!uuid) return ''
   const cleanUuid = removeUuidDashes(uuid)
-  return `https://crafatar.com/avatars/${cleanUuid}?size=${size}&overlay`
+  return `https://mc-heads.net/avatar/${cleanUuid}`
+  
 }
 
 /**
@@ -61,7 +62,7 @@ export function getMinecraftAvatarUrl(uuid: string, size: number = 64): string {
 export function getMinecraftSkinUrl(uuid: string): string {
   if (!uuid) return ''
   const cleanUuid = removeUuidDashes(uuid)
-  return `https://crafatar.com/skins/${cleanUuid}`
+  return `https://mc-heads.net/body/${cleanUuid}`
 }
 
 /**

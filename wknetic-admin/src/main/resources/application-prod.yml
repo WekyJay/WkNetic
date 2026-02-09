@@ -4,6 +4,11 @@ wknetic:
     # 生产环境读取 WKNETIC_JWT_SECRET，如果没读到，就用后面的默认值
     secret: ${WKNETIC_JWT_SECRET:WkNeticCoreSecretKeyForSpringSecurityVersion2026MakeItLong}
     expiration: 2592000
+  microsoft:
+    oauth:
+      client-id: ${MICROSOFT_OAUTH_CLIENT_ID}
+      client-secret: ${MICROSOFT_OAUTH_CLIENT_SECRET}
+      redirect-uri: http://localhost:8080/oauth/microsoft/callback
 spring:
   data:
     redis:

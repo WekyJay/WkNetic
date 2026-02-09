@@ -464,6 +464,8 @@ public class SysUserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impl
         return success;
     }
 
+
+
     @Override
     public MinecraftBindingInfo getMinecraftBindingInfo(Long userId) {
         // 获取用户信息

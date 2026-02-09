@@ -3,33 +3,48 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { userApi } from '@/api/user'
-import { validateUuid, formatUuid, getMinecraftAvatarUrl, getUuidErrorMessage } from '@/utils/minecraft'
-import type { MinecraftProfile, MicrosoftOAuthConfig, MicrosoftBindResult } from '@/api/user'
+import { formatUuid, getMinecraftAvatarUrl } from '@/utils/minecraft'
+import type { MinecraftDeviceFlowStartResponse } from '@/api/user'
 import WkButton from '@/components/common/WkButton.vue'
-import WkInput from '@/components/common/WkInput.vue'
 import WkCard from '@/components/common/WkCard.vue'
 import WkAlert from '@/components/common/WkAlert.vue'
-import WkLoading from '@/components/common/WkLoading.vue'
+
+// 设备流状态接口
+interface DeviceFlowStateDTO {
+  deviceCode: string
+  userCode: string
+  verificationUri: string
+  verificationUriComplete: string
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'EXPIRED' | 'ERROR'
+  statusDescription?: string
+  expiresAt: string
+  timeRemaining: number
+  interval: number
+  terminal: boolean
+  microsoftAccessToken?: string | null
+  minecraftUuid?: string | null
+  minecraftUsername?: string | null
+  errorMessage?: string | null
+}
 
 const { t } = useI18n()
 const authStore = useAuthStore()
 
 // 状态管理
-const loading = ref(false)
-const saving = ref(false)
-const verifying = ref(false)
 const message = ref('')
 const messageType = ref<'success' | 'error' | 'warning' | 'info'>('info')
 
-// Microsoft OAuth状态
-const microsoftConfig = ref<MicrosoftOAuthConfig | null>(null)
-const microsoftLoading = ref(false)
-const microsoftAuthorizing = ref(false)
-const oauthWindow = ref<Window | null>(null)
+// MinecraftAuth配置
+const minecraftAuthConfig = ref<MinecraftAuthConfigResponse | null>(null)
+const minecraftAuthLoading = ref(false)
 
-// 表单数据
-const uuidInput = ref('')
-const verificationResult = ref<MinecraftProfile | null>(null)
+// 设备流状态
+const deviceFlowActive = ref(false)
+const deviceFlowData = ref<MinecraftDeviceFlowStartResponse | null>(null)
+const deviceFlowPolling = ref(false)
+const deviceFlowPollInterval = ref<NodeJS.Timeout | null>(null)
+const deviceFlowExpiresAt = ref<number | null>(null)
+const deviceFlowTimeRemaining = ref<number | null>(null)
 
 // 当前绑定的Minecraft账号
 const currentMinecraft = computed(() => {
@@ -40,94 +55,28 @@ const currentMinecraft = computed(() => {
   }
 })
 
-// 验证UUID格式
-const uuidError = computed(() => {
-  if (!uuidInput.value) return ''
-  return getUuidErrorMessage(uuidInput.value)
+// 检查MinecraftAuth是否已配置
+const isMinecraftAuthConfigured = computed(() => {
+  return minecraftAuthConfig.value?.enabled && 
+         minecraftAuthConfig.value?.client_id && 
+         minecraftAuthConfig.value?.polling_interval && 
+         minecraftAuthConfig.value?.polling_timeout
 })
 
-// 格式化显示的UUID
-const formattedUuid = computed(() => {
-  if (!uuidInput.value) return ''
-  return formatUuid(uuidInput.value)
+// 设备流剩余时间格式化
+const deviceFlowTimeFormatted = computed(() => {
+  if (!deviceFlowTimeRemaining.value) return '--:--'
+  console.info("Device Flow Time Remaining:", deviceFlowTimeRemaining.value);
+  const minutes = Math.floor(deviceFlowTimeRemaining.value / 60)
+  const seconds = deviceFlowTimeRemaining.value % 60
+
+  console.info("Formatted Time - Minutes:", minutes, "Seconds:", seconds);
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
 })
-
-// 检查是否已配置Microsoft OAuth
-const isMicrosoftConfigured = computed(() => {
-  return microsoftConfig.value?.enabled && 
-         microsoftConfig.value?.clientIdConfigured && 
-         microsoftConfig.value?.clientSecretConfigured
-})
-
-// 验证Minecraft UUID
-const verifyUuid = async () => {
-  if (uuidError.value) return
-  
-  verifying.value = true
-  message.value = ''
-  
-  try {
-    const result = await userApi.validateMinecraftUuid(uuidInput.value)
-    verificationResult.value = result.data
-    
-    if (result.data.valid) {
-      messageType.value = 'success'
-      message.value = `验证成功！玩家名称：${result.data.name}`
-    } else {
-      messageType.value = 'error'
-      message.value = result.data.error || 'UUID验证失败'
-    }
-  } catch (error: any) {
-    messageType.value = 'error'
-    message.value = error.response?.data?.message || '验证失败，请重试'
-    verificationResult.value = null
-  } finally {
-    verifying.value = false
-  }
-}
-
-// 绑定Minecraft账号
-const bindMinecraft = async () => {
-  if (!verificationResult.value?.valid) {
-    messageType.value = 'error'
-    message.value = '请先验证有效的Minecraft UUID'
-    return
-  }
-  
-  saving.value = true
-  
-  try {
-    // 调用新的绑定API（不需要userId参数）
-    await userApi.bindMinecraftAccount(
-      verificationResult.value.id,
-      verificationResult.value.name
-    )
-    
-    messageType.value = 'success'
-    message.value = 'Minecraft账号绑定成功！'
-    
-    // 更新本地用户信息
-    if (authStore.user) {
-      authStore.user.minecraftUuid = verificationResult.value.id
-      authStore.user.minecraftUsername = verificationResult.value.name
-    }
-    
-    // 重置表单
-    uuidInput.value = ''
-    verificationResult.value = null
-  } catch (error: any) {
-    messageType.value = 'error'
-    message.value = error.response?.data?.message || '绑定失败，请重试'
-  } finally {
-    saving.value = false
-  }
-}
 
 // 解绑Minecraft账号
 const unbindMinecraft = async () => {
   if (!confirm('确定要解绑Minecraft账号吗？')) return
-  
-  saving.value = true
   
   try {
     // 调用新的解绑API（不需要userId参数）
@@ -144,160 +93,290 @@ const unbindMinecraft = async () => {
   } catch (error: any) {
     messageType.value = 'error'
     message.value = error.response?.data?.message || '解绑失败，请重试'
-  } finally {
-    saving.value = false
   }
 }
 
-// 加载用户数据
-const loadUserData = () => {
-  // 数据已通过authStore获取
-}
-
-// 加载Microsoft OAuth配置
-const loadMicrosoftConfig = async () => {
-  microsoftLoading.value = true
+// 加载MinecraftAuth配置
+const loadMinecraftAuthConfig = async () => {
+  minecraftAuthLoading.value = true
   try {
-    const result = await userApi.getMicrosoftConfig()
-    microsoftConfig.value = result.data
+    const result = await userApi.getMinecraftAuthConfig()
+    minecraftAuthConfig.value = result.data
   } catch (error: any) {
-    console.error('Failed to load Microsoft OAuth config:', error)
+    console.error('Failed to load MinecraftAuth config:', error)
     messageType.value = 'error'
-    message.value = '无法加载Microsoft OAuth配置'
+    message.value = '无法加载MinecraftAuth配置'
   } finally {
-    microsoftLoading.value = false
+    minecraftAuthLoading.value = false
   }
 }
 
-// 启动Microsoft OAuth授权流程
-const startMicrosoftOAuth = async () => {
-  if (!isMicrosoftConfigured.value) {
+// 加载当前用户的Minecraft绑定信息
+const loadCurrentUserMinecraftInfo = async () => {
+  if (!authStore.user?.userId) return
+  
+  try {
+    // 获取最新的用户信息，包括Minecraft绑定
+    const result = await userApi.getUserProfile(authStore.user.userId)
+    if (result.data && authStore.user) {
+      // 更新本地用户信息中的Minecraft相关字段
+      authStore.user.minecraftUuid = result.data.minecraftUuid
+      authStore.user.minecraftUsername = result.data.minecraftUsername
+    }
+  } catch (error: any) {
+    console.error('Failed to load user Minecraft info:', error)
+  }
+}
+
+// 启动Minecraft设备流认证（使用MinecraftAuth库）
+const startMinecraftDeviceFlow = async () => {
+  if (!isMinecraftAuthConfigured.value) {
     messageType.value = 'error'
-    message.value = 'Microsoft OAuth功能未配置，请联系管理员'
+    message.value = 'MinecraftAuth功能未配置，请联系管理员'
     return
   }
   
-  microsoftAuthorizing.value = true
+  deviceFlowActive.value = true
+  
   try {
-    // 获取授权URL
-    const result = await userApi.getMicrosoftAuthorizationUrl()
-    const authorizationUrl = result.data
+    // 启动设备流
+    const result = await userApi.startMinecraftDeviceFlow()
+    deviceFlowData.value = result.data
     
-    if (!authorizationUrl) {
-      throw new Error('无法获取授权URL')
+    // 设置过期时间
+    // 注意：expires_in 应该是设备码过期的时间戳（毫秒），或者是从现在开始的秒数
+    // 根据微软设备流规范，expires_in 通常是从现在开始的秒数，比如 900 秒（15分钟）
+    // 但后端可能返回的是过期时间戳，我们需要根据实际情况处理
+    deviceFlowExpiresAt.value = deviceFlowData.value.expires_in;
+    
+    // 调试日志：查看返回的数据结构
+    console.info("Device flow data received:", deviceFlowData.value);
+    console.info("expires_in value:", deviceFlowData.value.expires_in);
+    console.info("Current time (Date.now()):", Date.now());
+    
+    // 计算剩余时间：先尝试判断 expires_in 的单位
+    const expiresIn = deviceFlowData.value.expires_in;
+    let remainingSeconds;
+    
+    if (expiresIn > 1000000000000) {
+      // 如果 expires_in 大于 1000000000000，很可能是毫秒时间戳
+      // 计算剩余毫秒数并转换为秒
+      const remainingMs = expiresIn - Date.now();
+      remainingSeconds = Math.max(0, Math.floor(remainingMs / 1000));
+      console.info("expires_in interpreted as timestamp (ms), remaining seconds:", remainingSeconds);
+    } else if (expiresIn >= 0 && expiresIn <= 3600) {
+      // 如果 expires_in 在 0-3600 之间，很可能是秒数
+      remainingSeconds = expiresIn;
+      console.info("expires_in interpreted as seconds, remaining seconds:", remainingSeconds);
+    } else {
+      // 无法确定单位，使用默认计算方式
+      remainingSeconds = Math.max(0, Math.floor(expiresIn / 1000));
+      console.warn("Cannot determine expires_in unit, using default calculation:", remainingSeconds);
     }
     
-    // 打开新窗口进行授权
-    oauthWindow.value = window.open(
-      authorizationUrl,
-      'Microsoft OAuth',
-      'width=600,height=700,menubar=no,toolbar=no,location=yes,resizable=yes,scrollbars=yes,status=yes'
-    )
+    deviceFlowTimeRemaining.value = remainingSeconds;
+    console.info("最终倒计时时间（秒）: ", deviceFlowTimeRemaining.value);
     
-    if (!oauthWindow.value) {
-      throw new Error('请允许弹出窗口进行授权')
-    }
-    
-    // 监听窗口关闭
-    const checkWindowClosed = setInterval(() => {
-      if (oauthWindow.value?.closed) {
-        clearInterval(checkWindowClosed)
-        microsoftAuthorizing.value = false
-        messageType.value = 'info'
-        message.value = '授权窗口已关闭，如果授权成功，请等待绑定完成'
+    // 开始倒计时
+    const countdownInterval = setInterval(() => {
+      if (deviceFlowTimeRemaining.value && deviceFlowTimeRemaining.value > 0) {
+        deviceFlowTimeRemaining.value--
+      } else {
+        clearInterval(countdownInterval)
+        if (deviceFlowActive.value) {
+          messageType.value = 'warning'
+          message.value = '设备码已过期，请重新开始'
+          stopDeviceFlow()
+        }
       }
     }, 1000)
     
+    // 开始轮询
+    startPollingMinecraftDeviceFlow()
+    
+    messageType.value = 'info'
+    message.value = '设备流已启动，请在另一台设备上完成授权'
+    
   } catch (error: any) {
-    microsoftAuthorizing.value = false
+    deviceFlowActive.value = false
     messageType.value = 'error'
-    message.value = error.response?.data?.message || error.message || '启动Microsoft授权失败'
+    message.value = error.response?.data?.message || error.message || '启动设备流失败'
   }
 }
 
-// 绑定Microsoft账户
-const bindMicrosoftAccount = async () => {
-  if (!isMicrosoftConfigured.value) {
-    messageType.value = 'error'
-    message.value = 'Microsoft OAuth功能未配置'
-    return
-  }
+// 开始轮询Minecraft设备流状态
+const startPollingMinecraftDeviceFlow = () => {
+  if (!deviceFlowData.value) return
   
-  microsoftLoading.value = true
-  try {
-    const result = await userApi.bindMicrosoftAccount()
-    const bindResult = result.data
-    
-    if (bindResult.success) {
-      messageType.value = 'success'
-      message.value = bindResult.message
-      
-      // 如果绑定成功并且返回了Minecraft信息，更新本地用户信息
-      if (bindResult.minecraftUuid && bindResult.minecraftUsername && authStore.user) {
-        authStore.user.minecraftUuid = bindResult.minecraftUuid
-        authStore.user.minecraftUsername = bindResult.minecraftUsername
+  deviceFlowPolling.value = true
+  
+  const poll = async () => {
+    try {
+      if (!deviceFlowData.value?.device_code) {
+        stopDeviceFlow()
+        return
       }
-    } else {
-      messageType.value = 'warning'
-      message.value = bindResult.message || 'Microsoft账户绑定失败'
+      
+      // 轮询设备流状态
+      const response = await userApi.pollDeviceFlowState(deviceFlowData.value.device_code)
+      const result = response.data
+
+      
+      if (!result) {
+        throw new Error(result?.message || '轮询失败')
+      }
+      
+      const state = result as DeviceFlowStateDTO
+      
+      // 更新设备流剩余时间
+      if (state.timeRemaining >= 0 && state.timeRemaining <= 3600) {
+        // 合理范围：0-3600秒（0-1小时），直接使用
+        deviceFlowTimeRemaining.value = state.timeRemaining
+      } else if (state.timeRemaining > 1000 && state.timeRemaining <= 3600000) {
+        // 如果值在1000-3600000之间，可能是毫秒，转换为秒
+        deviceFlowTimeRemaining.value = Math.floor(state.timeRemaining / 1000)
+      } else {
+        // 异常值，不更新，继续使用前端倒计时
+        console.warn('后端返回的timeRemaining值异常:', state.timeRemaining, '保持前端倒计时')
+      }
+      
+      // 检查状态
+      switch (state.status) {
+        case 'PENDING':
+          // 继续轮询，状态未变
+          break
+          
+        case 'PROCESSING':
+          // 处理中，继续轮询
+          messageType.value = 'info'
+          message.value = '授权正在进行中，请稍候...'
+          break
+          
+        case 'COMPLETED':
+          // 认证完成
+          messageType.value = 'success'
+          message.value = 'Minecraft账户认证成功！'
+          
+          // 如果认证成功且包含Minecraft信息，更新用户信息
+          if (state.minecraftUuid && state.minecraftUsername && authStore.user) {
+            authStore.user.minecraftUuid = state.minecraftUuid
+            authStore.user.minecraftUsername = state.minecraftUsername
+            
+            // 自动绑定到当前用户账户
+            try {
+              await userApi.bindMinecraftAccount(state.minecraftUuid, state.minecraftUsername)
+              message.value = 'Minecraft账户已成功绑定！'
+              
+              // 重新加载用户信息确保数据同步
+              await loadCurrentUserMinecraftInfo()
+            } catch (bindError: any) {
+              console.error('自动绑定失败:', bindError)
+              message.value = '认证成功但自动绑定失败，请手动绑定'
+            }
+          }
+          
+          stopDeviceFlow()
+          break
+          
+        case 'EXPIRED':
+          // 已过期
+          messageType.value = 'warning'
+          message.value = '设备码已过期，请重新开始认证'
+          stopDeviceFlow()
+          break
+          
+        case 'ERROR':
+          // 发生错误
+          messageType.value = 'error'
+          message.value = state.statusDescription || state.errorMessage || '认证过程中发生错误'
+          stopDeviceFlow()
+          break
+          
+        default:
+          // 未知状态
+          messageType.value = 'warning'
+          message.value = `未知状态: ${state.status}`
+          stopDeviceFlow()
+      }
+      
+      // 如果是终端状态，停止轮询
+      if (state.terminal) {
+        stopDeviceFlow()
+      }
+      
+    } catch (error: any) {
+      console.error('Device flow polling error:', error)
+      
+      // 如果是网络错误，继续轮询；如果是其他错误，停止轮询
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        // 网络错误，继续轮询
+      } else {
+        messageType.value = 'error'
+        message.value = `轮询失败: ${error.message || '未知错误'}`
+        stopDeviceFlow()
+      }
     }
-  } catch (error: any) {
-    messageType.value = 'error'
-    message.value = error.response?.data?.message || '绑定Microsoft账户失败'
-  } finally {
-    microsoftLoading.value = false
   }
+  
+  // 立即执行第一次轮询
+  poll()
+  
+  // 设置轮询间隔（使用设备流返回的interval，或默认5秒）
+  const interval = (deviceFlowData.value.interval || 5) * 1000
+  deviceFlowPollInterval.value = setInterval(poll, interval)
 }
 
-// 处理来自OAuth窗口的消息
-const handleOAuthMessage = (event: MessageEvent) => {
-  // 确保消息来自可信源
-  if (event.origin !== window.location.origin) return
+// 停止设备流
+const stopDeviceFlow = () => {
+  deviceFlowActive.value = false
+  deviceFlowPolling.value = false
   
-  const data = event.data
+  if (deviceFlowPollInterval.value) {
+    clearInterval(deviceFlowPollInterval.value)
+    deviceFlowPollInterval.value = null
+  }
   
-  if (data.type === 'microsoft_oauth_callback') {
-    const { code, state, error, errorDescription } = data
-    
-    // 调用回调API
-    userApi.microsoftOAuthCallback(code, state, error, errorDescription)
-      .then(response => {
-        messageType.value = 'success'
-        message.value = response.data.message
-        
-        // 自动尝试绑定
-        setTimeout(() => {
-          bindMicrosoftAccount()
-        }, 1000)
-      })
-      .catch(error => {
-        messageType.value = 'error'
-        message.value = error.response?.data?.message || 'OAuth回调处理失败'
-      })
-      .finally(() => {
-        if (oauthWindow.value && !oauthWindow.value.closed) {
-          oauthWindow.value.close()
-        }
-        microsoftAuthorizing.value = false
-      })
+  deviceFlowData.value = null
+  deviceFlowExpiresAt.value = null
+  deviceFlowTimeRemaining.value = null
+}
+
+
+// 复制到剪贴板
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    messageType.value = 'success'
+    message.value = '已复制到剪贴板'
+  } catch (error) {
+    // 降级方案
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    document.body.appendChild(textArea)
+    textArea.select()
+    try {
+      document.execCommand('copy')
+      messageType.value = 'success'
+      message.value = '已复制到剪贴板'
+    } catch (err) {
+      messageType.value = 'error'
+      message.value = '复制失败'
+    }
+    document.body.removeChild(textArea)
   }
 }
 
 onMounted(() => {
-  loadUserData()
-  loadMicrosoftConfig()
-  
-  // 监听OAuth回调消息
-  window.addEventListener('message', handleOAuthMessage)
+  // 加载授权配置
+  loadMinecraftAuthConfig()
+  // 获取玩家绑定的Minecraft账号信息
+  loadCurrentUserMinecraftInfo()
 })
 
 onUnmounted(() => {
-  // 清理事件监听器
-  window.removeEventListener('message', handleOAuthMessage)
-  
-  // 关闭可能未关闭的OAuth窗口
-  if (oauthWindow.value && !oauthWindow.value.closed) {
-    oauthWindow.value.close()
+  // 停止设备流轮询
+  if (deviceFlowPollInterval.value) {
+    clearInterval(deviceFlowPollInterval.value)
   }
 })
 </script>
@@ -338,16 +417,16 @@ onUnmounted(() => {
                 <h4 class="text-base font-medium text-text">
                   {{ currentMinecraft.username || '未知玩家' }}
                 </h4>
-                <span class="px-2 py-0.5 text-xs bg-brand/10 text-brand rounded">
-                  已绑定
+                <span class="px-2 py-0.5 text-xs bg-brand/10 rounded">
+                  正版认证
                 </span>
               </div>
               <p class="text-sm text-text-secondary mt-1">
                 UUID: {{ formatUuid(currentMinecraft.uuid) }}
               </p>
-              <p class="text-xs text-text-muted mt-1">
+              <!-- <p class="text-xs text-text-muted mt-1">
                 绑定时间: {{ authStore.user?.updateTime ? new Date(authStore.user.updateTime).toLocaleDateString() : '未知' }}
-              </p>
+              </p> -->
             </div>
             
             <!-- 解绑按钮 -->
@@ -355,7 +434,6 @@ onUnmounted(() => {
               variant="ghost"
               size="sm"
               @click="unbindMinecraft"
-              :loading="saving"
             >
               <i class="i-tabler-unlink" />
               <span>解绑</span>
@@ -377,315 +455,157 @@ onUnmounted(() => {
     </WkCard>
     
     <!-- 绑定新账号 -->
-    <WkCard>
+    <WkCard v-if="!currentMinecraft?.uuid">
       <div class="space-y-6">
         <div>
-          <h3 class="text-lg font-semibold text-text mb-2">绑定新的Minecraft账号</h3>
+          <h3 class="text-lg font-semibold text-text mb-2">绑定Minecraft账号</h3>
           <p class="text-sm text-text-secondary">
-            输入您的Minecraft UUID进行验证和绑定
+            目前仅支持通过Microsoft账户或游戏中绑定方式获取Minecraft账号信息
           </p>
         </div>
         
-        <!-- UUID输入 -->
-        <div class="space-y-3">
-          <label class="block text-sm font-medium text-text">
-            Minecraft UUID
-          </label>
-          <div class="flex gap-2">
-            <WkInput
-              v-model="uuidInput"
-              placeholder="输入Minecraft UUID（32位十六进制）"
-              :error="uuidError"
-              class="flex-1"
-            >
-              <template #prefix>
-                <i class="i-tabler-id text-text-secondary" />
-              </template>
-            </WkInput>
-            <WkButton
-              @click="verifyUuid"
-              :disabled="!uuidInput || !!uuidError"
-              :loading="verifying"
-            >
-              <i class="i-tabler-search" />
-              <span>验证</span>
-            </WkButton>
-          </div>
-          
-          <!-- UUID格式提示 -->
-          <div v-if="uuidInput" class="text-xs text-text-muted">
-            <p>格式化UUID: {{ formattedUuid }}</p>
-            <p class="mt-1">
-              <i class="i-tabler-info-circle inline mr-1" />
-              如何获取UUID？在Minecraft游戏中按F3+H显示高级提示，然后查看物品的NBT数据
-            </p>
-          </div>
-          
-          <!-- UUID错误提示 -->
-          <div v-if="uuidError" class="text-sm text-red-500">
-            <i class="i-tabler-alert-circle inline mr-1" />
-            {{ uuidError }}
-          </div>
-        </div>
-        
-        <!-- 验证结果 -->
-        <div v-if="verificationResult" class="space-y-4">
-          <div class="p-4 rounded-lg border" :class="{
-            'border-green-500 bg-green-50 dark:bg-green-900/20': verificationResult.valid,
-            'border-red-500 bg-red-50 dark:bg-red-900/20': !verificationResult.valid
-          }">
-            <div class="flex items-center gap-3">
-              <i
-                :class="verificationResult.valid ? 'i-tabler-check text-green-500' : 'i-tabler-x text-red-500'"
-                class="text-xl"
-              />
+        <!-- 绑定方式说明 -->
+        <div class="space-y-6">
+          <div class="p-6 bg-bg-raised rounded-xl border border-border">
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                <i class="i-tabler-brand-windows text-2xl text-white" />
+              </div>
               <div class="flex-1">
-                <h4 class="font-medium" :class="verificationResult.valid ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'">
-                  {{ verificationResult.valid ? '验证成功' : '验证失败' }}
-                </h4>
-                <p class="text-sm mt-1" :class="verificationResult.valid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
-                  {{ verificationResult.valid ? `玩家: ${verificationResult.name}` : verificationResult.error }}
+                <h4 class="text-lg font-semibold text-text mb-2">Microsoft账户绑定</h4>
+                <p class="text-sm text-text-secondary mb-4">
+                  通过Microsoft OAuth设备流授权，自动获取您的Minecraft账号信息。支持Bedrock版和Java版账号。
                 </p>
-              </div>
-            </div>
-            
-            <!-- 验证成功时的详细信息 -->
-            <div v-if="verificationResult.valid" class="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
-              <div class="flex items-center gap-4">
-                <img
-                  :src="getMinecraftAvatarUrl(verificationResult.id, 48)"
-                  :alt="verificationResult.name"
-                  class="w-12 h-12 rounded-lg border border-green-300 dark:border-green-700"
-                  @error="(e: any) => e.target.src = '/default-avatar.png'"
-                />
-                <div>
-                  <p class="text-sm font-medium text-green-700 dark:text-green-300">
-                    {{ verificationResult.name }}
-                  </p>
-                  <p class="text-xs text-green-600 dark:text-green-400 mt-1">
-                    UUID: {{ formatUuid(verificationResult.id) }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- 绑定按钮 -->
-          <div v-if="verificationResult.valid" class="flex justify-end">
-            <WkButton
-              variant="primary"
-              @click="bindMinecraft"
-              :loading="saving"
-            >
-              <i class="i-tabler-link" />
-              <span>绑定此账号</span>
-            </WkButton>
-          </div>
-        </div>
-        
-        <!-- 使用说明 -->
-        <div class="pt-4 border-t border-border">
-          <h4 class="text-sm font-medium text-text mb-2">如何获取Minecraft UUID？</h4>
-          <ul class="text-sm text-text-secondary space-y-1">
-            <li class="flex items-start gap-2">
-              <i class="i-tabler-number-1 text-brand mt-0.5" />
-              <span>在Minecraft Java版中，按<code class="px-1 py-0.5 bg-bg-raised rounded text-xs">F3+H</code>开启高级提示</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i class="i-tabler-number-2 text-brand mt-0.5" />
-              <span>将鼠标悬停在任意物品上，查看NBT数据中的<code class="px-1 py-0.5 bg-bg-raised rounded text-xs">UUID</code>字段</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <i class="i-tabler-number-3 text-brand mt-0.5" />
-              <span>也可以使用第三方网站如<code class="px-1 py-0.5 bg-bg-raised rounded text-xs">namemc.com</code>查询玩家UUID</span>
-            </li>
-          </ul>
-          
-          <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div class="flex items-start gap-2">
-              <i class="i-tabler-info-circle text-blue-500 mt-0.5" />
-              <div class="text-sm text-blue-700 dark:text-blue-300">
-                <p class="font-medium">注意：Microsoft账户支持</p>
-                <p class="mt-1">如果您使用Microsoft账户登录Minecraft，请确保您输入的是正确的Java版UUID。Bedrock版支持即将推出。</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </WkCard>
-    
-    <!-- Microsoft账户绑定 -->
-    <WkCard>
-      <div class="space-y-6">
-        <div class="flex items-center gap-3">
-          <i class="i-tabler-brand-windows text-2xl text-blue-500" />
-          <div>
-            <h3 class="text-lg font-semibold text-text">Microsoft账户绑定</h3>
-            <p class="text-sm text-text-secondary">支持Bedrock版和Microsoft账户登录</p>
-          </div>
-        </div>
-        
-        <!-- 加载状态 -->
-        <WkLoading v-if="microsoftLoading" message="正在加载Microsoft OAuth配置..." />
-        
-        <!-- Microsoft OAuth配置状态 -->
-        <div v-else-if="microsoftConfig" class="space-y-4">
-          <!-- 配置状态提示 -->
-          <div v-if="!isMicrosoftConfigured" class="p-4 rounded-lg border border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
-            <div class="flex items-start gap-2">
-              <i class="i-tabler-alert-triangle text-yellow-500 mt-0.5" />
-              <div class="flex-1">
-                <h4 class="font-medium text-yellow-700 dark:text-yellow-300">Microsoft OAuth功能未配置</h4>
-                <p class="text-sm text-yellow-600 dark:text-yellow-400 mt-1">
-                  请联系管理员配置Microsoft Azure应用信息以启用Microsoft账户绑定功能。
-                </p>
-                <ul class="text-xs text-yellow-600 dark:text-yellow-400 mt-2 space-y-1">
-                  <li class="flex items-center gap-1">
-                    <i class="i-tabler-circle-dot text-xs" />
-                    <span>启用状态: {{ microsoftConfig.enabled ? '已启用' : '已禁用' }}</span>
-                  </li>
-                  <li class="flex items-center gap-1">
-                    <i class="i-tabler-circle-dot text-xs" />
-                    <span>客户端ID: {{ microsoftConfig.clientIdConfigured ? '已配置' : '未配置' }}</span>
-                  </li>
-                  <li class="flex items-center gap-1">
-                    <i class="i-tabler-circle-dot text-xs" />
-                    <span>客户端密钥: {{ microsoftConfig.clientSecretConfigured ? '已配置' : '未配置' }}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Microsoft账户绑定流程 -->
-          <div v-else class="space-y-6">
-            <!-- 当前绑定状态 -->
-            <div class="space-y-3">
-              <h4 class="text-sm font-medium text-text">当前绑定状态</h4>
-              <div class="p-4 rounded-lg bg-bg-raised">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-3">
-                    <i class="i-tabler-brand-minecraft text-xl text-green-500" />
-                    <div>
-                      <p class="text-sm font-medium text-text">
-                        {{ currentMinecraft?.uuid ? '已绑定Minecraft账号' : '未绑定Minecraft账号' }}
-                      </p>
-                      <p class="text-xs text-text-secondary mt-1">
-                        {{ currentMinecraft?.uuid ? 
-                          `玩家: ${currentMinecraft.username}` : 
-                          '通过Microsoft账户绑定Bedrock版或Java版账号' 
-                        }}
-                      </p>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-2 text-sm text-text-secondary">
+                    <i class="i-tabler-device-mobile text-base text-blue-500" />
+                    <span>设备流模式：无需重定向，适合所有设备</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-text-secondary">
+                    <i class="i-tabler-shield-check text-base text-green-500" />
+                    <span>安全可靠：使用Microsoft官方OAuth 2.0认证</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-text-secondary">
+                    <i class="i-tabler-brand-minecraft text-base text-green-700" />
+                    <span>自动获取：自动获取您的Minecraft账号信息</span>
+                  </div>
+                  
+                  <!-- 设备流状态显示 -->
+                  <div v-if="deviceFlowActive" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <div class="flex items-center justify-between mb-3">
+                      <div class="flex items-center gap-2">
+                        <i class="i-tabler-device-mobile text-lg text-blue-600 dark:text-blue-400" />
+                        <span class="font-medium text-blue-700 dark:text-blue-300">设备流认证进行中</span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm text-blue-600 dark:text-blue-400">剩余时间: {{ deviceFlowTimeFormatted }}</span>
+                        <WkButton
+                          variant="ghost"
+                          size="sm"
+                          @click="stopDeviceFlow"
+                        >
+                          <i class="i-tabler-x" />
+                          <span>取消</span>
+                        </WkButton>
+                      </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                      <div class="bg-white dark:bg-gray-800 p-3 rounded border">
+                        <div class="text-center mb-2">
+                          <div class="text-2xl font-mono font-bold tracking-wider bg-gray-100 dark:bg-gray-700 py-2 px-4 rounded inline-block">
+                            {{ deviceFlowData?.user_code }}
+                          </div>
+                        </div>
+                        <p class="text-sm text-center text-gray-600 dark:text-gray-400 mb-3">
+                          请在另一台设备上访问以下链接并输入此代码：
+                        </p>
+                        <div class="flex items-center justify-center gap-2">
+                          <a 
+                            :href="deviceFlowData?.verification_uri" 
+                            target="_blank"
+                            class="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                          >
+                            {{ deviceFlowData?.verification_uri }}
+                          </a>
+                          <WkButton
+                            variant="ghost"
+                            size="sm"
+                            @click="copyToClipboard(deviceFlowData?.verification_uri || '')"
+                          >
+                            <i class="i-tabler-copy" />
+                          </WkButton>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center justify-center">
+                        <div class="flex items-center gap-2">
+                          <i v-if="deviceFlowPolling" class="i-tabler-info-circle text-base text-gray-600 dark:text-gray-400" />
+                          <span class="text-sm text-gray-600 dark:text-gray-400">
+                            {{ deviceFlowPolling ? '等待授权中...' : '准备轮询...' }}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <span v-if="currentMinecraft?.uuid" class="px-2 py-1 text-xs bg-green-500/10 text-green-600 dark:text-green-400 rounded">
-                    已绑定
-                  </span>
-                  <span v-else class="px-2 py-1 text-xs bg-gray-500/10 text-gray-600 dark:text-gray-400 rounded">
-                    未绑定
-                  </span>
+                  
+                  <!-- 设备流操作按钮 -->
+                  <div class="flex gap-3">
+                    <WkButton
+                      v-if="!deviceFlowActive"
+                      @click="startMinecraftDeviceFlow"
+                      :loading="minecraftAuthLoading"
+                      :disabled="!isMinecraftAuthConfigured"
+                    >
+                      <i class="i-tabler-device-mobile" />
+                      <span>启动Minecraft设备流认证</span>
+                    </WkButton>
+                    
+                    <WkButton
+                      v-if="deviceFlowActive"
+                      variant="secondary"
+                      @click="stopDeviceFlow"
+                    >
+                      <i class="i-tabler-x" />
+                      <span>取消认证</span>
+                    </WkButton>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <!-- Microsoft绑定流程 -->
-            <div class="space-y-4">
-              <h4 class="text-sm font-medium text-text">绑定流程</h4>
-              
-              <div class="space-y-3">
-                <div class="flex items-center gap-3 p-3 rounded-lg border border-border">
-                  <div class="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span class="text-white font-medium">1</span>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-text">Microsoft账户授权</p>
-                    <p class="text-xs text-text-secondary mt-1">
-                      点击下方按钮登录Microsoft账户并授权WkNetic访问您的Minecraft信息
-                    </p>
-                  </div>
-                </div>
-                
-                <div class="flex items-center gap-3 p-3 rounded-lg border border-border">
-                  <div class="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span class="text-white font-medium">2</span>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-text">自动获取Minecraft信息</p>
-                    <p class="text-xs text-text-secondary mt-1">
-                      系统自动获取您的Minecraft UUID和玩家名称
-                    </p>
-                  </div>
-                </div>
-                
-                <div class="flex items-center gap-3 p-3 rounded-lg border border-border">
-                  <div class="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span class="text-white font-medium">3</span>
-                  </div>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium text-text">完成绑定</p>
-                    <p class="text-xs text-text-secondary mt-1">
-                      自动将Minecraft账号绑定到您的WkNetic账户
-                    </p>
-                  </div>
-                </div>
+          </div>
+          
+          <!-- 手动绑定（高级）- 已移除手动UUID绑定 -->
+          <div class="p-6 bg-bg-raised rounded-xl border border-border">
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center">
+                <i class="i-tabler-key text-2xl text-white"></i>
               </div>
-              
-              <!-- 操作按钮 -->
-              <div class="flex flex-col gap-3">
-                <WkButton
-                  variant="primary"
-                  @click="startMicrosoftOAuth"
-                  :loading="microsoftAuthorizing"
-                  :disabled="!isMicrosoftConfigured"
-                >
-                  <i class="i-tabler-brand-windows" />
-                  <span>{{ microsoftAuthorizing ? '正在授权...' : '使用Microsoft账户绑定' }}</span>
-                </WkButton>
+              <div class="flex-1">
+                <h4 class="text-lg font-semibold text-text mb-2">服务器内绑定</h4>
+                <p class="text-sm text-text-secondary mb-4">
+                  在Minecraft服务器内使用<code>/wknetic bind</code>命令进行绑定。这种方式更简单且安全。
+                </p>
                 
-                <WkButton
-                  variant="ghost"
-                  @click="bindMicrosoftAccount"
-                  :loading="microsoftLoading"
-                  :disabled="!isMicrosoftConfigured"
-                  class="mt-2"
-                >
-                  <i class="i-tabler-refresh" />
-                  <span>手动完成绑定（如果已授权）</span>
-                </WkButton>
-              </div>
-            </div>
-            
-            <!-- 使用说明 -->
-            <div class="pt-4 border-t border-border">
-              <h4 class="text-sm font-medium text-text mb-2">Microsoft账户绑定的优势</h4>
-              <ul class="text-sm text-text-secondary space-y-2">
-                <li class="flex items-start gap-2">
-                  <i class="i-tabler-check text-green-500 mt-0.5" />
-                  <span>支持Bedrock版（基岩版）和Java版账号绑定</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <i class="i-tabler-check text-green-500 mt-0.5" />
-                  <span>无需手动输入UUID，自动获取准确信息</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <i class="i-tabler-check text-green-500 mt-0.5" />
-                  <span>支持Microsoft账户登录的所有Minecraft版本</span>
-                </li>
-                <li class="flex items-start gap-2">
-                  <i class="i-tabler-check text-green-500 mt-0.5" />
-                  <span>更加安全，无需担心UUID输入错误</span>
-                </li>
-              </ul>
-              
-              <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div class="flex items-start gap-2">
-                  <i class="i-tabler-info-circle text-blue-500 mt-0.5" />
-                  <div class="text-sm text-blue-700 dark:text-blue-300">
-                    <p class="font-medium">注意：授权流程</p>
-                    <p class="mt-1">
-                      点击授权按钮后，将会打开Microsoft登录页面。请确保您登录的是与Minecraft关联的Microsoft账户。
-                      授权完成后，页面会自动关闭并继续绑定流程。
-                    </p>
+                <div class="space-y-4">
+                  <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <h5 class="font-medium text-text mb-2">绑定步骤：</h5>
+                    <ol class="list-decimal pl-5 space-y-2 text-sm text-text-secondary">
+                      <li>在Minecraft服务器中登录游戏</li>
+                      <li>在游戏中输入命令：<code class="bg-gray-200 dark:bg-gray-700 px-1.5 py-0.5 rounded">/wknetic bind</code></li>
+                      <li>按照游戏内提示完成绑定流程</li>
+                      <li>绑定成功后，系统会自动同步您的Minecraft账号信息</li>
+                    </ol>
+                    <div class="mt-3 text-xs text-text-muted">
+                      <p>注意：您需要在服务器中拥有WkNetic-Bridge插件才能使用此功能。</p>
+                    </div>
+                  </div>
+                  
+                  <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded border border-green-200 dark:border-green-800">
+                    <div class="flex items-center gap-2">
+                      <i class="i-tabler-shield-check text-green-600 dark:text-green-400"></i>
+                      <span class="text-sm text-green-700 dark:text-green-300">推荐使用此方式，更安全便捷！</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -699,10 +619,7 @@ onUnmounted(() => {
 
 <style scoped>
 .minecraft-settings {
-  min-height: 400px;
-}
-
-code {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  max-width: 800px;
+  margin: 0 auto;
 }
 </style>

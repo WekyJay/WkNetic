@@ -1,6 +1,7 @@
 package cn.wekyjay.wknetic.auth.security;
 
 import cn.hutool.core.util.StrUtil;
+import cn.wekyjay.wknetic.auth.model.LoginUser;
 import cn.wekyjay.wknetic.common.config.JwtProperties;
 import cn.wekyjay.wknetic.common.utils.JwtUtils;
 import cn.wekyjay.wknetic.common.domain.SysUser;
@@ -67,20 +68,31 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             // 3. 从数据库加载用户角色信息
             SysUser user = userMapper.getUserWithRoleById(userId);
             
+            if (user == null) {
+                log.warn("用户不存在，用户ID: {}", userId);
+                chain.doFilter(request, response);
+                return;
+            }
+            
             // 构建权限列表 (将 role_code 转为 ROLE_ 前缀的权限)
             List<SimpleGrantedAuthority> authorities = Collections.emptyList();
-            if (user != null && user.getRole() != null && !user.getRole().isEmpty()) {
+            if (user.getRole() != null && !user.getRole().isEmpty()) {
                 authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
                 log.debug("用户 {} 的角色: {}, 权限: ROLE_{}", userId, user.getRole(), user.getRole());
             }
             
-            // 4. 构建 Authentication 对象
+            // 4. 构建 LoginUser 对象作为 Principal
+            String username = user.getUsername() != null ? user.getUsername() : "";
+            String role = user.getRole() != null ? user.getRole() : "";
+            LoginUser loginUser = new LoginUser(userId, username, null, role);
+            
+            // 5. 构建 Authentication 对象
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userId, null, authorities);
+                    loginUser, null, authorities);
 
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            // 5. 将用户信息存入 Security 上下文
+            // 6. 将用户信息存入 Security 上下文
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

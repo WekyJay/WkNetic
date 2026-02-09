@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * Microsoft OAuth 2.0 配置类
+ * 使用设备流（Device Flow）模式进行认证
  */
 @Data
 @Configuration
@@ -13,42 +14,33 @@ import org.springframework.context.annotation.Configuration;
 public class MicrosoftOAuthConfig {
     
     /**
-     * Microsoft Azure 应用注册的客户端ID
+     * Microsoft 官方设备流客户端ID（固定值）
+     * 注意：这个客户端ID仅适用于Microsoft账户（消费者账户）
      */
-    private String clientId = "";
+    private String clientId = "00000000-402b-9631-c394-b33df003c47e";
     
     /**
-     * Microsoft Azure 应用注册的客户端密钥
+     * 设备流不需要客户端密钥
      */
     private String clientSecret = "";
     
     /**
-     * 重定向URI，需要与Azure门户中注册的重定向URI匹配
+     * 设备流认证端点 - 获取设备码
+     * 正确的Microsoft设备流端点
      */
-    private String redirectUri = "http://localhost:8080/api/v1/oauth/microsoft/callback";
+    private String deviceCodeEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode";
     
     /**
-     * Microsoft OAuth 2.0 授权端点
+     * 设备流令牌端点 - 轮询获取令牌
      */
-    private String authorizationEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
-    
-    /**
-     * Microsoft OAuth 2.0 令牌端点
-     */
-    private String tokenEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
-    
-    /**
-     * Microsoft Graph API 用户信息端点
-     */
-    private String userInfoEndpoint = "https://graph.microsoft.com/v1.0/me";
+    private String deviceTokenEndpoint = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
     
     /**
      * 请求的权限范围
+     * XboxLive.Signin - Xbox Live 登录（Minecraft相关）
      * offline_access - 获取刷新令牌
-     * XboxLive.signin - Xbox Live 登录（Minecraft相关）
-     * XboxLive.offline_access - Xbox Live 离线访问
      */
-    private String scope = "XboxLive.signin XboxLive.offline_access offline_access";
+    private String scope = "XboxLive.signin offline_access";
     
     /**
      * Minecraft服务API端点
@@ -79,4 +71,14 @@ public class MicrosoftOAuthConfig {
      * 启用/禁用Microsoft OAuth功能
      */
     private boolean enabled = false;
+    
+    /**
+     * 设备流轮询间隔（毫秒）
+     */
+    private int pollingInterval = 5000;
+    
+    /**
+     * 设备流轮询超时时间（毫秒）
+     */
+    private int pollingTimeout = 300000; // 5分钟
 }

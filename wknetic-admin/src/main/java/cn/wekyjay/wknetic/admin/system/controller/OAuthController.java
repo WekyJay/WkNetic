@@ -1,34 +1,37 @@
 package cn.wekyjay.wknetic.admin.system.controller;
 
 import cn.wekyjay.wknetic.admin.config.MicrosoftOAuthConfig;
+import cn.wekyjay.wknetic.admin.system.service.ISysUserService;
 import cn.wekyjay.wknetic.common.model.Result;
-import cn.wekyjay.wknetic.common.model.dto.MicrosoftOAuthCallbackDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 import cn.wekyjay.wknetic.auth.model.LoginUser;
 import cn.wekyjay.wknetic.common.utils.RedisUtils;
+import co.elastic.clients.elasticsearch.security.User;
 
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
  * OAuth 2.0 认证控制器
- * 处理Microsoft OAuth授权和回调
+ * 使用设备流（Device Flow）模式处理Microsoft OAuth认证
  */
 @Slf4j
-@Tag(name = "OAuth 2.0", description = "OAuth 2.0 认证相关接口")
+@Tag(name = "OAuth 2.0", description = "OAuth 2.0 认证相关接口（设备流模式）")
 @RestController
 @RequestMapping("/api/v1/oauth")
 @RequiredArgsConstructor
@@ -37,108 +40,20 @@ public class OAuthController {
     @Autowired
     private MicrosoftOAuthConfig microsoftOAuthConfig;
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Autowired
     private RedisUtils redisUtils;
 
-    /**
-     * 获取Microsoft OAuth授权URL
-     */
-    @Operation(summary = "Get Microsoft OAuth Authorization URL", description = "获取Microsoft OAuth授权URL，用于前端重定向")
-    @GetMapping("/microsoft/authorize")
-    public Result<String> getMicrosoftAuthorizationUrl() {
-        try {
-            if (!microsoftOAuthConfig.isEnabled()) {
-                return Result.error("Microsoft OAuth功能未启用");
-            }
-
-            // 生成随机state参数防止CSRF攻击
-            String state = UUID.randomUUID().toString();
-            
-            // 将state存储到Redis，设置5分钟过期
-            String redisKey = "oauth:state:" + state;
-            redisUtils.set(redisKey, "pending", 5, TimeUnit.MINUTES); // 5分钟过期
-
-            // 构建授权URL
-            String authorizationUrl = UriComponentsBuilder.fromHttpUrl(microsoftOAuthConfig.getAuthorizationEndpoint())
-                    .queryParam("client_id", microsoftOAuthConfig.getClientId())
-                    .queryParam("response_type", "code")
-                    .queryParam("redirect_uri", microsoftOAuthConfig.getRedirectUri())
-                    .queryParam("scope", microsoftOAuthConfig.getScope())
-                    .queryParam("state", state)
-                    .queryParam("response_mode", "query")
-                    .toUriString();
-
-            return Result.success(authorizationUrl);
-        } catch (Exception e) {
-            log.error("获取Microsoft授权URL失败", e);
-            return Result.error("获取Microsoft授权URL失败: " + e.getMessage());
-        }
-    }
+    @Autowired
+    private ISysUserService userService; // 假设有一个用户服务可以调用
 
     /**
-     * Microsoft OAuth回调端点
+     * 启动设备流认证流程 - 获取设备码
      */
-    @Operation(summary = "Microsoft OAuth Callback", description = "Microsoft OAuth回调端点，处理授权码交换")
-    @GetMapping("/microsoft/callback")
-    public Result<Map<String, Object>> microsoftCallback(MicrosoftOAuthCallbackDTO callbackDTO) {
-        try {
-            if (!microsoftOAuthConfig.isEnabled()) {
-                return Result.error("Microsoft OAuth功能未启用");
-            }
-
-            // 检查错误
-            if (callbackDTO.getError() != null) {
-                log.error("Microsoft OAuth授权失败: {} - {}", callbackDTO.getError(), callbackDTO.getErrorDescription());
-                return Result.error("Microsoft OAuth授权失败: " + callbackDTO.getError());
-            }
-
-            // 验证state参数
-            String state = callbackDTO.getState();
-            if (state == null || !redisUtils.hasKey("oauth:state:" + state)) {
-                log.error("无效的state参数或state已过期");
-                return Result.error("无效的state参数或state已过期");
-            }
-
-            // 删除已使用的state
-            redisUtils.delete("oauth:state:" + state);
-
-            String code = callbackDTO.getCode();
-            if (code == null || code.isEmpty()) {
-                return Result.error("缺少授权码");
-            }
-
-            // 获取当前登录用户ID
-            Long userId = getCurrentUserId();
-            if (userId == null) {
-                return Result.error("请先登录");
-            }
-
-            // 将授权码存储到Redis，关联当前用户
-            String authCodeKey = "oauth:microsoft:code:" + userId;
-            redisUtils.set(authCodeKey, code, 5, TimeUnit.MINUTES); // 5分钟过期
-
-            // 返回前端需要的信息
-            Map<String, Object> result = new HashMap<>();
-            result.put("code", code);
-            result.put("userId", userId);
-            result.put("message", "授权码已接收，请在前端完成绑定流程");
-
-            return Result.success(result);
-        } catch (Exception e) {
-            log.error("Microsoft OAuth回调处理失败", e);
-            return Result.error("Microsoft OAuth回调处理失败: " + e.getMessage());
-        }
-    }
-
-    /**
-     * 绑定Microsoft账户并获取Minecraft信息
-     */
-    @Operation(summary = "Bind Microsoft Account and Get Minecraft Info", description = "绑定Microsoft账户并获取Minecraft信息")
-    @PostMapping("/microsoft/bind")
-    public Result<Map<String, Object>> bindMicrosoftAccount() {
+    @Operation(summary = "Start Device Flow Authentication", description = "启动设备流认证流程，获取设备码和用户验证信息")
+    @PostMapping("/microsoft/device-flow/start")
+    public Result<Map<String, Object>> startDeviceFlow() {
         try {
             if (!microsoftOAuthConfig.isEnabled()) {
                 return Result.error("Microsoft OAuth功能未启用");
@@ -150,164 +65,231 @@ public class OAuthController {
                 return Result.error("请先登录");
             }
 
-            // 从Redis获取授权码
-            String authCodeKey = "oauth:microsoft:code:" + userId;
-            String authCode = (String) redisUtils.get(authCodeKey);
+            // 1. 请求设备码
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
             
-            if (authCode == null || authCode.isEmpty()) {
-                return Result.error("未找到有效的授权码，请重新授权");
-            }
-
-            // 删除已使用的授权码
-            redisUtils.delete(authCodeKey);
-
-            // 1. 使用授权码交换访问令牌
-            Map<String, String> tokenRequest = new HashMap<>();
-            tokenRequest.put("client_id", microsoftOAuthConfig.getClientId());
-            tokenRequest.put("client_secret", microsoftOAuthConfig.getClientSecret());
-            tokenRequest.put("code", authCode);
-            tokenRequest.put("redirect_uri", microsoftOAuthConfig.getRedirectUri());
-            tokenRequest.put("grant_type", "authorization_code");
-
-            Map<String, Object> tokenResponse = restTemplate.postForObject(
-                microsoftOAuthConfig.getTokenEndpoint(),
-                tokenRequest,
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("client_id", microsoftOAuthConfig.getClientId());
+            params.add("scope", microsoftOAuthConfig.getScope());
+            
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+            
+            // 发送请求获取设备码
+            Map<String, Object> response = restTemplate.postForObject(
+                microsoftOAuthConfig.getDeviceCodeEndpoint(),
+                request,
                 Map.class
             );
-
-            if (tokenResponse == null || !tokenResponse.containsKey("access_token")) {
-                log.error("获取Microsoft访问令牌失败: {}", tokenResponse);
-                return Result.error("获取Microsoft访问令牌失败");
+            
+            if (response == null || !response.containsKey("device_code")) {
+                log.error("获取设备码失败: {}", response);
+                return Result.error("获取设备码失败，请稍后重试");
             }
+            
+            String deviceCode = (String) response.get("device_code");
+            String userCode = (String) response.get("user_code");
+            String verificationUri = (String) response.get("verification_uri");
+            Integer expiresIn = (Integer) response.get("expires_in");
+            Integer interval = (Integer) response.get("interval");
+            
+            // 2. 将设备码和用户ID关联存储到Redis
+            String deviceKey = "oauth:device:" + deviceCode;
+            redisUtils.set(deviceKey, userId.toString(), expiresIn, TimeUnit.SECONDS);
+            
+            // 3. 返回用户验证信息
+            Map<String, Object> result = new HashMap<>();
+            result.put("device_code", deviceCode);
+            result.put("user_code", userCode);
+            result.put("verification_uri", verificationUri);
+            result.put("expires_in", expiresIn);
+            result.put("interval", interval != null ? interval : microsoftOAuthConfig.getPollingInterval() / 1000);
+            result.put("message", "请在浏览器中访问 " + verificationUri + " 并输入代码: " + userCode);
+            
+            log.info("设备流认证已启动，用户ID: {}, 设备码: {}, 用户码: {}", userId, deviceCode, userCode);
+            return Result.success(result);
+            
+        } catch (Exception e) {
+            log.error("启动设备流认证失败", e);
+            return Result.error("启动设备流认证失败: " + e.getMessage());
+        }
+    }
 
-            String accessToken = (String) tokenResponse.get("access_token");
-            String refreshToken = (String) tokenResponse.get("refresh_token");
+    /**
+     * 轮询设备流认证状态 - 获取访问令牌
+     */
+    @Operation(summary = "Poll Device Flow Status", description = "轮询设备流认证状态，获取访问令牌")
+    @PostMapping("/microsoft/device-flow/poll")
+    public Result<Map<String, Object>> pollDeviceFlow(@RequestBody Map<String, String> requestBody) {
+        try {
+            if (!microsoftOAuthConfig.isEnabled()) {
+                return Result.error("Microsoft OAuth功能未启用");
+            }
+            
+            String deviceCode = requestBody.get("device_code");
+            if (deviceCode == null || deviceCode.isEmpty()) {
+                return Result.error("设备码不能为空");
+            }
+            
+            // 1. 检查设备码是否有效（是否关联了用户ID）
+            String deviceKey = "oauth:device:" + deviceCode;
+            String userIdStr = redisUtils.get(deviceKey);
+            if (userIdStr == null) {
+                return Result.error("设备码已过期或无效");
+            }
+            
+            // 2. 轮询获取访问令牌
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            
+            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+            params.add("client_id", microsoftOAuthConfig.getClientId());
+            params.add("device_code", deviceCode);
+            params.add("grant_type", "urn:ietf:params:oauth:grant-type:device_code");
+            
+            HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+            
+            Map<String, Object> response = restTemplate.postForObject(
+                microsoftOAuthConfig.getDeviceTokenEndpoint(),
+                request,
+                Map.class
+            );
+            
+            if (response == null) {
+                return Result.error("认证尚未完成，请稍后再试");
+            }
+            
+            // 检查是否有错误
+            if (response.containsKey("error")) {
+                String error = (String) response.get("error");
+                String errorDescription = response.containsKey("error_description") 
+                    ? (String) response.get("error_description") 
+                    : error;
+                
+                // 如果是授权等待中，返回特定状态码
+                if ("authorization_pending".equals(error)) {
+                    Map<String, Object> pendingResult = new HashMap<>();
+                    pendingResult.put("status", "pending");
+                    pendingResult.put("message", "等待用户授权");
+                    return Result.success(pendingResult);
+                }
+                
+                // 其他错误
+                log.error("设备流认证错误: {}", errorDescription);
+                return Result.error("认证失败: " + errorDescription);
+            }
+            
+            // 3. 认证成功，获取访问令牌
+            String accessToken = (String) response.get("access_token");
+            String refreshToken = (String) response.get("refresh_token");
+            Integer expiresIn = (Integer) response.get("expires_in");
+            
+            if (accessToken == null) {
+                return Result.error("获取访问令牌失败");
+            }
+            
+            // 4. 删除设备码，防止重复使用
+            redisUtils.delete(deviceKey);
+            
+            // 5. 将访问令牌和用户ID关联存储到Redis（临时存储，用于后续绑定）
+            String tokenKey = "oauth:token:" + accessToken;
+            redisUtils.set(tokenKey, userIdStr, 300, TimeUnit.SECONDS); // 5分钟有效期
+            
+            // 6. 返回成功结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("access_token", accessToken);
+            result.put("refresh_token", refreshToken);
+            result.put("expires_in", expiresIn);
+            result.put("message", "认证成功，正在绑定Minecraft账户...");
+            
+            log.info("设备流认证成功，用户ID: {}, 访问令牌已获取", userIdStr);
+            return Result.success(result);
+            
+        } catch (Exception e) {
+            log.error("轮询设备流认证状态失败", e);
+            return Result.error("轮询设备流认证状态失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 绑定Microsoft账户到Minecraft
+     */
+    @Operation(summary = "Bind Microsoft Account", description = "使用访问令牌绑定Microsoft账户到Minecraft")
+    @PostMapping("/microsoft/bind")
+    public Result<Map<String, Object>> bindMicrosoftAccount(@RequestBody Map<String, String> requestBody) {
+        try {
+            if (!microsoftOAuthConfig.isEnabled()) {
+                return Result.error("Microsoft OAuth功能未启用");
+            }
+            
+            String accessToken = requestBody.get("access_token");
+            if (accessToken == null || accessToken.isEmpty()) {
+                return Result.error("访问令牌不能为空");
+            }
+            
+            // 1. 验证访问令牌是否有效（是否关联了用户ID）
+            String tokenKey = "oauth:token:" + accessToken;
+            // 获取并删除，防止重复使用
+            String userIdStr = redisUtils.get(tokenKey);
+            if (userIdStr != null) {
+                redisUtils.delete(tokenKey);
+            } else {
+                return Result.error("访问令牌已过期或无效");
+            }
+            
+            Long userId = Long.parseLong(userIdStr);
             
             // 2. 使用访问令牌获取Xbox Live令牌
-            Map<String, Object> xboxAuthRequest = new HashMap<>();
-            xboxAuthRequest.put("Properties", Map.of(
-                "AuthMethod", "RPS",
-                "SiteName", "user.auth.xboxlive.com",
-                "RpsTicket", "d=" + accessToken
-            ));
-            xboxAuthRequest.put("RelyingParty", "http://auth.xboxlive.com");
-            xboxAuthRequest.put("TokenType", "JWT");
-
-            Map<String, Object> xboxResponse = restTemplate.postForObject(
-                microsoftOAuthConfig.getXboxLiveAuthEndpoint(),
-                xboxAuthRequest,
-                Map.class
-            );
-
-            if (xboxResponse == null || !xboxResponse.containsKey("Token")) {
-                log.error("获取Xbox Live令牌失败: {}", xboxResponse);
+            Map<String, Object> xboxToken = getXboxLiveToken(accessToken);
+            if (xboxToken == null) {
                 return Result.error("获取Xbox Live令牌失败");
             }
-
-            String xboxToken = (String) xboxResponse.get("Token");
-            String userHash = null;
             
-            if (xboxResponse.containsKey("DisplayClaims")) {
-                Map<String, Object> displayClaims = (Map<String, Object>) xboxResponse.get("DisplayClaims");
-                if (displayClaims.containsKey("xui")) {
-                    List<Map<String, String>> xui = (List<Map<String, String>>) displayClaims.get("xui");
-                    if (!xui.isEmpty()) {
-                        userHash = xui.get(0).get("uhs");
-                    }
-                }
-            }
-
-            if (userHash == null) {
-                log.error("无法获取用户哈希(UserHash)");
-                return Result.error("无法获取用户身份信息");
-            }
-
-            // 3. 使用Xbox Live令牌获取XSTS令牌
-            Map<String, Object> xstsRequest = new HashMap<>();
-            xstsRequest.put("Properties", Map.of(
-                "SandboxId", "RETAIL",
-                "UserTokens", List.of(xboxToken)
-            ));
-            xstsRequest.put("RelyingParty", "rp://api.minecraftservices.com/");
-            xstsRequest.put("TokenType", "JWT");
-
-            Map<String, Object> xstsResponse = restTemplate.postForObject(
-                microsoftOAuthConfig.getXstsAuthEndpoint(),
-                xstsRequest,
-                Map.class
-            );
-
-            if (xstsResponse == null || !xstsResponse.containsKey("Token")) {
-                log.error("获取XSTS令牌失败: {}", xstsResponse);
+            // 3. 获取XSTS令牌
+            Map<String, Object> xstsToken = getXSTSToken(xboxToken);
+            if (xstsToken == null) {
                 return Result.error("获取XSTS令牌失败");
             }
-
-            String xstsToken = (String) xstsResponse.get("Token");
-
-            // 4. 使用XSTS令牌获取Minecraft访问令牌
-            Map<String, Object> minecraftAuthRequest = Map.of(
-                "identityToken", String.format("XBL3.0 x=%s;%s", userHash, xstsToken)
-            );
-
-            Map<String, Object> minecraftTokenResponse = restTemplate.postForObject(
-                microsoftOAuthConfig.getMinecraftAuthEndpoint(),
-                minecraftAuthRequest,
-                Map.class
-            );
-
-            if (minecraftTokenResponse == null || !minecraftTokenResponse.containsKey("access_token")) {
-                log.error("获取Minecraft访问令牌失败: {}", minecraftTokenResponse);
-                return Result.error("获取Minecraft访问令牌失败");
-            }
-
-            String minecraftAccessToken = (String) minecraftTokenResponse.get("access_token");
-            String minecraftTokenType = (String) minecraftTokenResponse.get("token_type");
-            int expiresIn = (int) minecraftTokenResponse.get("expires_in");
-
-            // 5. 使用Minecraft访问令牌获取玩家档案
-            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.setBearerAuth(minecraftAccessToken);
-            org.springframework.http.HttpEntity<?> entity = new org.springframework.http.HttpEntity<>(headers);
-
-            org.springframework.http.ResponseEntity<Map> profileResponse = restTemplate.exchange(
-                microsoftOAuthConfig.getMinecraftProfileEndpoint(),
-                org.springframework.http.HttpMethod.GET,
-                entity,
-                Map.class
-            );
-
-            if (profileResponse.getStatusCode() != org.springframework.http.HttpStatus.OK || 
-                profileResponse.getBody() == null || 
-                !profileResponse.getBody().containsKey("id")) {
-                log.error("获取Minecraft玩家档案失败: {}", profileResponse.getBody());
-                return Result.error("获取Minecraft玩家档案失败");
-            }
-
-            Map<String, Object> profile = profileResponse.getBody();
-            String minecraftUuid = (String) profile.get("id");
-            String minecraftUsername = (String) profile.get("name");
-
-            // 6. 将绑定信息存储到数据库
-            // 这里应该调用UserService来更新用户的Minecraft绑定信息
-            // 暂时只返回获取到的信息
             
+            // 4. 获取Minecraft访问令牌
+            Map<String, Object> minecraftToken = getMinecraftToken(xstsToken);
+            if (minecraftToken == null) {
+                return Result.error("获取Minecraft令牌失败");
+            }
+            
+            String minecraftAccessToken = (String) minecraftToken.get("access_token");
+            
+            // 5. 获取Minecraft档案信息
+            Map<String, Object> minecraftProfile = getMinecraftProfile(minecraftAccessToken);
+            if (minecraftProfile == null) {
+                return Result.error("获取Minecraft档案信息失败");
+            }
+            
+            String minecraftUuid = (String) minecraftProfile.get("id");
+            String minecraftUsername = (String) minecraftProfile.get("name");
+            
+            if (minecraftUuid == null || minecraftUsername == null) {
+                return Result.error("Minecraft档案信息不完整");
+            }
+            
+            // 6. 保存Minecraft信息到用户账户
+            boolean success = saveMinecraftInfo(userId, minecraftUuid, minecraftUsername);
+            if (!success) {
+                return Result.error("保存Minecraft信息失败");
+            }
+            
+            // 7. 返回成功结果
             Map<String, Object> result = new HashMap<>();
-            result.put("success", true);
-            result.put("message", "Microsoft账户绑定成功");
-            result.put("userId", userId);
-            result.put("minecraftUuid", minecraftUuid);
-            result.put("minecraftUsername", minecraftUsername);
-            result.put("minecraftAccessToken", "已获取（不返回）");
-            result.put("accessTokenType", minecraftTokenType);
-            result.put("expiresIn", expiresIn);
+            result.put("status", "success");
+            result.put("minecraft_uuid", minecraftUuid);
+            result.put("minecraft_username", minecraftUsername);
+            result.put("message", "Minecraft账户绑定成功");
             
-            // 这里应该调用服务层保存绑定信息
-            // 例如：userService.bindMinecraftAccount(userId, minecraftUuid, minecraftUsername);
-            
-            log.info("用户 {} 成功绑定Minecraft账户: {} (UUID: {})", 
+            log.info("Minecraft账户绑定成功，用户ID: {}, Minecraft用户名: {}, UUID: {}", 
                 userId, minecraftUsername, minecraftUuid);
-
             return Result.success(result);
+            
         } catch (Exception e) {
             log.error("绑定Microsoft账户失败", e);
             return Result.error("绑定Microsoft账户失败: " + e.getMessage());
@@ -315,23 +297,23 @@ public class OAuthController {
     }
 
     /**
-     * 获取Microsoft OAuth配置状态
+     * 获取Microsoft OAuth配置信息
      */
-    @Operation(summary = "Get Microsoft OAuth Config Status", description = "获取Microsoft OAuth配置状态")
+    @Operation(summary = "Get Microsoft OAuth Config", description = "获取Microsoft OAuth配置信息")
     @GetMapping("/microsoft/config")
     public Result<Map<String, Object>> getMicrosoftConfig() {
         try {
             Map<String, Object> config = new HashMap<>();
             config.put("enabled", microsoftOAuthConfig.isEnabled());
-            config.put("clientIdConfigured", !microsoftOAuthConfig.getClientId().isEmpty());
-            config.put("clientSecretConfigured", !microsoftOAuthConfig.getClientSecret().isEmpty());
-            config.put("redirectUri", microsoftOAuthConfig.getRedirectUri());
+            config.put("client_id", microsoftOAuthConfig.getClientId());
             config.put("scope", microsoftOAuthConfig.getScope());
-
+            config.put("polling_interval", microsoftOAuthConfig.getPollingInterval());
+            config.put("polling_timeout", microsoftOAuthConfig.getPollingTimeout());
+            
             return Result.success(config);
         } catch (Exception e) {
-            log.error("获取Microsoft配置失败", e);
-            return Result.error("获取Microsoft配置失败: " + e.getMessage());
+            log.error("获取Microsoft OAuth配置失败", e);
+            return Result.error("获取配置失败: " + e.getMessage());
         }
     }
 
@@ -339,19 +321,150 @@ public class OAuthController {
      * 获取当前登录用户ID
      */
     private Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.getPrincipal() instanceof LoginUser) {
-            LoginUser loginUser = (LoginUser) authentication.getPrincipal();
-            return loginUser.getUserId();
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof LoginUser) {
+                LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+                return loginUser.getUserId();
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("获取当前用户ID失败", e);
+            return null;
         }
-        return null;
     }
 
     /**
-     * 提供RestTemplate bean
+     * 使用Microsoft访问令牌获取Xbox Live令牌
      */
-    @org.springframework.context.annotation.Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    private Map<String, Object> getXboxLiveToken(String accessToken) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Accept", "application/json");
+            
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("Properties", Map.of(
+                "AuthMethod", "RPS",
+                "SiteName", "user.auth.xboxlive.com",
+                "RpsTicket", "d=" + accessToken
+            ));
+            requestBody.put("RelyingParty", "http://auth.xboxlive.com");
+            requestBody.put("TokenType", "JWT");
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            
+            Map<String, Object> response = restTemplate.postForObject(
+                microsoftOAuthConfig.getXboxLiveAuthEndpoint(),
+                request,
+                Map.class
+            );
+            
+            return response;
+        } catch (Exception e) {
+            log.error("获取Xbox Live令牌失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 使用Xbox Live令牌获取XSTS令牌
+     */
+    private Map<String, Object> getXSTSToken(Map<String, Object> xboxToken) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Accept", "application/json");
+            
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("Properties", Map.of(
+                "SandboxId", "RETAIL",
+                "UserTokens", List.of((String) xboxToken.get("Token"))
+            ));
+            requestBody.put("RelyingParty", "rp://api.minecraftservices.com/");
+            requestBody.put("TokenType", "JWT");
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            
+            Map<String, Object> response = restTemplate.postForObject(
+                microsoftOAuthConfig.getXstsAuthEndpoint(),
+                request,
+                Map.class
+            );
+            
+            return response;
+        } catch (Exception e) {
+            log.error("获取XSTS令牌失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 使用XSTS令牌获取Minecraft访问令牌
+     */
+    private Map<String, Object> getMinecraftToken(Map<String, Object> xstsToken) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Accept", "application/json");
+            
+            Map<String, Object> requestBody = new HashMap<>();
+            requestBody.put("identityToken", 
+                "XBL3.0 x=" + xstsToken.get("DisplayClaims") + ";" + xstsToken.get("Token"));
+            
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            
+            Map<String, Object> response = restTemplate.postForObject(
+                microsoftOAuthConfig.getMinecraftAuthEndpoint(),
+                request,
+                Map.class
+            );
+            
+            return response;
+        } catch (Exception e) {
+            log.error("获取Minecraft令牌失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 使用Minecraft访问令牌获取Minecraft档案信息
+     */
+    private Map<String, Object> getMinecraftProfile(String minecraftAccessToken) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + minecraftAccessToken);
+            headers.set("Accept", "application/json");
+            
+            HttpEntity<Void> request = new HttpEntity<>(headers);
+            
+            Map<String, Object> response = restTemplate.exchange(
+                microsoftOAuthConfig.getMinecraftProfileEndpoint(),
+                org.springframework.http.HttpMethod.GET,
+                request,
+                Map.class
+            ).getBody();
+            
+            return response;
+        } catch (Exception e) {
+            log.error("获取Minecraft档案信息失败", e);
+            return null;
+        }
+    }
+
+    /**
+     * 保存Minecraft信息到用户账户
+     */
+    private boolean saveMinecraftInfo(Long userId, String minecraftUuid, String minecraftUsername) {
+        try {
+            log.info("保存Minecraft信息 - 用户ID: {}, UUID: {}, 用户名: {}", 
+                userId, minecraftUuid, minecraftUsername);
+            
+            // 调用用户服务的bindMinecraftAccount方法
+            return userService.bindMinecraftAccount(userId, minecraftUuid, minecraftUsername);
+        } catch (Exception e) {
+            log.error("保存Minecraft信息失败", e);
+            return false;
+        }
     }
 }

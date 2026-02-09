@@ -51,6 +51,7 @@ declare module 'vue' {
     HomeLayout: typeof import('./src/components/layout/HomeLayout.vue')['default']
     IconPickerDialog: typeof import('./src/components/common/IconPickerDialog.vue')['default']
     LoginModal: typeof import('./src/components/LoginModal.vue')['default']
+    MinecraftSettings: typeof import('./src/components/user/MinecraftSettings.vue')['default']
     NewsSection: typeof import('./src/components/home/NewsSection.vue')['default']
     PostSearchCard: typeof import('./src/components/forum/PostSearchCard.vue')['default']
     ProjectCard: typeof import('./src/components/home/ProjectCard.vue')['default']

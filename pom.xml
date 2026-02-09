@@ -31,6 +31,14 @@
         <url/>
     </scm>
 
+    <!-- 仓库配置 -->
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
+
     <!-- 变量属性 -->
     <properties>
         <java.version>21</java.version>

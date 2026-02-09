@@ -2,6 +2,30 @@ wknetic:
   jwt:
     secret: "WkNeticCoreSecretKeyForSpringSecurityVersion2026MakeItLong"
     expiration: 2592000
+  microsoft:
+    oauth:
+      enabled: true
+      # 设备流使用固定的官方客户端ID，不需要环境变量
+      client-id: "00000000402b5328"
+      # 设备流认证端点
+      device-code-endpoint: "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode"
+      device-token-endpoint: "https://login.microsoftonline.com/consumers/oauth2/v2.0/token"
+      # 请求的权限范围
+      scope: "service::user.auth.xboxlive.com::MBI_SSL"
+      # Minecraft服务API端点
+      minecraft-services-endpoint: "https://api.minecraftservices.com"
+      # Xbox Live身份验证端点
+      xbox-live-auth-endpoint: "https://user.auth.xboxlive.com/user/authenticate"
+      # Xbox Live XSTS端点
+      xsts-auth-endpoint: "https://xsts.auth.xboxlive.com/xsts/authorize"
+      # Minecraft服务登录端点
+      minecraft-auth-endpoint: "https://api.minecraftservices.com/authentication/login_with_xbox"
+      # Minecraft档案端点
+      minecraft-profile-endpoint: "https://api.minecraftservices.com/minecraft/profile"
+      # 设备流轮询间隔（毫秒）
+      polling-interval: 5000
+      # 设备流轮询超时时间（毫秒）
+      polling-timeout: 300000
 spring:
   data:
     redis:

@@ -37,6 +37,17 @@ public class RedisUtils {
     }
 
     /**
+     * 原子操作：获取并删除键值
+     */
+    public String getAndDelete(String key) {
+        String value = redisTemplate.opsForValue().get(key);
+        if (value != null) {
+            redisTemplate.delete(key);
+        }
+        return value;
+    }
+
+    /**
      * 删除键
      */
     public Boolean delete(String key) {

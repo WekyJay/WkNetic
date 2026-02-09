@@ -264,6 +264,15 @@ const routes: RouteRecordRaw[] = [
                 title: 'routes.register'
             }
         },
+        // Microsoft OAuth回调页面
+        {
+            path: '/oauth/microsoft/callback',
+            name: 'microsoft-oauth-callback',
+            component: () => import('@/pages/auth/OAuthCallbackPage.vue'),
+            meta: {
+                title: 'Microsoft OAuth回调'
+            }
+        },
         // 404 页面
         {
             path: '/404',

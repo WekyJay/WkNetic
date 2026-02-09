@@ -96,6 +96,12 @@
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
         </dependency>
+        <!-- MinecraftAuth library for simplified Minecraft authentication -->
+        <dependency>
+            <groupId>net.raphimc</groupId>
+            <artifactId>MinecraftAuth</artifactId>
+            <version>5.0.0</version>
+        </dependency>
     </dependencies>
 
 

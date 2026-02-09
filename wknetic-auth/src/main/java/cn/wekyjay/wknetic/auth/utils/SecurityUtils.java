@@ -1,5 +1,6 @@
 package cn.wekyjay.wknetic.auth.utils;
 
+import cn.wekyjay.wknetic.auth.model.LoginUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.GrantedAuthority;
@@ -25,16 +26,20 @@ public class SecurityUtils {
             return null;
         }
         
-        // 假设Principal是用户ID（Long类型）
-        // 实际项目中需要根据JWT或UserDetails来获取
         try {
             Object principal = authentication.getPrincipal();
-            if (principal instanceof Long) {
+            if (principal instanceof LoginUser) {
+                LoginUser loginUser = (LoginUser) principal;
+                return loginUser.getUserId();
+            } else if (principal instanceof Long) {
                 return (Long) principal;
+            } else if (principal instanceof String) {
+                // 处理字符串类型的principal（如用户名）
+                // 这里可以尝试从数据库查询用户ID
+                // 暂时返回null，由调用方处理
+                return null;
             }
-            // 如果是自定义UserDetails，从中提取userId
-            // return ((CustomUserDetails) principal).getUserId();
-            return 1L; // 临时返回，实际需要从认证信息中获取
+            return null;
         } catch (Exception e) {
             return null;
         }

@@ -82,47 +82,86 @@ export interface MinecraftProfile {
 }
 
 /**
- * Minecraft绑定信息
+ * MinecraftAuth设备流启动响应
  */
-export interface MinecraftBindingInfo {
-  minecraftUuid?: string
-  minecraftUsername?: string
-  bindTime?: string
-  bound: boolean
-  status: string
-  avatarUrl?: string
+export interface MinecraftDeviceFlowStartResponse {
+  device_code: string
+  user_code: string
+  verification_uri: string
+  verification_uri_complete: string
+  expires_in: number
+  interval: number
+  message?: string
 }
 
 /**
- * Microsoft OAuth配置信息
+ * MinecraftAuth设备流轮询响应
  */
-export interface MicrosoftOAuthConfig {
-  enabled: boolean
-  clientIdConfigured: boolean
-  clientSecretConfigured: boolean
-  redirectUri: string
-  scope: string
-}
-
-/**
- * Microsoft OAuth回调结果
- */
-export interface MicrosoftOAuthCallbackResult {
-  code: string
-  userId: number
-  message: string
+export interface MinecraftDeviceFlowPollResponse {
+  status: 'pending' | 'authorized' | 'expired' | 'error'
+  access_token?: string
+  error?: string
+  error_description?: string
 }
 
 /**
  * Microsoft账户绑定结果
  */
-export interface MicrosoftBindResult {
+export interface MinecraftBindResult {
   success: boolean
   message: string
-  userId: number
+  user_id?: number
   warning?: string
-  minecraftUuid?: string
-  minecraftUsername?: string
+  minecraft_uuid?: string
+  minecraft_username?: string
+}
+
+
+/**
+ * MinecraftAuth配置响应
+ */
+export interface MinecraftAuthConfig {
+  code: number
+  timestamp: number
+  message: string
+  data?: {
+    client_id: string
+    scope: string
+    polling_timeout: number
+    enabled: boolean
+    device_token_endpoint: string
+    device_code_endpoint: string
+    polling_interval: number
+  }
+  success?: boolean
+}
+
+/**
+ * MinecraftAuth状态检查响应
+ */
+export interface MinecraftAuthStatusResponse {
+  enabled: boolean
+  message: string
+  timestamp: number
+}
+
+/**
+ * MinecraftAuth连接测试响应
+ */
+export interface MinecraftAuthTestConnectionResponse {
+  status: 'success' | 'error'
+  message: string
+  timestamp: number
+}
+
+/**
+ * 设备流轮询响应
+ */
+export interface DeviceFlowPollResponse {
+  status: 'pending' | 'authorized' | 'expired' | 'error'
+  accessToken?: string
+  error?: string
+  errorDescription?: string
 }
 
 /**
@@ -268,31 +307,90 @@ export const userApi = {
    * 获取Microsoft OAuth配置状态
    */
   getMicrosoftConfig() {
-    return api.get<MicrosoftOAuthConfig>('/api/v1/oauth/microsoft/config')
+    return api.get<MinecraftAuthConfig>('/api/v1/oauth/microsoft/config')
   },
 
   /**
-   * 绑定Microsoft账户并获取Minecraft信息
+   * 启动Minecraft设备流认证（使用MinecraftAuth库）
    */
-  bindMicrosoftAccount() {
-    return api.post<MicrosoftBindResult>('/api/v1/oauth/microsoft/bind')
+  startMinecraftDeviceFlow() {
+    return api.post<MinecraftDeviceFlowStartResponse>('/api/v1/minecraft-auth/device-flow/start')
   },
 
   /**
-   * 处理Microsoft OAuth回调
-   * @param code 授权码
-   * @param state 状态参数
-   * @param error 错误信息（可选）
-   * @param errorDescription 错误描述（可选）
+   * 验证Minecraft UUID（使用MinecraftAuth库）
    */
-  microsoftOAuthCallback(code: string, state: string, error?: string, errorDescription?: string) {
-    return api.get<MicrosoftOAuthCallbackResult>('/api/v1/oauth/microsoft/callback', {
-      params: {
-        code,
-        state,
-        error,
-        errorDescription
-      }
+  validateMinecraftUuidWithAuth(uuid: string) {
+    return api.get<MinecraftProfile>('/api/v1/minecraft-auth/validate-uuid/' + encodeURIComponent(uuid))
+  },
+
+  /**
+   * 使用Microsoft令牌绑定Minecraft账户（使用MinecraftAuth库）
+   */
+  bindMinecraftWithMicrosoftToken(accessToken: string, userId?: number) {
+    return api.post<MinecraftBindResult>('/api/v1/minecraft-auth/bind-with-microsoft', {
+      access_token: accessToken,
+      user_id: userId?.toString() || ''
+    })
+  },
+
+  /**
+   * 轮询设备流状态
+   */
+  pollDeviceFlowState(deviceCode: string) {
+    return api.get<any>(`/api/v1/minecraft-auth/device-flow/poll/${deviceCode}`)
+  },
+
+  /**
+   * 启动带用户ID的设备流认证
+   */
+  startDeviceFlowWithUser(userId: number) {
+    return api.post<MinecraftDeviceFlowStartResponse>(`/api/v1/minecraft-auth/device-flow/start-with-user/${userId}`)
+  },
+
+  /**
+   * 获取Microsoft OAuth配置信息（使用MinecraftAuth库）
+   */
+  getMinecraftAuthConfig() {
+    return api.get<MinecraftAuthConfig>('/api/v1/minecraft-auth/config')
+  },
+
+  /**
+   * 测试MinecraftAuth库连接
+   */
+  testMinecraftAuthConnection() {
+    return api.get<MinecraftAuthTestConnectionResponse>('/api/v1/minecraft-auth/test-connection')
+  },
+
+  /**
+   * 检查Microsoft OAuth功能状态
+   */
+  checkMinecraftAuthStatus() {
+    return api.get<MinecraftAuthStatusResponse>('/api/v1/minecraft-auth/status')
+  },
+
+  /**
+   * 启动Microsoft OAuth设备流（旧版兼容）
+   */
+  startDeviceFlow() {
+    return api.post<MinecraftDeviceFlowStartResponse>('/api/v1/minecraft-auth/device-flow/start')
+  },
+
+  /**
+   * 轮询设备流状态（旧版兼容）
+   */
+  pollDeviceFlow(deviceCode: string) {
+    return api.post<MinecraftDeviceFlowPollResponse>('/api/v1/minecraft-auth/device-flow/poll', {
+      deviceCode
+    })
+  },
+
+  /**
+   * 使用设备流访问令牌绑定Microsoft账户（旧版兼容）
+   */
+  bindMicrosoftWithDeviceFlow(accessToken: string) {
+    return api.post<MinecraftBindResult>('/api/v1/minecraft-auth/bind-with-microsoft', {
+      access_token: accessToken
     })
   }
 }

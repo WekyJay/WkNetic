@@ -39,4 +39,10 @@ public class UserInfoVO implements Serializable {
 
     /** Minecraft游戏用户名 */
     private String minecraftUsername;
+
+    /** 创建时间 */
+    private String createTime;
+
+    /** 更新时间 */
+    private String updateTime;
 }

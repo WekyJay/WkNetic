@@ -55,6 +55,8 @@ export interface UserInfo {
   role: 'ADMIN' | 'MODERATOR' | 'USER' | 'VIP' | 'BANNED'
   minecraftUuid?: string
   minecraftUsername?: string
+  updateTime: string
+  createTime: string
 }
 
 /**
