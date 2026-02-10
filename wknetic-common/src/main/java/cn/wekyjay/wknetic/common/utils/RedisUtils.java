@@ -3,6 +3,8 @@ package cn.wekyjay.wknetic.common.utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -11,6 +13,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class RedisUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(RedisUtils.class);
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
@@ -26,7 +30,10 @@ public class RedisUtils {
      * 设置键值（带过期时间）
      */
     public void set(String key, String value, long timeout, TimeUnit unit) {
+        log.info("Redis set with TTL: key={}, timeout={}, unit={}", key, timeout, unit);
         redisTemplate.opsForValue().set(key, value, timeout, unit);
+        Long ttlSeconds = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+        log.info("Redis TTL after set: key={}, ttlSeconds={}", key, ttlSeconds);
     }
 
     /**

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -28,7 +29,7 @@ public class DeviceFlowStateService {
     private static final String REDIS_KEY_PREFIX = "device_flow:";
     private static final long DEFAULT_EXPIRY_SECONDS = 900; // 15分钟
     
-    private final RedisUtils redisUtils;
+    private RedisUtils redisUtils;
     private final MicrosoftOAuthConfig microsoftOAuthConfig;
     private final ObjectMapper objectMapper;
     
@@ -56,7 +57,7 @@ public class DeviceFlowStateService {
         long expirySeconds = microsoftOAuthConfig.getPollingTimeout() > 0 
                 ? microsoftOAuthConfig.getPollingTimeout() / 1000
                 : DEFAULT_EXPIRY_SECONDS;
-        state.setExpiresAt(LocalDateTime.now().plusSeconds(expirySeconds));
+        state.setExpiresAt(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusSeconds(expirySeconds));
         
         // 设置轮询间隔（默认5秒）
         state.setInterval(microsoftOAuthConfig.getPollingInterval());
@@ -81,8 +82,10 @@ public class DeviceFlowStateService {
             String key = getRedisKey(state.getDeviceCode());
             String json = objectMapper.writeValueAsString(state);
             
-            // 计算剩余过期时间
-            long timeRemaining = state.getExpiresAt().toEpochSecond(ZoneOffset.UTC) - LocalDateTime.now().toEpochSecond(ZoneOffset.UTC);
+                // 计算剩余过期时间，使用系统默认时区，避免多出8小时
+                long timeRemaining = state.getExpiresAt().toEpochSecond(ZoneOffset.systemDefault().getRules().getOffset(LocalDateTime.now()))
+                    - LocalDateTime.now().toEpochSecond(ZoneOffset.systemDefault().getRules().getOffset(LocalDateTime.now()));
+            
             if (timeRemaining > 0) {
                 redisUtils.set(key, json, timeRemaining, TimeUnit.SECONDS);
             } else {
@@ -148,7 +151,7 @@ public class DeviceFlowStateService {
         
         // 如果是终端状态，设置较短过期时间（5分钟）
         if (newStatus.isTerminal()) {
-            state.setExpiresAt(LocalDateTime.now().plusSeconds(300));
+            state.setExpiresAt(LocalDateTime.now(java.time.ZoneId.systemDefault()).plusSeconds(300));
         }
         
         saveDeviceFlowState(state);
@@ -177,7 +180,7 @@ public class DeviceFlowStateService {
         
         // 如果是终端状态，设置较短过期时间（5分钟）
         if (newStatus.isTerminal()) {
-            state.setExpiresAt(LocalDateTime.now().plusSeconds(300));
+            state.setExpiresAt(LocalDateTime.now(ZoneId.systemDefault()).plusSeconds(300));
         }
         
         saveDeviceFlowState(state);
