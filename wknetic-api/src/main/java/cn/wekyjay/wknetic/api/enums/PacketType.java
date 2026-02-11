@@ -102,6 +102,7 @@ public enum PacketType {
     CLIENT_LOG_UPLOAD      (202), // 客户端日志上报
 
     // 游戏服务器管理 (210-229)
+    SERVER_RESP            (209), // 消息响应包
     SERVER_LOGIN           (210), // 游戏服务器登录（携带Token）
     SERVER_LOGIN_RESP      (211), // 登录响应
     SERVER_HEARTBEAT       (212), // 游戏服务器心跳
@@ -119,5 +120,16 @@ public enum PacketType {
             if (type.id == id) return type;
         }
         return null;
+    }
+
+    public static PacketType getByName(String name) {
+        if (name == null) return null;
+        for (PacketType type : PacketType.values()) {
+            // 忽略大小写匹配，并且去掉两端可能存在的空格
+            if (type.name().equalsIgnoreCase(name.trim())) {
+                return type;
+            }
+        }
+        return null; // 或者返回一个自定义的 UNKNOWN 类型
     }
 }

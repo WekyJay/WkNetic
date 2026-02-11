@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.channel.Channel;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties.Admin;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
@@ -53,17 +55,18 @@ public class AdminCommandListener implements MessageListener {
                 return;
             }
 
-            // 构造命令数据包
-            ObjectNode packet = objectMapper.createObjectNode();
-            packet.put("type", PacketType.ADMIN_COMMAND.getId());
-            packet.put("commandType", command.getCommandType());
-            packet.put("targetPlayer", command.getTargetPlayer());
-            packet.put("command", command.getCommand());
-            packet.put("reason", command.getReason());
-            packet.put("commandId", command.getCommandId());
+            AdminCommandPacket commandPacket = new AdminCommandPacket();
+
+            commandPacket.setCommandType(command.getCommandType());
+            commandPacket.setTargetPlayer(command.getTargetPlayer());
+            commandPacket.setCommand(command.getCommand());
+            commandPacket.setReason(command.getReason());
+            commandPacket.setCommandId(command.getCommandId());
+            commandPacket.setSessionId(sessionId);
+
 
             // 发送命令到游戏服务器
-            channel.writeAndFlush(packet.toString());
+            channel.writeAndFlush(commandPacket.toJsonString());
             
             log.info("已转发管理员命令到服务器 [sessionId: {}] - 命令类型: {}", sessionId, command.getCommandType());
         } catch (Exception e) {

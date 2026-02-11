@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppTheme } from '@/composables/useTheme'
 import { userApi } from '@/api/user'
@@ -14,6 +15,8 @@ import UserAvatar from '@/components/user/UserAvatar.vue'
 import MinecraftSettings from '@/components/user/MinecraftSettings.vue'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const theme = useAppTheme()
 
@@ -52,6 +55,23 @@ const tabs = computed(() => [
   { key: 'minecraft', label: 'Minecraft', icon: 'i-tabler-brand-minecraft' },
   { key: 'preferences', label: '偏好设置', icon: 'i-tabler-palette' }
 ])
+
+const isValidTab = (key: string) => tabs.value.some((tab) => tab.key === key)
+
+const syncTabFromRoute = () => {
+  const tabParam = typeof route.params.tab === 'string' ? route.params.tab : ''
+  activeTab.value = isValidTab(tabParam) ? tabParam : 'profile'
+}
+
+const goToTab = (key: string) => {
+  if (!isValidTab(key)) return
+  activeTab.value = key
+  if (key === 'profile') {
+    router.replace({ name: 'user-settings' })
+    return
+  }
+  router.replace({ name: 'user-settings', params: { tab: key } })
+}
 
 /** 加载用户数据 */
 const loadUserData = () => {
@@ -104,7 +124,15 @@ const handleAvatarUpload = (event: Event) => {
 
 onMounted(() => {
   loadUserData()
+  syncTabFromRoute()
 })
+
+watch(
+  () => route.params.tab,
+  () => {
+    syncTabFromRoute()
+  }
+)
 </script>
 
 <template>
@@ -130,7 +158,7 @@ onMounted(() => {
                     ? 'bg-brand/10 font-medium'
                     : 'text-text-secondary hover:bg-bg-hover hover:text-text'
                 ]"
-                @click="activeTab = tab.key"
+                @click="goToTab(tab.key)"
               >
                 <i :class="tab.icon" class="text-lg" />
                 <span>{{ tab.label }}</span>

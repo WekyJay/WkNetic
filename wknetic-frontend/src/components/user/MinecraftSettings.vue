@@ -149,11 +149,6 @@ const startMinecraftDeviceFlow = async () => {
     // 但后端可能返回的是过期时间戳，我们需要根据实际情况处理
     deviceFlowExpiresAt.value = deviceFlowData.value.expires_in;
     
-    // 调试日志：查看返回的数据结构
-    console.info("Device flow data received:", deviceFlowData.value);
-    console.info("expires_in value:", deviceFlowData.value.expires_in);
-    console.info("Current time (Date.now()):", Date.now());
-    
     // 计算剩余时间：先尝试判断 expires_in 的单位
     const expiresIn = deviceFlowData.value.expires_in;
     let remainingSeconds;

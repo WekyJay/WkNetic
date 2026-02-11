@@ -1,6 +1,6 @@
 package cn.wekyjay.wknetic.api.model.packet;
 
-import cn.wekyjay.wknetic.api.enums.PacketType;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -11,11 +11,9 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public abstract class ServerPacket extends BasePacket{
-    private String serverName;
-    private String serverVersion;
+public class ServerLoginRespPacket extends ServerRespPacket {
 
-    @Override
-    protected abstract PacketType defineType();
+    private String sessionId;
 
+   
 }

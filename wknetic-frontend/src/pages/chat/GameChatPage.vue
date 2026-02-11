@@ -1,76 +1,75 @@
 <template>
-  <AppLayout>
-    <template #header>
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold">{{ $t('gameChat.title') }}</h1>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {{ $t('gameChat.subtitle') }}
-          </p>
+  <div class="flex flex-col p-16" style="height: calc(100vh);">
+    <!-- 页头 -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      <div>
+        <h1 class="text-2xl font-bold">{{ $t('gameChat.title') }}</h1>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          {{ $t('gameChat.subtitle') }}
+        </p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <!-- 服务器选择 -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('gameChat.server') }}:</span>
+          <el-select
+            v-model="selectedServer"
+            :placeholder="$t('gameChat.selectServer')"
+            size="small"
+            style="width: 150px"
+            @change="onServerChange"
+          >
+            <el-option
+              v-for="server in servers"
+              :key="server.id"
+              :label="server.name"
+              :value="server.id"
+            />
+          </el-select>
         </div>
         
-        <div class="flex items-center gap-3">
-          <!-- 服务器选择 -->
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('gameChat.server') }}:</span>
-            <el-select
-              v-model="selectedServer"
-              :placeholder="$t('gameChat.selectServer')"
-              size="small"
-              style="width: 150px"
-              @change="onServerChange"
-            >
-              <el-option
-                v-for="server in servers"
-                :key="server.id"
-                :label="server.name"
-                :value="server.id"
-              />
-            </el-select>
-          </div>
-          
-          <!-- 频道选择 -->
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('gameChat.channel') }}:</span>
-            <el-select
-              v-model="selectedChannel"
-              :placeholder="$t('gameChat.selectChannel')"
-              size="small"
-              style="width: 150px"
-              @change="onChannelChange"
-            >
-              <el-option
-                v-for="channel in channels"
-                :key="channel.id"
-                :label="channel.name"
-                :value="channel.id"
-              />
-            </el-select>
-          </div>
-          
-          <!-- 世界选择（仅在特定频道显示） -->
-          <div v-if="showWorldSelector" class="flex items-center gap-2">
-            <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('gameChat.world') }}:</span>
-            <el-select
-              v-model="selectedWorld"
-              :placeholder="$t('gameChat.selectWorld')"
-              size="small"
-              style="width: 150px"
-              @change="onWorldChange"
-            >
-              <el-option
-                v-for="world in worlds"
-                :key="world.id"
-                :label="world.name"
-                :value="world.id"
-              />
-            </el-select>
-          </div>
+        <!-- 频道选择 -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('gameChat.channel') }}:</span>
+          <el-select
+            v-model="selectedChannel"
+            :placeholder="$t('gameChat.selectChannel')"
+            size="small"
+            style="width: 150px"
+            @change="onChannelChange"
+          >
+            <el-option
+              v-for="channel in channels"
+              :key="channel.id"
+              :label="channel.name"
+              :value="channel.id"
+            />
+          </el-select>
+        </div>
+        
+        <!-- 世界选择（仅在特定频道显示） -->
+        <div v-if="showWorldSelector" class="flex items-center gap-2">
+          <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('gameChat.world') }}:</span>
+          <el-select
+            v-model="selectedWorld"
+            :placeholder="$t('gameChat.selectWorld')"
+            size="small"
+            style="width: 150px"
+            @change="onWorldChange"
+          >
+            <el-option
+              v-for="world in worlds"
+              :key="world.id"
+              :label="world.name"
+              :value="world.id"
+            />
+          </el-select>
         </div>
       </div>
-    </template>
+    </div>
 
-    <div class="flex flex-col" style="height: calc(100vh - 128px);">
+    <div class="flex flex-col flex-1">
       <!-- 聊天区域 -->
       <div class="flex-1 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <!-- 聊天消息列表 -->
@@ -93,20 +92,20 @@
             <div
               v-for="message in messages"
               :key="message.id"
-              class="flex gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              class="flex min-h-20 gap-3 p-3 pb-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <!-- 玩家头像 -->
               <div class="flex-shrink-0">
                 <UserAvatar
-                  :avatar="message.player.avatar"
+                  :src="getMinecraftAvatarUrl(message.player.uuid)"
                   :username="message.player.username"
                   size="md"
                 />
               </div>
               
               <!-- 消息内容 -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-baseline gap-2 mb-1">
+              <div class="min-w-0">
+                <div class="flex items-baseline gap-2">
                   <span class="font-semibold text-gray-900 dark:text-gray-100">
                     {{ message.player.username }}
                   </span>
@@ -126,23 +125,25 @@
                 </div>
                 
                 <!-- 消息操作 -->
-                <div class="flex gap-2 mt-2 opacity-0 hover:opacity-100 transition-opacity">
-                  <el-button
+                <div class="flex h-6 gap-2 opacity-0 hover:opacity-100 transition-opacity">
+                  <el-text
                     v-if="canReply"
+                    style="cursor: pointer;"
                     type="text"
                     size="small"
                     @click="replyTo(message.player.username)"
                   >
                     {{ $t('gameChat.reply') }}
-                  </el-button>
-                  <el-button
+                  </el-text>
+                  <el-text
                     v-if="canReport"
                     type="text"
+                    style="cursor: pointer;"
                     size="small"
                     @click="reportMessage(message)"
                   >
                     {{ $t('gameChat.report') }}
-                  </el-button>
+                  </el-text>
                 </div>
               </div>
             </div>
@@ -213,28 +214,7 @@
                 >
                   {{ $t('gameChat.send') }}
                 </el-button>
-                
-                <el-button
-                  v-if="showQuickActions"
-                  type="text"
-                  size="small"
-                  @click="toggleQuickActions"
-                >
-                  {{ $t('gameChat.quickActions') }}
-                </el-button>
               </div>
-            </div>
-            
-            <!-- 快速操作 -->
-            <div v-if="showQuickActionsPanel" class="grid grid-cols-2 md:grid-cols-4 gap-2">
-              <el-button
-                v-for="action in quickActions"
-                :key="action.text"
-                size="small"
-                @click="insertQuickAction(action.text)"
-              >
-                {{ action.text }}
-              </el-button>
             </div>
             
             <!-- 发送提示 -->
@@ -251,12 +231,12 @@
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           <div
             v-for="player in onlinePlayers"
-            :key="player.id"
+            :key="player.uuid"
             class="flex items-center gap-2 p-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer"
             @click="whisperTo(player.username)"
           >
             <UserAvatar
-              :avatar="player.avatar"
+              :avatar="getMinecraftAvatarUrl(player.uuid)"
               :username="player.username"
               size="sm"
             />
@@ -265,20 +245,19 @@
         </div>
       </div>
     </div>
-  </AppLayout>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useUserStore } from '@/stores/user'
 import { useGameChatStore } from '@/stores/gameChat'
 import { ElMessage, ElMessageBox } from 'element-plus'
-// Using UnoCSS icons (preset-icons). Removed Element Plus icon imports.
-import AppLayout from '@/components/layout/AppLayout.vue'
 import UserAvatar from '@/components/user/UserAvatar.vue'
 import { useI18n } from 'vue-i18n'
+import { getMinecraftAvatarUrl } from '@/utils/minecraft'
+import { gameChatApi, type ServerInfo, type ChannelInfo, type WorldInfo } from '@/api/gameChat'
 
 // 国际化
 const { t } = useI18n()
@@ -286,103 +265,41 @@ const router = useRouter()
 
 // Store
 const authStore = useAuthStore()
-const userStore = useUserStore()
+const gameChatStore = useGameChatStore()
 
 // 状态
 const messagesContainer = ref<HTMLElement>()
-const loadingMessages = ref(false)
-const sending = ref(false)
 const messageInput = ref('')
 const replyingTo = ref('')
-const showQuickActionsPanel = ref(false)
 const selectedServer = ref('')
-const selectedChannel = ref('world')
+const selectedChannel = ref<'global' | 'world' | 'party' | 'whisper' | 'staff'>('global')
 const selectedWorld = ref('all')
 const showWorldSelector = computed(() => selectedChannel.value === 'world')
 
-// 模拟数据
-const servers = ref([
-  { id: 'server1', name: t('gameChat.servers.main'), players: 42 },
-  { id: 'server2', name: t('gameChat.servers.test'), players: 12 },
-  { id: 'server3', name: t('gameChat.servers.dev'), players: 5 }
-])
+// 从store获取状态
+const loadingMessages = computed(() => gameChatStore.isLoading)
+const sending = computed(() => gameChatStore.isSending)
+const messages = computed(() => gameChatStore.filteredMessages)
 
-const channels = ref([
-  { id: 'global', name: t('gameChat.channels.global') },
-  { id: 'world', name: t('gameChat.channels.world') },
-  { id: 'party', name: t('gameChat.channels.party') },
-  { id: 'whisper', name: t('gameChat.channels.whisper') },
-  { id: 'staff', name: t('gameChat.channels.staff') }
-])
+// 服务器、频道、世界列表（从API获取）
+const servers = ref<ServerInfo[]>([])
+const channels = ref<ChannelInfo[]>([])
+const worlds = ref<WorldInfo[]>([])
 
-const worlds = ref([
-  { id: 'all', name: t('gameChat.worlds.all') },
-  { id: 'world', name: t('gameChat.worlds.world') },
-  { id: 'apocalypse', name: t('gameChat.worlds.apocalypse') },
-  { id: 'resource', name: t('gameChat.worlds.resource') }
-])
+// 加载状态
+const loadingServers = ref(false)
+const loadingChannels = ref(false)
+const loadingWorlds = ref(false)
+const loadingError = ref<string | null>(null)
 
-const messages = ref([
-  {
-    id: '1',
-    player: {
-      id: 'player1',
-      username: 'WekyJay',
-      avatar: 'https://example.com/avatar1.jpg'
-    },
-    content: t('gameChat.sampleMessages.1'),
-    timestamp: Date.now() - 300000, // 5分钟前
-    channel: 'world'
-  },
-  {
-    id: '2',
-    player: {
-      id: 'player2',
-      username: 'MinecraftFan',
-      avatar: 'https://example.com/avatar2.jpg'
-    },
-    content: t('gameChat.sampleMessages.2'),
-    timestamp: Date.now() - 180000, // 3分钟前
-    channel: 'world'
-  },
-  {
-    id: '3',
-    player: {
-      id: 'player3',
-      username: 'BuilderPro',
-      avatar: 'https://example.com/avatar3.jpg'
-    },
-    content: t('gameChat.sampleMessages.3'),
-    timestamp: Date.now() - 60000, // 1分钟前
-    channel: 'global'
-  }
-])
-
-const onlinePlayers = ref([
-  { id: 'player1', username: 'WekyJay', avatar: 'https://example.com/avatar1.jpg' },
-  { id: 'player2', username: 'MinecraftFan', avatar: 'https://example.com/avatar2.jpg' },
-  { id: 'player3', username: 'BuilderPro', avatar: 'https://example.com/avatar3.jpg' },
-  { id: 'player4', username: 'RedstoneWizard', avatar: 'https://example.com/avatar4.jpg' },
-  { id: 'player5', username: 'AdventureTime', avatar: 'https://example.com/avatar5.jpg' },
-  { id: 'player6', username: 'FarmExpert', avatar: 'https://example.com/avatar6.jpg' }
-])
-
-const quickActions = ref([
-  { text: '/help' },
-  { text: '/list' },
-  { text: '/spawn' },
-  { text: '/home' },
-  { text: '/tpa' },
-  { text: '/msg' },
-  { text: t('gameChat.quickActions.hello') },
-  { text: t('gameChat.quickActions.thanks') }
-])
+// 从store获取在线玩家
+const onlinePlayers = computed(() => gameChatStore.onlinePlayers)
 
 // 计算属性
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const hasMinecraftAccount = computed(() => userStore.user?.minecraftAccount != null)
-const canReply = computed(() => isAuthenticated.value && hasMinecraftAccount.value)
-const canReport = computed(() => isAuthenticated.value)
+const hasMinecraftAccount = computed(() => authStore.user?.minecraftUsername != null)
+const canReply = computed(() => gameChatStore.hasPermissionToSpeak)
+const canReport = computed(() => gameChatStore.hasPermissionToView)
 
 const inputPlaceholder = computed(() => {
   if (!isAuthenticated.value) return t('gameChat.placeholders.loginRequired')
@@ -390,8 +307,6 @@ const inputPlaceholder = computed(() => {
   if (replyingTo.value) return t('gameChat.placeholders.replying', { username: replyingTo.value })
   return t('gameChat.placeholders.default')
 })
-
-const showQuickActions = computed(() => isAuthenticated.value && hasMinecraftAccount.value)
 
 // 方法
 const formatTime = (timestamp: number) => {
@@ -402,6 +317,84 @@ const formatTime = (timestamp: number) => {
 const getChannelName = (channelId: string) => {
   const channel = channels.value.find(c => c.id === channelId)
   return channel?.name || channelId
+}
+
+// API调用函数
+const fetchServers = async () => {
+  loadingServers.value = true
+  try {
+    const res = await gameChatApi.getServers()
+    if (res.status === 200 && res.data) {
+      servers.value = res.data
+    } else {
+      loadingError.value = '获取服务器列表失败'
+      ElMessage.error(loadingError.value)
+    }
+  } catch (error: any) {
+    console.error('Failed to fetch servers:', error)
+    loadingError.value = '获取服务器列表失败：' + (error.message || '网络错误')
+    ElMessage.error(loadingError.value)
+  } finally {
+    loadingServers.value = false
+  }
+}
+
+const fetchChannels = async () => {
+  loadingChannels.value = true
+  try {
+    const res = await gameChatApi.getChannels()
+    if (res.status === 200 && res.data) {
+      channels.value = res.data
+    } else {
+      loadingError.value = '获取频道列表失败'
+      ElMessage.error(loadingError.value)
+    }
+  } catch (error: any) {
+    console.error('Failed to fetch channels:', error)
+    loadingError.value = '获取频道列表失败：' + (error.message || '网络错误')
+    ElMessage.error(loadingError.value)
+  } finally {
+    loadingChannels.value = false
+  }
+}
+
+const fetchWorlds = async () => {
+  loadingWorlds.value = true
+  try {
+    const res = await gameChatApi.getWorlds()
+    if (res.status === 200 && res.data) {
+      worlds.value = res.data
+    } else {
+      loadingError.value = '获取世界列表失败'
+      ElMessage.error(loadingError.value)
+    }
+  } catch (error: any) {
+    console.error('Failed to fetch worlds:', error)
+    loadingError.value = '获取世界列表失败：' + (error.message || '网络错误')
+    ElMessage.error(loadingError.value)
+  } finally {
+    loadingWorlds.value = false
+  }
+}
+
+// 初始化数据
+const initializeData = async () => {
+  loadingError.value = null
+  
+  // 并行加载所有数据
+  await Promise.all([
+    fetchServers(),
+    fetchChannels(),
+    fetchWorlds()
+  ])
+  
+  // 初始化选择第一个服务器
+  if (servers.value.length > 0) {
+    selectedServer.value = servers.value[0].name
+  } else {
+    // 如果没有服务器，显示警告
+    ElMessage.warning('未找到可用服务器')
+  }
 }
 
 const replyTo = (username: string) => {
@@ -422,69 +415,36 @@ const whisperTo = (username: string) => {
   replyTo(username)
 }
 
-const toggleQuickActions = () => {
-  showQuickActionsPanel.value = !showQuickActionsPanel.value
+const onServerChange = async () => {
+  if (!selectedServer.value) return
+  await gameChatStore.switchServer(selectedServer.value)
+  nextTick(() => {
+    scrollToBottom()
+  })
 }
 
-const insertQuickAction = (text: string) => {
-  messageInput.value += text + ' '
+const onChannelChange = async () => {
+  await gameChatStore.switchChannel(selectedChannel.value)
+  nextTick(() => {
+    scrollToBottom()
+  })
 }
 
-const onServerChange = () => {
-  // 切换服务器时重新加载消息
-  loadMessages()
-}
-
-const onChannelChange = () => {
-  // 切换频道时重新加载消息
-  loadMessages()
-}
-
-const onWorldChange = () => {
-  // 切换世界时重新加载消息
-  loadMessages()
-}
-
-const loadMessages = async () => {
-  loadingMessages.value = true
-  try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    // 实际实现中这里会调用API获取消息
-  } catch (error) {
-    console.error('加载消息失败:', error)
-    ElMessage.error(t('gameChat.errors.loadFailed'))
-  } finally {
-    loadingMessages.value = false
-  }
+const onWorldChange = async () => {
+  await gameChatStore.switchWorld(selectedWorld.value)
+  nextTick(() => {
+    scrollToBottom()
+  })
 }
 
 const sendMessage = async () => {
-  if (!messageInput.value.trim() || !isAuthenticated.value || !hasMinecraftAccount.value) {
+  if (!messageInput.value.trim()) {
     return
   }
 
-  sending.value = true
-  try {
-    const content = messageInput.value.trim()
-      const newMessage = {
-        id: Date.now().toString(),
-        player: {
-          id: userStore.userId.toString() || '',
-          username: userStore.user?.username || 'Anonymous',
-          avatar: userStore.user?.avatar || ''
-        },
-        content: content,
-        timestamp: Date.now(),
-        channel: selectedChannel.value
-      }
-
-    // 模拟WebSocket发送
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // 添加到消息列表
-    messages.value.push(newMessage)
-    
+  const success = await gameChatStore.sendMessage(messageInput.value.trim())
+  
+  if (success) {
     // 清空输入
     messageInput.value = ''
     cancelReply()
@@ -493,13 +453,6 @@ const sendMessage = async () => {
     nextTick(() => {
       scrollToBottom()
     })
-    
-    ElMessage.success(t('gameChat.sendSuccess'))
-  } catch (error) {
-    console.error('发送消息失败:', error)
-    ElMessage.error(t('gameChat.errors.sendFailed'))
-  } finally {
-    sending.value = false
   }
 }
 
@@ -542,41 +495,51 @@ const scrollToBottom = () => {
 }
 
 // 生命周期
-onMounted(() => {
-  // 初始化选择第一个服务器
-  if (servers.value.length > 0) {
-    selectedServer.value = servers.value[0].id
+onMounted(async () => {
+  // 检查登录状态
+  if (!authStore.isAuthenticated) {
+    ElMessage.warning(t('gameChat.loginRequired'))
+    router.push('/login')
+    return
   }
-  
-  // 加载消息
-  loadMessages()
-  
-  // 滚动到底部
-  nextTick(() => {
-    scrollToBottom()
-  })
-  
-  // 模拟WebSocket连接
-  // 实际实现中这里会建立WebSocket连接
+
+  // 初始化数据（服务器、频道、世界列表）
+  await initializeData()
+
+  // 检查是否有可用的服务器数据
+  if (servers.value.length > 0) {
+    selectedServer.value = servers.value[0].name
+    
+    // 加载消息
+    await gameChatStore.loadChatHistory(selectedServer.value, selectedChannel.value, selectedWorld.value)
+    
+    // 滚动到底部
+    nextTick(() => {
+      scrollToBottom()
+    })
+  } else if (!loadingServers.value && !loadingChannels.value && !loadingWorlds.value) {
+    // 如果数据加载完成但没有服务器，显示提示
+    ElMessage.warning('没有可用的服务器数据，请稍后再试')
+  }
 })
 
 onUnmounted(() => {
-  // 清理WebSocket连接
+  // 断开连接并清理
+  gameChatStore.disconnect()
 })
 
 // 监听用户状态变化
 watch(() => authStore.isAuthenticated, (isAuth) => {
   if (!isAuth) {
-    // 用户登出时清空消息
-    messages.value = []
+    // 用户登出时断开连接
+    gameChatStore.disconnect()
+    router.push('/login')
   }
 })
 </script>
 
 <style scoped>
-.flex-1 {
-  min-height: 400px;
-}
+
 
 .overflow-y-auto {
   scrollbar-width: thin;

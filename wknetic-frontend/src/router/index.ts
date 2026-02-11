@@ -109,7 +109,7 @@ const routes: RouteRecordRaw[] = [
                     }
                 },
                 {
-                    path: '/settings',
+                    path: '/settings/:tab?',
                     name: 'user-settings',
                     component: () => import('@/pages/user/UserSettingsPage.vue'),
                     meta: {
@@ -361,18 +361,18 @@ router.beforeEach((to, _from, next) => {
         return
     }
 
-    // 检查是否需要Minecraft账户绑定
-    if (to.meta.requiresMinecraftAccount && isAuthenticated) {
-        const hasMinecraftAccount = userStore.user?.minecraftAccount != null
-        if (!hasMinecraftAccount) {
-            console.warn('需要绑定Minecraft账户才能访问此页面')
-            next({
-                path: '/settings',
-                query: { tab: 'account' }
-            })
-            return
-        }
-    }
+    // // 检查是否需要Minecraft账户绑定
+    // if (to.meta.requiresMinecraftAccount && isAuthenticated) {
+    //     const hasMinecraftAccount = userStore.user?.minecraftAccount != null
+    //     if (!hasMinecraftAccount) {
+    //         console.warn('需要绑定Minecraft账户才能访问此页面')
+    //         next({
+    //             path: '/settings',
+    //             query: { tab: 'account' }
+    //         })
+    //         return
+    //     }
+    // }
 
     // 如果已登录，访问登录页则跳转到首页
     if (to.path === '/login') {

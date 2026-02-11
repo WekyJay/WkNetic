@@ -1,12 +1,10 @@
 package cn.wekyjay.wknetic.api.model.packet;
 
+import cn.wekyjay.wknetic.api.enums.PacketType;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
-import java.io.Serializable;
 
 /**
  * 管理员命令数据包
@@ -15,11 +13,10 @@ import java.io.Serializable;
  * @since 2026-02-03
  */
 @Data
-@SuperBuilder
-@NoArgsConstructor
 @AllArgsConstructor
-public class AdminCommandPacket implements Serializable {
-    private static final long serialVersionUID = 1L;
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class AdminCommandPacket extends BasePacket {
     /**
      * 会话ID（用于标识目标服务器连接）
      */
@@ -49,4 +46,9 @@ public class AdminCommandPacket implements Serializable {
      * 命令ID（用于追踪响应）
      */
     private String commandId;
+
+    @Override
+    protected PacketType defineType() {
+        return PacketType.ADMIN_COMMAND;
+    }
 }

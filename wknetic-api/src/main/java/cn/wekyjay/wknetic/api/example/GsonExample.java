@@ -20,7 +20,6 @@ public class GsonExample {
         try {
             // 1. 创建ServerLoginPacket
             ServerLoginPacket packet = new ServerLoginPacket();
-            packet.setType(PacketType.SERVER_LOGIN);
             packet.setToken("test_token_1234567890_abcdefghijklmnopqrstuvwxyz");
             packet.setProtocolVersion(1);
             packet.setServerIp("192.168.1.100");

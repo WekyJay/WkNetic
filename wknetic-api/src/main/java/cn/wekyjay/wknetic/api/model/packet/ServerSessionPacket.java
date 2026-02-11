@@ -24,10 +24,8 @@ import cn.wekyjay.wknetic.api.model.dto.socket.PluginInfoDto;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@SuperBuilder
-@NoArgsConstructor
 @AllArgsConstructor
-
+@NoArgsConstructor
 public class ServerSessionPacket extends ServerPacket implements Serializable {
     private static final long serialVersionUID = 1L;
     
@@ -35,11 +33,7 @@ public class ServerSessionPacket extends ServerPacket implements Serializable {
     /**
      * 会话ID（用于日志和查询，避免暴露token）
      */
-    @Builder.Default
     private String sessionId = UUID.randomUUID().toString();
-    
-    @Builder.Default
-    private PacketType type = PacketType.SERVER_INFO;
     
     /**
      * MOTD
@@ -87,6 +81,11 @@ public class ServerSessionPacket extends ServerPacket implements Serializable {
     private String loginIp;
     
     /**
+     * 服务器端口
+     */
+    private Integer port;
+    
+    /**
      * 登录时间
      */
     private Date loginTime;
@@ -96,4 +95,15 @@ public class ServerSessionPacket extends ServerPacket implements Serializable {
      */
     private Date lastActiveTime;
     
+    /**
+     * 获取服务器版本（从父类继承serverVersion的别名方法）
+     */
+    public String getVersion() {
+        return getServerVersion();
+    }
+    
+    @Override
+    protected PacketType defineType() {
+        return PacketType.SERVER_INFO;
+    }
 }

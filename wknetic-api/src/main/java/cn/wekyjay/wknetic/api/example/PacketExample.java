@@ -34,6 +34,11 @@ public class PacketExample {
             this.data = data;
             this.value = value;
         }
+
+        @Override
+        protected PacketType defineType() {
+            return this.getType();
+        }
     }
     
     public static void main(String[] args) {

@@ -11,16 +11,13 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class PlayerChatPacket extends ServerPacket {
-    private String player;
-    private String msg;
-    private String uuid;
-    private String world;
-    private long time;
+public class ServerRespPacket extends BasePacket {
+    private boolean success;
+    private String message;
+
     @Override
     protected PacketType defineType() {
-        return PacketType.CHAT_MSG;
+        return PacketType.SERVER_RESP;
     }
-
     
 }

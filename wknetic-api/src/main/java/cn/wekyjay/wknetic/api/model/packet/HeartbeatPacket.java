@@ -1,25 +1,20 @@
 package cn.wekyjay.wknetic.api.model.packet;
 
 import cn.wekyjay.wknetic.api.enums.PacketType;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+
 @Data
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
 @NoArgsConstructor
-public class PlayerChatPacket extends ServerPacket {
-    private String player;
-    private String msg;
-    private String uuid;
-    private String world;
-    private long time;
+public class HeartbeatPacket extends BasePacket {
+
     @Override
     protected PacketType defineType() {
-        return PacketType.CHAT_MSG;
+        return PacketType.HEARTBEAT;
     }
 
     

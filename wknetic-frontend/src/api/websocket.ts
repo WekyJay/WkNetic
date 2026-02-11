@@ -17,25 +17,25 @@ export interface WebSocketMessage {
   }
 }
 
-/**
- * 游戏聊天消息
- */
-export interface GameChatMessage {
-  id: string
-  serverId: string
-  channel: 'global' | 'world' | 'party' | 'whisper' | 'staff'
-  world?: string
-  sender: {
-    id: number
-    username: string
-    nickname: string
-    avatar: string
-    isPlayer: boolean
+  /**
+   * 游戏聊天消息
+   */
+  export interface GameChatMessage {
+    id: string
+    serverName: string
+    channel: 'global' | 'world' | 'party' | 'whisper' | 'staff'
+    world?: string
+    sender: {
+      id: number
+      username: string
+      nickname: string
+      avatar: string
+      isPlayer: boolean
+    }
+    content: string
+    timestamp: number
+    replyTo?: string
   }
-  content: string
-  timestamp: number
-  replyTo?: string
-}
 
 /**
  * 服务器状态
@@ -147,34 +147,34 @@ class WebSocketService {
     this.isConnecting = false
   }
 
-  /**
-   * 订阅游戏聊天消息
-   */
-  public subscribeToGameChat(
-    serverId: string,
-    channel: string,
-    callback: (message: GameChatMessage) => void,
-    world?: string
-  ): string {
-    if (!this.client || !this.client.connected) {
-      console.error('WebSocket not connected')
-      return ''
-    }
-
-    const topic = this.buildChatTopic(serverId, channel, world)
-    const subscription = this.client.subscribe(topic, (message) => {
-      try {
-        const parsedMessage = JSON.parse(message.body) as GameChatMessage
-        callback(parsedMessage)
-      } catch (error) {
-        console.error('Failed to parse chat message:', error)
+    /**
+     * 订阅游戏聊天消息
+     */
+    public subscribeToGameChat(
+        serverName: string,
+        channel: string,
+        callback: (message: GameChatMessage) => void,
+        world?: string
+      ): string {
+        if (!this.client || !this.client.connected) {
+          console.error('WebSocket not connected')
+          return ''
+        }
+  
+        const topic = this.buildChatTopic(serverName, channel, world)
+        const subscription = this.client.subscribe(topic, (message) => {
+          try {
+            const parsedMessage = JSON.parse(message.body) as GameChatMessage
+            callback(parsedMessage)
+          } catch (error) {
+            console.error('Failed to parse chat message:', error)
+          }
+        })
+  
+        const subscriptionId = `chat-${serverName}-${channel}-${world || 'all'}`
+        this.subscriptions.set(subscriptionId, subscription)
+        return subscriptionId
       }
-    })
-
-    const subscriptionId = `chat-${serverId}-${channel}-${world || 'all'}`
-    this.subscriptions.set(subscriptionId, subscription)
-    return subscriptionId
-  }
 
   /**
    * 订阅服务器状态
@@ -218,7 +218,7 @@ class WebSocketService {
    * 发送聊天消息
    */
   public sendChatMessage(
-    serverId: string,
+    serverName: string,
     channel: string,
     world: string,
     content: string,
@@ -230,7 +230,7 @@ class WebSocketService {
     }
 
     const message = {
-      serverId,
+      serverName,
       channel,
       world,
       content,
@@ -239,7 +239,7 @@ class WebSocketService {
     }
 
     this.client.publish({
-      destination: `/app/chat/${serverId}/send`,
+      destination: `/app/chat/${serverName}/send`,
       body: JSON.stringify(message)
     })
 
@@ -250,7 +250,7 @@ class WebSocketService {
    * 加入聊天频道
    */
   public joinChatChannel(
-    serverId: string,
+    serverName: string,
     channel: string,
     world?: string
   ): boolean {
@@ -260,14 +260,14 @@ class WebSocketService {
     }
 
     const joinRequest = {
-      serverId,
+      serverName,
       channel,
       world,
       timestamp: Date.now()
     }
 
     this.client.publish({
-      destination: `/app/chat/${serverId}/join`,
+      destination: `/app/chat/${serverName}/join`,
       body: JSON.stringify(joinRequest)
     })
 
@@ -278,7 +278,7 @@ class WebSocketService {
    * 离开聊天频道
    */
   public leaveChatChannel(
-    serverId: string,
+    serverName: string,
     channel: string,
     world?: string
   ): boolean {
@@ -288,14 +288,14 @@ class WebSocketService {
     }
 
     const leaveRequest = {
-      serverId,
+      serverName,
       channel,
       world,
       timestamp: Date.now()
     }
 
     this.client.publish({
-      destination: `/app/chat/${serverId}/leave`,
+      destination: `/app/chat/${serverName}/leave`,
       body: JSON.stringify(leaveRequest)
     })
 
@@ -319,8 +319,8 @@ class WebSocketService {
   /**
    * 构建聊天主题
    */
-  private buildChatTopic(serverId: string, channel: string, world?: string): string {
-    let topic = `/topic/chat/${serverId}/${channel}`
+  private buildChatTopic(serverName: string, channel: string, world?: string): string {
+    let topic = `/topic/chat/${serverName}/${channel}`
     if (world && world !== 'all') {
       topic += `/${world}`
     }

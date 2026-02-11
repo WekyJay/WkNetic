@@ -6,6 +6,10 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cn.wekyjay.wknetic.common.model.vo.ChatMessageVO;
+
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -16,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 public class RedisChatConfig {
 
-    public static final String CHAT_TOPIC = "wknetic-global-chat";
+    public static final String CHAT_TOPIC = "wknetic:chat:message";
 
     @Bean
     RedisMessageListenerContainer container(RedisConnectionFactory connectionFactory,MessageListenerAdapter listenerAdapter) {
@@ -44,12 +48,41 @@ public class RedisChatConfig {
         
         @Resource
         private SimpMessagingTemplate messagingTemplate; // WebSocket 发送工具
+        
+        @Resource
+        private ObjectMapper objectMapper;
 
         // 这个方法会被反射调用
         public void receiveMessage(String message) {
-            // message 是 JSON 字符串
-            // 直接推送到所有订阅了 /topic/chat 的 WebSocket 客户端
-            messagingTemplate.convertAndSend("/topic/chat", message);
+            try {
+                // 解析消息
+                ChatMessageVO chatMessage = objectMapper.readValue(message, ChatMessageVO.class);
+                
+                if (chatMessage == null || chatMessage.getServerName() == null) {
+                    return;
+                }
+                
+                // 构建基础主题
+                String baseTopic = String.format("/topic/chat/%s/%s", 
+                    chatMessage.getServerName(), 
+                    chatMessage.getChannel());
+                
+                // 推送到基础主题
+                messagingTemplate.convertAndSend(baseTopic, chatMessage);
+                
+                // 如果有世界信息，也推送到世界特定主题
+                if (chatMessage.getWorld() != null && !chatMessage.getWorld().isEmpty()) {
+                    String worldTopic = String.format("%s/%s", baseTopic, chatMessage.getWorld());
+                    messagingTemplate.convertAndSend(worldTopic, chatMessage);
+                }
+                
+                // 同时也推送到全局主题（兼容旧客户端）
+                messagingTemplate.convertAndSend("/topic/chat", chatMessage);
+                
+            } catch (Exception e) {
+                // 如果解析失败，回退到旧的行为
+                messagingTemplate.convertAndSend("/topic/chat", message);
+            }
         }
     }
 }

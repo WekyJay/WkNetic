@@ -1,13 +1,14 @@
 package cn.wekyjay.wknetic.api.model.packet;
 
+
 import cn.wekyjay.wknetic.api.enums.PacketType;
+import cn.wekyjay.wknetic.api.utils.PacketUtils;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -15,15 +16,22 @@ import lombok.experimental.SuperBuilder;
  * 包含通用的验证注解，确保数据完整性
  */
 @Data
-@SuperBuilder
 @AllArgsConstructor
-@NoArgsConstructor
 public abstract class BasePacket {
+
+
+    /**
+     *  构造函数，初始化Packet类型
+     */
+    protected BasePacket() {
+        this.type = defineType();
+    }
+
     /**
      * Packet 类型 - 不能为空
      */
     @NotNull(message = "Packet类型不能为空")
-    private PacketType type;
+    protected PacketType type;
     
     /**
      * Token（仅用于认证，不出现在日志中）
@@ -44,6 +52,17 @@ public abstract class BasePacket {
      * 时间戳 - 用于记录Packet创建时间
      */
     private long timestamp = System.currentTimeMillis();
+
+
+
+    /**
+     * 定义Packet类型的抽象方法
+     * @return
+     */
+
+    protected abstract PacketType defineType();
+
+    
     
     /**
      * 验证Packet数据是否有效（基础验证）
@@ -56,4 +75,9 @@ public abstract class BasePacket {
                token.length() <= 64 && 
                protocolVersion >= 1;
     }
+
+    public String toJsonString() {
+       return PacketUtils.toJsonSafe(this);
+    }
+
 }

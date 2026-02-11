@@ -1,5 +1,6 @@
 package cn.wekyjay.wknetic.admin.system.controller;
 
+import cn.wekyjay.wknetic.api.enums.PacketType;
 import cn.wekyjay.wknetic.api.model.packet.AdminCommandPacket;
 import cn.wekyjay.wknetic.common.model.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +31,6 @@ import java.util.*;
 public class ServerMonitorController {
 
     private final StringRedisTemplate stringRedisTemplate;
-    private final ObjectMapper objectMapper;
 
     public static final String ADMIN_COMMAND_TOPIC = "wknetic:admin:command";
 
@@ -39,17 +39,16 @@ public class ServerMonitorController {
     @Operation(summary = "发送管理命令", description = "向游戏服务器发送管理命令")
     public Result<Void> sendCommand(@Valid @RequestBody SendCommandRequest request) {
         try {
-            AdminCommandPacket command = AdminCommandPacket.builder()
-                    .sessionId(request.getSessionId())
-                    .commandType(request.getCommandType())
-                    .targetPlayer(request.getTargetPlayer())
-                    .command(request.getCommand())
-                    .reason(request.getReason())
-                    .commandId(UUID.randomUUID().toString())
-                    .build();
+            AdminCommandPacket command = new AdminCommandPacket();
 
-            String json = objectMapper.writeValueAsString(command);
-            stringRedisTemplate.convertAndSend(ADMIN_COMMAND_TOPIC, json);
+            command.setSessionId(request.getSessionId());
+            command.setCommandType(request.getCommandType());
+            command.setTargetPlayer(request.getTargetPlayer());
+            command.setCommand(request.getCommand());
+            command.setReason(request.getReason());
+            command.setCommandId(UUID.randomUUID().toString());
+              
+            stringRedisTemplate.convertAndSend(ADMIN_COMMAND_TOPIC, command.toJsonString());
 
             log.info("发送管理命令: {} [sessionId: {}]", request.getCommandType(), request.getSessionId());
             return Result.success();

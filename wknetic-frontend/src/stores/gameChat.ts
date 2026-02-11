@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { GameChatMessage, ServerStatus } from '@/api/websocket'
-import { webSocketService } from '@/api/websocket'
-import { useUserStore } from './user'
+import { gameChatApi, type ChatMessage, type ServerInfo, type OnlinePlayer } from '@/api/gameChat'
+import { useAuthStore } from './auth'
+import { ElMessage } from 'element-plus'
 
 /**
  * 聊天频道类型
@@ -15,48 +15,6 @@ export type ChatChannel = 'global' | 'world' | 'party' | 'whisper' | 'staff'
 export interface WorldInfo {
   id: string
   name: string
-  displayName: string
-  type: 'normal' | 'resource' | 'nether' | 'end' | 'apocalypse' | 'custom'
-}
-
-/**
- * 服务器信息
- */
-export interface ServerInfo {
-  id: string
-  name: string
-  status: 'online' | 'offline' | 'maintenance'
-  players: {
-    online: number
-    max: number
-  }
-  worlds: WorldInfo[]
-}
-
-/**
- * 聊天状态
- */
-export interface ChatState {
-  // 当前选择的服务器
-  currentServer: ServerInfo | null
-  // 当前选择的频道
-  currentChannel: ChatChannel
-  // 当前选择的世界（可选）
-  currentWorld: WorldInfo | null
-  // 消息列表
-  messages: GameChatMessage[]
-  // 是否已连接WebSocket
-  isConnected: boolean
-  // 是否正在加载
-  isLoading: boolean
-  // 错误信息
-  error: string | null
-  // 订阅ID
-  subscriptionId: string | null
-  // 是否可以发言（需要绑定游戏账号）
-  canSpeak: boolean
-  // 是否正在发送消息
-  isSending: boolean
 }
 
 /**
@@ -64,58 +22,57 @@ export interface ChatState {
  */
 export const useGameChatStore = defineStore('gameChat', () => {
   // State
-  const currentServer = ref<ServerInfo | null>(null)
+  const currentServerName = ref<string>('')
   const currentChannel = ref<ChatChannel>('global')
-  const currentWorld = ref<WorldInfo | null>(null)
-  const messages = ref<GameChatMessage[]>([])
-  const isConnected = ref(false)
+  const currentWorld = ref<string>('all')
+  const messages = ref<ChatMessage[]>([])
+  const onlinePlayers = ref<OnlinePlayer[]>([])
   const isLoading = ref(false)
-  const error = ref<string | null>(null)
-  const subscriptionId = ref<string | null>(null)
-  const canSpeak = ref(false)
   const isSending = ref(false)
-
+  const error = ref<string | null>(null)
+  
+  // Redis订阅连接
+  let eventSource: EventSource | null = null
+  
+  // 轮询间隔
+  let pollingInterval: number | null = null
+  
   // 用户store
-  const userStore = useUserStore()
+  const authStore = useAuthStore()
 
   // Getters
   const filteredMessages = computed(() => {
     return messages.value.filter(msg => {
       // 按服务器过滤
-      if (currentServer.value && msg.serverId !== currentServer.value.id) {
+      if (currentServerName.value && msg.serverName !== currentServerName.value) {
         return false
       }
       // 按频道过滤
       if (msg.channel !== currentChannel.value) {
         return false
       }
-      // 按世界过滤
-      if (currentWorld.value && msg.world !== currentWorld.value.id) {
+      // 按世界过滤（如果选择了特定世界）
+      if (currentWorld.value && currentWorld.value !== 'all' && msg.world !== currentWorld.value) {
         return false
       }
       return true
     })
   })
 
-  const unreadCount = computed(() => {
-    // 简单实现：返回最新消息数量，实际可根据时间戳判断
-    return messages.value.length > 100 ? messages.value.length - 100 : 0
+  const hasPermissionToView = computed(() => {
+    return authStore.isAuthenticated
   })
 
   const hasPermissionToSpeak = computed(() => {
-    return userStore.isLoggedIn && canSpeak.value
-  })
-
-  const hasPermissionToView = computed(() => {
-    return userStore.isLoggedIn
+    return authStore.isAuthenticated && authStore.user?.minecraftUsername != null
   })
 
   // Actions
   /**
-   * 初始化聊天
+   * 初始化聊天 - 加载历史消息
    */
-  const initializeChat = async (serverId: string, channel: ChatChannel = 'global', worldId?: string) => {
-    if (!userStore.isLoggedIn) {
+  const loadChatHistory = async (serverName: string, channel: ChatChannel = 'global', world: string = 'all') => {
+    if (!authStore.isAuthenticated) {
       error.value = '请先登录'
       return false
     }
@@ -124,50 +81,30 @@ export const useGameChatStore = defineStore('gameChat', () => {
     error.value = null
 
     try {
-      // 连接WebSocket
-      webSocketService.initialize(userStore.token)
-
-      // 设置当前服务器、频道、世界
-      // 这里需要从API获取服务器信息，暂时用模拟数据
-      currentServer.value = {
-        id: serverId,
-        name: `服务器 ${serverId}`,
-        status: 'online',
-        players: {
-          online: 0,
-          max: 100
-        },
-        worlds: [
-          { id: 'world', name: 'world', displayName: '主世界', type: 'normal' },
-          { id: 'nether', name: 'nether', displayName: '地狱', type: 'nether' },
-          { id: 'end', name: 'end', displayName: '末地', type: 'end' },
-          { id: 'apocalypse', name: 'apocalypse', displayName: '末日世界', type: 'apocalypse' },
-          { id: 'resource', name: 'resource', displayName: '资源世界', type: 'resource' }
-        ]
-      }
-
+      currentServerName.value = serverName
       currentChannel.value = channel
+      currentWorld.value = world
 
-      if (worldId) {
-        const world = currentServer.value.worlds.find(w => w.id === worldId)
-        currentWorld.value = world || null
+      // 从Redis获取历史消息
+      const response = await gameChatApi.getChatHistory({
+        serverName,
+        channel,
+        world: world !== 'all' ? world : undefined,
+        limit: 100
+      })
+      if (response.data) {
+        messages.value = response.data
       } else {
-        currentWorld.value = null
+        throw new Error(response.msg || '加载聊天历史失败')
       }
 
-      // 清空消息
-      messages.value = []
-
-      // 检查用户是否可以发言（需要绑定游戏账号）
-      // 这里需要调用API检查，暂时假设为true
-      canSpeak.value = true
-
-      // 订阅聊天消息
-      subscribeToChat(serverId, channel, worldId)
+      // 订阅Redis消息
+      subscribeToRedis()
 
       return true
     } catch (err) {
-      error.value = `初始化聊天失败: ${err instanceof Error ? err.message : String(err)}`
+      error.value = `加载聊天历史失败: ${err instanceof Error ? err.message : String(err)}`
+      ElMessage.error(error.value)
       return false
     } finally {
       isLoading.value = false
@@ -175,65 +112,89 @@ export const useGameChatStore = defineStore('gameChat', () => {
   }
 
   /**
-   * 订阅聊天消息
+   * 订阅Redis消息（使用SSE或轮询）
    */
-  const subscribeToChat = (serverId: string, channel: ChatChannel, worldId?: string) => {
-    // 取消现有订阅
-    if (subscriptionId.value) {
-      webSocketService.unsubscribe(subscriptionId.value)
-      subscriptionId.value = null
+  const subscribeToRedis = () => {
+    // 关闭现有连接
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
     }
 
-    // 订阅新频道
-    const subId = webSocketService.subscribeToGameChat(
-      serverId,
-      channel,
-      (message) => {
-        // 添加消息到列表
-        addMessage(message)
-      },
-      worldId
-    )
-
-    if (subId) {
-      subscriptionId.value = subId
-      isConnected.value = true
-    }
+    // 这里使用SSE订阅Redis发布的消息
+    // 注意：需要后端提供SSE端点
+    // 暂时使用轮询方式
+    startPolling()
   }
 
   /**
-   * 添加消息
+   * 开始轮询新消息
    */
-  const addMessage = (message: GameChatMessage) => {
-    // 避免重复消息
-    if (messages.value.some(m => m.id === message.id)) {
-      return
+  const startPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval)
     }
 
-    messages.value.push(message)
+    // 每3秒轮询一次
+    pollingInterval = window.setInterval(async () => {
+      if (!currentServerName.value) return
 
-    // 限制消息数量，最多保留500条
-    if (messages.value.length > 500) {
-      messages.value = messages.value.slice(-500)
+      try {
+        const response = await gameChatApi.getChatHistory({
+          serverName: currentServerName.value,
+          channel: currentChannel.value,
+          world: currentWorld.value !== 'all' ? currentWorld.value : undefined,
+          limit: 10 // 只获取最新的10条
+        })
+
+        if (response.code === 200 && response.data) {
+          // 合并新消息，避免重复
+          response.data.forEach(newMsg => {
+            if (!messages.value.some(m => m.id === newMsg.id)) {
+              messages.value.push(newMsg)
+            }
+          })
+
+          // 限制消息数量
+          if (messages.value.length > 500) {
+            messages.value = messages.value.slice(-500)
+          }
+        }
+      } catch (err) {
+        console.error('轮询消息失败:', err)
+      }
+    }, 3000)
+  }
+
+  /**
+   * 停止轮询
+   */
+  const stopPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval)
+      pollingInterval = null
     }
   }
 
   /**
    * 发送消息
    */
-  const sendMessage = async (content: string, replyTo?: string) => {
-    if (!userStore.isLoggedIn) {
+  const sendMessage = async (content: string) => {
+    if (!authStore.isAuthenticated) {
       error.value = '请先登录'
+      ElMessage.error(error.value)
       return false
     }
 
-    if (!canSpeak.value) {
+    if (!hasPermissionToSpeak.value) {
       error.value = '您需要绑定游戏账号才能发言'
+      ElMessage.error(error.value)
       return false
     }
 
-    if (!currentServer.value) {
+    if (!currentServerName.value) {
       error.value = '请先选择服务器'
+      ElMessage.error(error.value)
       return false
     }
 
@@ -246,21 +207,24 @@ export const useGameChatStore = defineStore('gameChat', () => {
     error.value = null
 
     try {
-      const success = webSocketService.sendChatMessage(
-        currentServer.value.id,
-        currentChannel.value,
-        currentWorld.value?.id || 'all',
-        content,
-        replyTo
-      )
+      const response = await gameChatApi.sendMessage({
+        serverName: currentServerName.value,
+        channel: currentChannel.value,
+        world: currentWorld.value !== 'all' ? currentWorld.value : undefined,
+        content: content.trim()
+      })
 
-      if (!success) {
-        throw new Error('发送消息失败')
+      if (response.code === 200) {
+        ElMessage.success('消息发送成功')
+        // 立即刷新消息列表
+        await loadChatHistory(currentServerName.value, currentChannel.value, currentWorld.value)
+        return true
+      } else {
+        throw new Error(response.msg || '发送消息失败')
       }
-
-      return true
     } catch (err) {
       error.value = `发送消息失败: ${err instanceof Error ? err.message : String(err)}`
+      ElMessage.error(error.value)
       return false
     } finally {
       isSending.value = false
@@ -270,50 +234,35 @@ export const useGameChatStore = defineStore('gameChat', () => {
   /**
    * 切换服务器
    */
-  const switchServer = async (serverId: string) => {
-    if (subscriptionId.value) {
-      webSocketService.unsubscribe(subscriptionId.value)
-      subscriptionId.value = null
-    }
-
-    return initializeChat(serverId, currentChannel.value, currentWorld.value?.id)
+  const switchServer = async (serverName: string) => {
+    stopPolling()
+    return loadChatHistory(serverName, currentChannel.value, currentWorld.value)
   }
 
   /**
    * 切换频道
    */
-  const switchChannel = (channel: ChatChannel) => {
-    if (!currentServer.value) {
+  const switchChannel = async (channel: ChatChannel) => {
+    if (!currentServerName.value) {
       error.value = '请先选择服务器'
       return false
     }
 
-    currentChannel.value = channel
-
-    subscribeToChat(currentServer.value.id, channel, currentWorld.value?.id)
-
-    return true
+    stopPolling()
+    return loadChatHistory(currentServerName.value, channel, currentWorld.value)
   }
 
   /**
    * 切换世界
    */
-  const switchWorld = (worldId: string | null) => {
-    if (!currentServer.value) {
+  const switchWorld = async (world: string) => {
+    if (!currentServerName.value) {
       error.value = '请先选择服务器'
       return false
     }
 
-    if (worldId) {
-      const world = currentServer.value.worlds.find(w => w.id === worldId)
-      currentWorld.value = world || null
-    } else {
-      currentWorld.value = null
-    }
-
-    subscribeToChat(currentServer.value.id, currentChannel.value, currentWorld.value?.id)
-
-    return true
+    stopPolling()
+    return loadChatHistory(currentServerName.value, currentChannel.value, world)
   }
 
   /**
@@ -327,79 +276,44 @@ export const useGameChatStore = defineStore('gameChat', () => {
    * 断开连接
    */
   const disconnect = () => {
-    if (subscriptionId.value) {
-      webSocketService.unsubscribe(subscriptionId.value)
-      subscriptionId.value = null
+    stopPolling()
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
     }
 
-    webSocketService.disconnect()
-
-    isConnected.value = false
-    currentServer.value = null
+    currentServerName.value = ''
     currentChannel.value = 'global'
-    currentWorld.value = null
+    currentWorld.value = 'all'
     messages.value = []
-    canSpeak.value = false
-  }
-
-  /**
-   * 重新连接
-   */
-  const reconnect = () => {
-    if (!currentServer.value) {
-      return false
-    }
-
-    disconnect()
-    return initializeChat(currentServer.value.id, currentChannel.value, currentWorld.value?.id)
-  }
-
-  /**
-   * 检查连接状态
-   */
-  const checkConnection = () => {
-    isConnected.value = webSocketService.isConnected()
-    return isConnected.value
-  }
-
-  // 初始化时检查用户登录状态
-  const init = () => {
-    if (!userStore.isLoggedIn) {
-      disconnect()
-    }
   }
 
   return {
     // State
-    currentServer,
+    currentServerName,
     currentChannel,
     currentWorld,
     messages,
-    isConnected,
+    onlinePlayers,
     isLoading,
-    error,
-    subscriptionId,
-    canSpeak,
     isSending,
+    error,
 
     // Getters
     filteredMessages,
-    unreadCount,
-    hasPermissionToSpeak,
     hasPermissionToView,
+    hasPermissionToSpeak,
 
     // Actions
-    initializeChat,
-    subscribeToChat,
-    addMessage,
+    loadChatHistory,
     sendMessage,
     switchServer,
     switchChannel,
     switchWorld,
     clearMessages,
     disconnect,
-    reconnect,
-    checkConnection,
-    init
+    startPolling,
+    stopPolling,
+    subscribeToRedis
   }
 })

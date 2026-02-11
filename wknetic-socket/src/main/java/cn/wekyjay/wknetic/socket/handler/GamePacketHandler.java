@@ -2,6 +2,8 @@ package cn.wekyjay.wknetic.socket.handler;
 
 import cn.wekyjay.wknetic.api.enums.PacketType;
 import cn.wekyjay.wknetic.api.model.packet.ServerLoginPacket;
+import cn.wekyjay.wknetic.api.model.packet.ServerLoginRespPacket;
+import cn.wekyjay.wknetic.api.model.packet.ServerRespPacket;
 import cn.wekyjay.wknetic.api.model.packet.ServerSessionPacket;
 import cn.wekyjay.wknetic.common.domain.SysServerToken;
 
@@ -59,19 +61,8 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             JsonNode json = objectMapper.readTree(msg);
             
             if (!json.has("type")) return;
-            int type = json.get("type").asInt();
-
-            PacketType packetType = PacketType.getById(type);
-            if (packetType == null) {
-                // 兼容旧编号
-                if (type == 3) {
-                    handleGameChat(json);
-                    return;
-                }
-                log.warn("Unknown packet type: {}", type);
-                return;
-            }
-
+            String type = json.get("type").asText();
+            PacketType packetType = PacketType.valueOf(type);
             switch (packetType) {
                 case AUTH_REQUEST:
                 case HANDSHAKE:
@@ -81,6 +72,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
                     break;
 
                 case SERVER_HEARTBEAT:
+                case HEARTBEAT:
                     handleServerHeartbeat(ctx, json);
                     break;
 
@@ -91,7 +83,6 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
                 case CHAT_MSG:
                 case PRIVATE_MSG:
                 case GROUP_CHAT:
-                case SYSTEM_BROADCAST:
                     handleGameChat(json);
                     break;
 
@@ -134,7 +125,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             // 验证Token
             LambdaQueryWrapper<SysServerToken> wrapper = new LambdaQueryWrapper<>();
             wrapper.eq(SysServerToken::getTokenValue, token)
-                   .eq(SysServerToken::getStatus, 1);
+                .eq(SysServerToken::getStatus, 1);
             SysServerToken serverToken = serverTokenMapper.selectOne(wrapper);
 
             if (serverToken == null) {
@@ -147,14 +138,13 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             String loginIp = getClientIp(ctx.channel());
 
             // 创建服务器会话
-            ServerSessionPacket session = ServerSessionPacket.builder()
-                    .token(token)
-                    .serverName(loginPacket.getServerName())
-                    .serverVersion(loginPacket.getServerVersion())
-                    .loginIp(loginIp)
-                    .loginTime(new Date())
-                    .lastActiveTime(new Date())
-                    .build();
+            ServerSessionPacket session = new ServerSessionPacket();
+            session.setToken(token);
+            session.setServerName(loginPacket.getServerName());
+            session.setServerVersion(loginPacket.getServerVersion());
+            session.setLoginIp(loginIp);
+            session.setLoginTime(new Date());
+            session.setLastActiveTime(new Date());
 
             // 注册连接（单点登录）
             channelManager.registerChannel(token, ctx.channel(), session);
@@ -177,6 +167,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
      * 处理服务器心跳
      */
     private void handleServerHeartbeat(ChannelHandlerContext ctx, JsonNode json) {
+        log.info("收到服务器心跳");
         ServerSessionPacket session = channelManager.getSession(ctx.channel());
         if (session != null) {
             session.setLastActiveTime(new Date());
@@ -218,7 +209,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             stringRedisTemplate.convertAndSend(redisKey, objectMapper.writeValueAsString(infoPacket));
             
             log.debug("服务器状态更新: {} [sessionId: {}] - 在线玩家: {}/{}", session.getServerName(), 
-                      session.getSessionId(), infoPacket.getOnlinePlayers(), infoPacket.getMaxPlayers());
+                    session.getSessionId(), infoPacket.getOnlinePlayers(), infoPacket.getMaxPlayers());
         } catch (Exception e) {
             log.error("处理服务器信息失败", e);
         }
@@ -229,53 +220,84 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
      * 处理游戏聊天
      */
     private void handleGameChat(JsonNode json) {
-        String playerName = json.has("player") ? json.get("player").asText() : "";
-        String content = json.has("msg") ? json.get("msg").asText() : "";
-        String server = json.has("server") ? json.get("server").asText() : "Unknown";
-        String time = json.has("time") ? json.get("time").asText() : "";
-        String world = json.has("world") ? json.get("world").asText() : "Global";
-        String uuid = json.has("uuid") ? json.get("uuid").asText() : "";
-        
-        ObjectNode broadcastMsg = objectMapper.createObjectNode();
-        broadcastMsg.put("player", playerName);
-        broadcastMsg.put("content", content);
-        broadcastMsg.put("server", server);
-        broadcastMsg.put("uuid", uuid);
-        broadcastMsg.put("time", time);
-        broadcastMsg.put("world", world);
-
-        stringRedisTemplate.convertAndSend(CHAT_TOPIC, broadcastMsg.toString());
-
-        String historyKey = "wknetic:chat:history";
-        stringRedisTemplate.opsForList().leftPush(historyKey, broadcastMsg.toString());
-        stringRedisTemplate.opsForList().trim(historyKey, 0, 49);
-        
-        log.info("转发并保存聊天: [{}] {}", playerName, content);
+        try {
+            String playerName = json.has("player") ? json.get("player").asText() : "";
+            String content = json.has("msg") ? json.get("msg").asText() : "";
+            String serverName = json.has("serverName") ? json.get("serverName").asText() : "Unknown";
+            String world = json.has("world") ? json.get("world").asText() : "world";
+            String uuid = json.has("uuid") ? json.get("uuid").asText() : "";
+            String channel = json.has("channel") ? json.get("channel").asText() : "global";
+            
+            // 构建新的消息格式
+            ObjectNode message = objectMapper.createObjectNode();
+            message.put("id", java.util.UUID.randomUUID().toString());
+            message.put("serverName", serverName);
+            message.put("channel", channel);
+            message.put("world", world);
+            
+            // 玩家信息
+            ObjectNode playerInfo = objectMapper.createObjectNode();
+            playerInfo.put("uuid", uuid);
+            playerInfo.put("username", playerName);
+            playerInfo.put("avatar", getMinecraftAvatarUrl(uuid));
+            message.set("player", playerInfo);
+            
+            message.put("content", content);
+            message.put("source", "game");
+            message.put("timestamp", java.time.LocalDateTime.now().toString());
+            
+            // 发布到Redis频道
+            String chatChannel = "wknetic:chat:message";
+            stringRedisTemplate.convertAndSend(chatChannel, message.toString());
+            
+            // 保存到历史记录
+            String historyKey = "wknetic:chat:history";
+            stringRedisTemplate.opsForList().rightPush(historyKey, message.toString());
+            
+            // 限制历史记录数量为500条
+            Long size = stringRedisTemplate.opsForList().size(historyKey);
+            if (size != null && size > 500) {
+                stringRedisTemplate.opsForList().trim(historyKey, -500, -1);
+            }
+            
+            log.info("转发并保存聊天: [{}] {} - 世界: {}", playerName, content, world);
+        } catch (Exception e) {
+            log.error("处理游戏聊天失败", e);
+        }
+    }
+    
+    /**
+     * 获取Minecraft头像URL
+     */
+    private String getMinecraftAvatarUrl(String uuid) {
+        if (uuid == null || uuid.isEmpty()) {
+            return "";
+        }
+        String cleanUuid = uuid.replace("-", "").toLowerCase();
+        return "https://mc-heads.net/avatar/" + cleanUuid;
     }
 
     /**
      * 发送服务器登录响应（包含sessionId）
      */
     private void sendServerLoginResponse(ChannelHandlerContext ctx, String sessionId, boolean success, String message) {
-        ObjectNode resp = objectMapper.createObjectNode();
-        resp.put("type", PacketType.SERVER_LOGIN_RESP.getId());
-        resp.put("success", success);
-        resp.put("message", message);
-        resp.put("sessionId", sessionId);
-        resp.put("timestamp", System.currentTimeMillis());
-        ctx.writeAndFlush(resp.toString());
+        ServerLoginRespPacket respPacket = new ServerLoginRespPacket();
+
+        respPacket.setSuccess(success);
+        respPacket.setMessage(message);
+        respPacket.setSessionId(sessionId);
+
+        ctx.writeAndFlush(respPacket.toJsonString());
     }
 
     /**
      * 发送服务器响应
      */
     private void sendServerResponse(ChannelHandlerContext ctx, PacketType type, boolean success, String message) {
-        ObjectNode resp = objectMapper.createObjectNode();
-        resp.put("type", type.getId());
-        resp.put("success", success);
-        resp.put("message", message);
-        resp.put("timestamp", System.currentTimeMillis());
-        ctx.writeAndFlush(resp.toString());
+        ServerRespPacket respPacket = new ServerRespPacket();
+        respPacket.setSuccess(success);
+        respPacket.setMessage(message);
+        ctx.writeAndFlush(respPacket.toJsonString());
     }
 
 
