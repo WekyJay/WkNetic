@@ -1,6 +1,6 @@
-package cn.wekyjay.wknetic.admin.game.service.impl;
+package cn.wekyjay.wknetic.admin.system.service.impl;
 
-import cn.wekyjay.wknetic.admin.game.service.GameChatControllerService;
+import cn.wekyjay.wknetic.admin.system.service.GameChatControllerService;
 import cn.wekyjay.wknetic.api.model.packet.ServerSessionPacket;
 import cn.wekyjay.wknetic.common.model.vo.ServerStatusVO;
 import cn.wekyjay.wknetic.common.utils.RedisUtils;

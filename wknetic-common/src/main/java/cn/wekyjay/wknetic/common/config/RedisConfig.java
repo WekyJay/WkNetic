@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -28,6 +30,10 @@ public class RedisConfig {
 
         // 创建自定义的 ObjectMapper，解决 Jackson 反序列化类型问题
         ObjectMapper objectMapper = new ObjectMapper();
+        // 解决 LocalDateTime 反序列化报错的问题
+        objectMapper.registerModule(new JavaTimeModule());
+        // 不把日期写为时间戳
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         // 允许反序列化未知类型，忽略未知属性
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false);

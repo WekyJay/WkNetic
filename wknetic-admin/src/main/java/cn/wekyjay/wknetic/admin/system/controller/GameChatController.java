@@ -1,7 +1,7 @@
-package cn.wekyjay.wknetic.admin.game.controller;
+package cn.wekyjay.wknetic.admin.system.controller;
 
-import cn.wekyjay.wknetic.admin.game.service.GameChatControllerService;
-import cn.wekyjay.wknetic.admin.game.service.GameChatService;
+import cn.wekyjay.wknetic.admin.system.service.GameChatControllerService;
+import cn.wekyjay.wknetic.admin.system.service.GameChatService;
 import cn.wekyjay.wknetic.auth.utils.SecurityUtils;
 import cn.wekyjay.wknetic.common.model.Result;
 import cn.wekyjay.wknetic.common.model.dto.ChatHistoryDTO;

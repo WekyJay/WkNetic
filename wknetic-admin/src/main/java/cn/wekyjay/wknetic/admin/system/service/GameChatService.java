@@ -1,4 +1,4 @@
-package cn.wekyjay.wknetic.admin.game.service;
+package cn.wekyjay.wknetic.admin.system.service;
 
 import cn.wekyjay.wknetic.common.model.vo.ChatMessageVO;
 import cn.wekyjay.wknetic.common.model.dto.ChatHistoryDTO;

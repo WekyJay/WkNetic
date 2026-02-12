@@ -1,5 +1,5 @@
 import { Client } from '@stomp/stompjs'
-import type { User } from '@/stores/user'
+import SockJS from 'sockjs-client'
 
 /**
  * WebSocket消息类型
@@ -71,13 +71,23 @@ class WebSocketService {
   private reconnectAttempts: number = 0
   private maxReconnectAttempts: number = 10
   private subscriptions: Map<string, any> = new Map()
+  private pendingSubscriptions: Map<string, {
+    serverName: string
+    channel: string
+    world?: string
+    callback: (message: GameChatMessage) => void
+  }> = new Map()
 
   constructor() {
+    // 根据useServerMonitor.ts的配置，后端使用SockJS端点/ws-connect
+    const baseUrl = window.WkConfig?.apiBaseUrl || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+    const wsUrl = baseUrl + '/ws-connect'
+
     this.config = {
-      url: import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws',
+      url: wsUrl,
       reconnectDelay: 5000,
-      heartbeatIncoming: 10000,
-      heartbeatOutgoing: 10000
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000
     }
   }
 
@@ -98,7 +108,9 @@ class WebSocketService {
     }
 
     this.client = new Client({
-      brokerURL: this.config.url,
+      webSocketFactory: () => {
+        return new SockJS(this.config.url) as any
+      },
       connectHeaders,
       reconnectDelay: this.config.reconnectDelay,
       heartbeatIncoming: this.config.heartbeatIncoming,
@@ -150,31 +162,90 @@ class WebSocketService {
     /**
      * 订阅游戏聊天消息
      */
-    public subscribeToGameChat(
-        serverName: string,
-        channel: string,
-        callback: (message: GameChatMessage) => void,
-        world?: string
-      ): string {
-        if (!this.client || !this.client.connected) {
-          console.error('WebSocket not connected')
-          return ''
-        }
-  
-        const topic = this.buildChatTopic(serverName, channel, world)
-        const subscription = this.client.subscribe(topic, (message) => {
-          try {
-            const parsedMessage = JSON.parse(message.body) as GameChatMessage
-            callback(parsedMessage)
-          } catch (error) {
-            console.error('Failed to parse chat message:', error)
+  public subscribeToGameChat(
+    serverName: string,
+    channel: string,
+    callback: (message: GameChatMessage) => void,
+    world?: string
+  ): string {
+    if (!this.client) {
+      console.error('WebSocket client not initialized')
+      return ''
+    }
+
+    const subscriptionId = `chat-${serverName}-${channel}-${world || 'all'}`
+
+    // 如果已经订阅，直接返回
+    if (this.subscriptions.has(subscriptionId)) {
+      return subscriptionId
+    }
+
+    const doSubscribe = () => {
+      const topic = this.buildChatTopic(serverName, channel, world)
+      const subscription = this.client!.subscribe(topic, (message) => {
+        try {
+          const rawMessage = JSON.parse(message.body)
+          
+          let chatMessage: GameChatMessage
+          
+          if (rawMessage.player && typeof rawMessage.player === 'object') {
+            chatMessage = {
+              id: rawMessage.id || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              serverName: rawMessage.serverName || '',
+              channel: rawMessage.channel || 'global',
+              world: rawMessage.world,
+              sender: {
+                id: 0,
+                username: rawMessage.player.username || 'Unknown',
+                nickname: rawMessage.player.username || 'Unknown',
+                avatar: rawMessage.player.avatar || '',
+                isPlayer: true
+              },
+              content: rawMessage.content || '',
+              timestamp: typeof rawMessage.timestamp === 'string' 
+                ? new Date(rawMessage.timestamp).getTime() 
+                : rawMessage.timestamp || Date.now(),
+              replyTo: undefined
+            }
+          } else if (rawMessage.sender && typeof rawMessage.sender === 'object') {
+            chatMessage = rawMessage as GameChatMessage
+          } else {
+            console.warn('Unknown chat message format:', rawMessage)
+            chatMessage = {
+              id: rawMessage.id || `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              serverName: rawMessage.serverName || '',
+              channel: 'global',
+              sender: {
+                id: 0,
+                username: 'System',
+                nickname: 'System',
+                avatar: '',
+                isPlayer: false
+              },
+              content: rawMessage.content || JSON.stringify(rawMessage),
+              timestamp: Date.now()
+            }
           }
-        })
-  
-        const subscriptionId = `chat-${serverName}-${channel}-${world || 'all'}`
-        this.subscriptions.set(subscriptionId, subscription)
-        return subscriptionId
-      }
+          
+          callback(chatMessage)
+        } catch (error) {
+          console.error('Failed to parse chat message:', error, message.body)
+        }
+      })
+      this.subscriptions.set(subscriptionId, subscription)
+      this.pendingSubscriptions.delete(subscriptionId)
+      return subscriptionId
+    }
+
+    if (this.client.connected) {
+      return doSubscribe()
+    }
+
+    // 未连接时，先记录，等 onConnected 时补订阅
+    this.pendingSubscriptions.set(subscriptionId, { serverName, channel, world, callback })
+    console.debug(`Queued pending chat subscription ${subscriptionId} until WebSocket connects`)
+    return subscriptionId
+  }
 
   /**
    * 订阅服务器状态
@@ -211,6 +282,9 @@ class WebSocketService {
     if (subscription) {
       subscription.unsubscribe()
       this.subscriptions.delete(subscriptionId)
+    }
+    if (this.pendingSubscriptions.has(subscriptionId)) {
+      this.pendingSubscriptions.delete(subscriptionId)
     }
   }
 
@@ -332,7 +406,18 @@ class WebSocketService {
    */
   private onConnected(): void {
     console.log('WebSocket connected, subscribing to topics...')
-    // 可以在这里添加全局订阅
+    // 补上连接前排队的订阅
+    if (this.pendingSubscriptions.size > 0) {
+      this.pendingSubscriptions.forEach((pending, subscriptionId) => {
+        this.subscribeToGameChat(
+          pending.serverName,
+          pending.channel,
+          pending.callback,
+          pending.world
+        )
+        console.debug(`Flushed pending subscription ${subscriptionId}`)
+      })
+    }
   }
 
   /**

@@ -366,6 +366,11 @@
       "sendFailed": "Failed to send message"
     },
     "sendSuccess": "Message sent successfully",
+    "websocket": {
+      "connected": "WebSocket connected",
+      "disconnected": "WebSocket disconnected",
+      "reconnect": "Reconnect"
+    },
     "quickActions": {
       "hello": "Hello!",
       "thanks": "Thanks!"

@@ -367,6 +367,11 @@
       "sendFailed": "发送消息失败"
     },
     "sendSuccess": "消息发送成功",
+    "websocket": {
+      "connected": "WebSocket已连接",
+      "disconnected": "WebSocket未连接",
+      "reconnect": "重连"
+    },
     "quickActions": {
       "hello": "你好！",
       "thanks": "谢谢！"

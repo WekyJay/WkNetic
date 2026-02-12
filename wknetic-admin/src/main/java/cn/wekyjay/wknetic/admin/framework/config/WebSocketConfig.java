@@ -18,6 +18,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.security.messaging.context.SecurityContextChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -53,43 +54,50 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
         // 在客户端入站通道添加拦截器，用于验证 JWT token
-        registration.interceptors(new ChannelInterceptor() {
-            @Override
-            public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
-                StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-                
-                // 只在 STOMP CONNECT 命令时进行认证
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    String authHeader = accessor.getFirstNativeHeader("Authorization");
+        registration.interceptors(
+            // 先做 JWT 认证，保证后续拦截器能拿到 SecurityContext
+            new ChannelInterceptor() {
+                @Override
+                public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
+                    StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+                    
+                    // 只在 STOMP CONNECT 命令时进行认证
+                    if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                        String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-                    if (StrUtil.isNotBlank(authHeader) && authHeader.startsWith("Bearer ")) {
-                        try {
-                            String token = authHeader.substring(7);
-                            
-                            if (jwtUtil.validateAndRenew(token)) {
-                                Long userId = jwtUtil.getUserId(token);
-
-                                SysUser user = userMapper.getUserWithRoleById(userId);
+                        if (StrUtil.isNotBlank(authHeader) && authHeader.startsWith("Bearer ")) {
+                            try {
+                                String token = authHeader.substring(7);
                                 
-                                List<SimpleGrantedAuthority> authorities = Collections.emptyList();
-                                if (user != null && user.getRole() != null && !user.getRole().isEmpty()) {
-                                    authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
-                                }
+                                if (jwtUtil.validateAndRenew(token)) {
+                                    Long userId = jwtUtil.getUserId(token);
 
-                                UsernamePasswordAuthenticationToken authentication = 
-                                        new UsernamePasswordAuthenticationToken(userId, null, authorities);
-                                SecurityContextHolder.getContext().setAuthentication(authentication);
-                                accessor.setUser(authentication);
+                                    SysUser user = userMapper.getUserWithRoleById(userId);
+                                    
+                                    List<SimpleGrantedAuthority> authorities = Collections.emptyList();
+                                    if (user != null && user.getRole() != null && !user.getRole().isEmpty()) {
+                                        authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
+                                    }
+
+                                    UsernamePasswordAuthenticationToken authentication = 
+                                            new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                                    accessor.setUser(authentication);
+                                    // 确保用户也写入 header，避免后续解析不到
+                                    accessor.setLeaveMutable(true);
+                                }
+                            } catch (Exception e) {
+                                log.error("WebSocket JWT 认证异常", e);
                             }
-                        } catch (Exception e) {
-                            log.error("WebSocket JWT 认证异常", e);
                         }
                     }
-                }
 
-                return message;
-            }
-        });
+                    return message;
+                }
+            },
+            // 再由官方拦截器把 SecurityContext 传播到后续消息处理线程
+            new SecurityContextChannelInterceptor()
+        );
     }
 
     @Override

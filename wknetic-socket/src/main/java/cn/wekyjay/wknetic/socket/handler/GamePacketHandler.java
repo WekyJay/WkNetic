@@ -30,6 +30,8 @@ import org.springframework.util.StringUtils;
 import jakarta.annotation.Resource;
 
 import java.net.InetSocketAddress;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 
@@ -53,47 +55,47 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
     public static final String CHAT_TOPIC = "wknetic-global-chat";
     public static final String SERVER_STATUS_TOPIC = "wknetic:server:status";
 
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String msg) {
-        log.debug("RECV: {}", msg);
+  @Override
+  protected void channelRead0(ChannelHandlerContext ctx, String msg) {
+    log.debug("RECV: {}", msg);
 
-        try {
-            JsonNode json = objectMapper.readTree(msg);
-            
-            if (!json.has("type")) return;
-            String type = json.get("type").asText();
-            PacketType packetType = PacketType.valueOf(type);
-            switch (packetType) {
-                case AUTH_REQUEST:
-                case HANDSHAKE:
-                case RECONNECT_REQUEST:
-                case SERVER_LOGIN:
-                    handleServerLogin(ctx, json);
-                    break;
+    try {
+      JsonNode json = objectMapper.readTree(msg);
+      
+      // 检查是否有 type 字段
+    String type = json.get("type").asText();
+    PacketType packetType = PacketType.valueOf(type);
+    switch (packetType) {
+        case AUTH_REQUEST:
+        case HANDSHAKE:
+        case RECONNECT_REQUEST:
+        case SERVER_LOGIN:
+        handleServerLogin(ctx, json);
+        break;
 
-                case SERVER_HEARTBEAT:
-                case HEARTBEAT:
-                    handleServerHeartbeat(ctx, json);
-                    break;
+        case SERVER_HEARTBEAT:
+        case HEARTBEAT:
+        handleServerHeartbeat(ctx, json);
+        break;
 
-                case SERVER_INFO:
-                    handleServerInfo(ctx, json);
-                    break;
+        case SERVER_INFO:
+        handleServerInfo(ctx, json);
+        break;
 
-                case CHAT_MSG:
-                case PRIVATE_MSG:
-                case GROUP_CHAT:
-                    handleGameChat(json);
-                    break;
+        case CHAT_MSG:
+        case PRIVATE_MSG:
+        case GROUP_CHAT:
+        handleGameChat(json);
+        break;
 
-                default:
-                    log.warn("Unhandled packet type: {}", packetType);
-                    break;
-            }
-        } catch (Exception e) {
-            log.error("Packet parse error", e);
-        }
+        default:
+        log.warn("Unhandled packet type: {}", packetType);
+        break;
     }
+    } catch (Exception e) {
+      log.error("Packet parse error", e);
+    }
+  }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
@@ -227,6 +229,9 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             String world = json.has("world") ? json.get("world").asText() : "world";
             String uuid = json.has("uuid") ? json.get("uuid").asText() : "";
             String channel = json.has("channel") ? json.get("channel").asText() : "global";
+
+            log.info("收到游戏聊天消息 serverName={}, channel={}, world={}, player={}, content={}",
+                    serverName, channel, world, playerName, content);
             
             // 构建新的消息格式
             ObjectNode message = objectMapper.createObjectNode();
@@ -244,11 +249,12 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             
             message.put("content", content);
             message.put("source", "game");
-            message.put("timestamp", java.time.LocalDateTime.now().toString());
+            message.put("timestamp", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")));
             
             // 发布到Redis频道
             String chatChannel = "wknetic:chat:message";
             stringRedisTemplate.convertAndSend(chatChannel, message.toString());
+            log.debug("已发布到Redis频道 {}: {}", chatChannel, message);
             
             // 保存到历史记录
             String historyKey = "wknetic:chat:history";
@@ -260,7 +266,8 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
                 stringRedisTemplate.opsForList().trim(historyKey, -500, -1);
             }
             
-            log.info("转发并保存聊天: [{}] {} - 世界: {}", playerName, content, world);
+            log.info("转发并保存聊天完成 serverName={}, channel={}, world={}, player={}", 
+                    serverName, channel, world, playerName);
         } catch (Exception e) {
             log.error("处理游戏聊天失败", e);
         }

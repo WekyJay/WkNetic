@@ -15,6 +15,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+
 import java.nio.charset.StandardCharsets;
 
 @Configuration
@@ -43,6 +45,7 @@ public class RedisChatConfig {
      * 内部类：真正的消息转发者
      * Redis -> WebSocket
      */
+    @Slf4j
     @Component
     public static class ChatRedisReceiver {
         
@@ -55,10 +58,12 @@ public class RedisChatConfig {
         // 这个方法会被反射调用
         public void receiveMessage(String message) {
             try {
+                log.info("Redis聊天消息收到: {}", message);
                 // 解析消息
                 ChatMessageVO chatMessage = objectMapper.readValue(message, ChatMessageVO.class);
                 
                 if (chatMessage == null || chatMessage.getServerName() == null) {
+                    log.warn("Redis聊天消息缺少必要字段: {}", message);
                     return;
                 }
                 
@@ -66,6 +71,10 @@ public class RedisChatConfig {
                 String baseTopic = String.format("/topic/chat/%s/%s", 
                     chatMessage.getServerName(), 
                     chatMessage.getChannel());
+
+                log.info("向WebSocket推送聊天消息 topic={} world={} player={}", 
+                        baseTopic, chatMessage.getWorld(), 
+                        chatMessage.getPlayer() != null ? chatMessage.getPlayer().getUsername() : "unknown");
                 
                 // 推送到基础主题
                 messagingTemplate.convertAndSend(baseTopic, chatMessage);
@@ -81,6 +90,7 @@ public class RedisChatConfig {
                 
             } catch (Exception e) {
                 // 如果解析失败，回退到旧的行为
+                log.error("解析Redis聊天消息失败，回退到原始推送", e);
                 messagingTemplate.convertAndSend("/topic/chat", message);
             }
         }

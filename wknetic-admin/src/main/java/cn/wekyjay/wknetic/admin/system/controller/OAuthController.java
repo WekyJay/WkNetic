@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import cn.wekyjay.wknetic.auth.model.LoginUser;
 import cn.wekyjay.wknetic.common.utils.RedisUtils;
-import co.elastic.clients.elasticsearch.security.User;
+
 
 import java.util.HashMap;
 import java.util.List;

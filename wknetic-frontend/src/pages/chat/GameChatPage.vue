@@ -1,9 +1,23 @@
 <template>
-  <div class="flex flex-col p-16" style="height: calc(100vh);">
+  <div class="flex flex-col p-16">
     <!-- 页头 -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
       <div>
-        <h1 class="text-2xl font-bold">{{ $t('gameChat.title') }}</h1>
+        <div class="flex items-center gap-3">
+          <h1 class="text-2xl font-bold">{{ $t('gameChat.title') }}</h1>
+          <!-- WebSocket连接状态指示器 -->
+          <div v-if="isWebSocketConnected" class="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span>{{ $t('gameChat.websocket.connected') }}</span>
+          </div>
+          <div v-else class="flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+            <span>{{ $t('gameChat.websocket.disconnected') }}</span>
+            <el-button v-if="!loadingMessages" link size="small" @click="reconnectWebSocket">
+              {{ $t('gameChat.websocket.reconnect') }}
+            </el-button>
+          </div>
+        </div>
         <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
           {{ $t('gameChat.subtitle') }}
         </p>
@@ -69,13 +83,13 @@
       </div>
     </div>
 
-    <div class="flex flex-col flex-1">
+    <div class="flex flex-col flex-1" style="height: calc(30vh);">
       <!-- 聊天区域 -->
       <div class="flex-1 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <!-- 聊天消息列表 -->
         <div
           ref="messagesContainer"
-          class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900"
+          class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900 max-h-[600px]"
           @scroll="handleScroll"
         >
           <div v-if="loadingMessages" class="flex justify-center py-8">
@@ -129,7 +143,7 @@
                   <el-text
                     v-if="canReply"
                     style="cursor: pointer;"
-                    type="text"
+                    type="info"
                     size="small"
                     @click="replyTo(message.player.username)"
                   >
@@ -137,7 +151,7 @@
                   </el-text>
                   <el-text
                     v-if="canReport"
-                    type="text"
+                    type="info"
                     style="cursor: pointer;"
                     size="small"
                     @click="reportMessage(message)"
@@ -185,7 +199,7 @@
                   {{ $t('gameChat.replyingTo') }} @{{ replyingTo }}
                 </span>
               </div>
-              <el-button type="text" size="small" @click="cancelReply">
+              <el-button link size="small" @click="cancelReply">
                 {{ $t('common.cancel') }}
               </el-button>
             </div>
@@ -300,6 +314,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated)
 const hasMinecraftAccount = computed(() => authStore.user?.minecraftUsername != null)
 const canReply = computed(() => gameChatStore.hasPermissionToSpeak)
 const canReport = computed(() => gameChatStore.hasPermissionToView)
+const isWebSocketConnected = computed(() => gameChatStore.isWebSocketConnected)
 
 const inputPlaceholder = computed(() => {
   if (!isAuthenticated.value) return t('gameChat.placeholders.loginRequired')
@@ -456,6 +471,11 @@ const sendMessage = async () => {
   }
 }
 
+const reconnectWebSocket = () => {
+  gameChatStore.reconnectWebSocket()
+  ElMessage.info('正在重新连接WebSocket...')
+}
+
 const reportMessage = async (message: any) => {
   try {
     await ElMessageBox.confirm(
@@ -493,6 +513,16 @@ const scrollToBottom = () => {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
   }
 }
+
+// 新消息到达后自动滚动到底部
+watch(
+  () => messages.value.length,
+  () => {
+    nextTick(() => {
+      scrollToBottom()
+    })
+  }
+)
 
 // 生命周期
 onMounted(async () => {

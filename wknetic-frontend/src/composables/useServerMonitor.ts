@@ -43,7 +43,7 @@ export function useServerMonitor() {
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      onConnect: () => {
+      onConnect: () => { 
         isConnected.value = true
         subscription.value = stompClient.value!.subscribe(
           '/topic/server/monitor',
@@ -51,7 +51,7 @@ export function useServerMonitor() {
             try {
               const serverInfo: ServerInfo = JSON.parse(message.body)
               lastMessageTime.value = Date.now() // 更新最后消息时间
-              updateServerStatus(serverInfo)
+              updateServerStatus(serverInfo) // 5s内更新服务器状态
             } catch (error) {
               console.error('解析服务器状态失败:', error)
             }

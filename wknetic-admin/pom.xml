@@ -50,6 +50,11 @@
         </dependency>
         <dependency>
             <groupId>cn.wekyjay.wknetic</groupId>
+            <artifactId>wknetic-api</artifactId>
+            <version>0.0.2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>cn.wekyjay.wknetic</groupId>
             <artifactId>wknetic-community</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
@@ -101,6 +106,11 @@
             <groupId>net.raphimc</groupId>
             <artifactId>MinecraftAuth</artifactId>
             <version>5.0.0</version>
+        </dependency>
+        <!-- Spring Security Messaging -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-messaging</artifactId>
         </dependency>
     </dependencies>
 
