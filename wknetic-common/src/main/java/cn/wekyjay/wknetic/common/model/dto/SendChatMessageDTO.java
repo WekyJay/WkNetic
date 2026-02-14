@@ -21,8 +21,10 @@ import lombok.NoArgsConstructor;
 public class SendChatMessageDTO {
     
     @Schema(description = "服务器名称")
-    @NotBlank(message = "服务器名称不能为空")
     private String serverName;
+    
+    @Schema(description = "服务器会话ID")
+    private String sessionId;
     
     @Schema(description = "频道")
     @NotBlank(message = "频道不能为空")

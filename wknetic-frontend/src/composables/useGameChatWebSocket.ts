@@ -204,7 +204,8 @@ export function useGameChatWebSocket() {
     channel: ChatChannel,
     content: string,
     world?: string,
-    replyTo?: string
+    replyTo?: string,
+    sessionId?: string
   ): boolean => {
     if (!webSocketService.isConnected()) {
       console.error('WebSocket not connected')
@@ -213,6 +214,35 @@ export function useGameChatWebSocket() {
 
     const success = webSocketService.sendChatMessage(
       serverName,
+      channel,
+      world || 'global',
+      content,
+      replyTo,
+      sessionId
+    )
+
+    if (!success) {
+      connectionError.value = '发送消息失败：WebSocket未连接'
+    }
+
+    return success
+  }
+  
+  // 发送聊天消息（使用sessionId）
+  const sendMessageWithSessionId = (
+    sessionId: string,
+    channel: ChatChannel,
+    content: string,
+    world?: string,
+    replyTo?: string
+  ): boolean => {
+    if (!webSocketService.isConnected()) {
+      console.error('WebSocket not connected')
+      return false
+    }
+
+    const success = webSocketService.sendChatMessageWithSessionId(
+      sessionId,
       channel,
       world || 'global',
       content,

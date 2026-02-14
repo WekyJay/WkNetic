@@ -19,6 +19,7 @@ export interface WorldInfo {
 export const useGameChatStore = defineStore('gameChat', () => {
   // State
   const currentServerName = ref<string>('')
+  const currentServerSessionId = ref<string>('')
   const currentChannel = ref<ChatChannel>('global')
   const currentWorld = ref<string>('all')
   const messages = ref<ChatMessage[]>([])
@@ -197,12 +198,26 @@ export const useGameChatStore = defineStore('gameChat', () => {
     error.value = null
 
     try {
-      // 使用WebSocket发送消息
+      // 确保sessionId不为空，如果为空则使用serverName
+      const sessionIdToUse = currentServerSessionId.value || currentServerName.value
+      
+      console.debug('发送聊天消息参数:', {
+        serverName: currentServerName.value,
+        sessionId: currentServerSessionId.value,
+        sessionIdToUse,
+        channel: currentChannel.value,
+        world: currentWorld.value !== 'all' ? currentWorld.value : undefined,
+        content: content.trim()
+      })
+      
+      // 使用WebSocket发送消息，同时传递serverName和sessionId
       const success = wsSendMessage(
         currentServerName.value,
         currentChannel.value,
         content.trim(),
-        currentWorld.value !== 'all' ? currentWorld.value : undefined
+        currentWorld.value !== 'all' ? currentWorld.value : undefined,
+        undefined, // replyTo
+        sessionIdToUse // sessionId
       )
 
       if (success) {
@@ -223,10 +238,17 @@ export const useGameChatStore = defineStore('gameChat', () => {
   /**
    * 切换服务器
    */
-  const switchServer = async (serverName: string) => {
+  const switchServer = async (serverName: string, sessionId?: string) => {
     // 先离开当前频道
     if (currentServerName.value && currentChannel.value) {
       wsLeaveChannel(currentServerName.value, currentChannel.value, currentWorld.value !== 'all' ? currentWorld.value : undefined)
+    }
+    
+    // 更新sessionId
+    if (sessionId) {
+      currentServerSessionId.value = sessionId
+    } else {
+      currentServerSessionId.value = ''
     }
     
     return loadChatHistory(serverName, currentChannel.value, currentWorld.value)

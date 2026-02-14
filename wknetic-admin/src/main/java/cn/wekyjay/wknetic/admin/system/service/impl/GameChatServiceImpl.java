@@ -9,6 +9,7 @@ import cn.wekyjay.wknetic.common.mapper.SysUserMapper;
 import cn.wekyjay.wknetic.common.model.dto.ChatHistoryDTO;
 import cn.wekyjay.wknetic.common.model.dto.SendChatMessageDTO;
 import cn.wekyjay.wknetic.common.model.vo.ChatMessageVO;
+import cn.wekyjay.wknetic.common.model.vo.ServerStatusVO;
 import cn.wekyjay.wknetic.common.utils.RedisUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -116,24 +118,34 @@ public class GameChatServiceImpl implements GameChatService {
                 log.warn("用户未绑定Minecraft账号: {}", userId);
                 return false;
             }
-            
             String messageContent = String.format("[来自网页] %s: %s", 
                 user.getMinecraftUsername(), dto.getContent());
+
+            log.info("准备发送聊天消息到服务器 {}: {}", dto.toString(), messageContent);
             
-            // --- 1. 发送命令到插件端 (核心修改点) ---
+            // --- 1. 根据服务器名称查找对应的sessionId ---
+            String sessionId = dto.getSessionId();
+            if (sessionId == null || sessionId.isEmpty()) {
+                log.error("找不到服务器 {} 对应的sessionId，消息无法发送", dto.getServerName());
+                return false;
+            }
+            
+            // --- 2. 发送命令到插件端 (核心修改点) ---
             AdminCommandPacket packet = new AdminCommandPacket();
-            packet.setToken(dto.getServerName()); // 假设 token 就是 serverName
-            packet.setSessionId(dto.getServerName());
+            packet.setToken(sessionId);
+            packet.setSessionId(sessionId);
             packet.setCommand("say " + messageContent);
             packet.setCommandType("COMMAND");
             packet.setCommandId(UUID.randomUUID().toString());
             
             // 手动转 JSON
             String packetJson = objectMapper.writeValueAsString(packet);
+            log.info("转换后的AdminCommandPacket JSON: {}", packetJson);
             
             // 【关键】使用 StringRedisTemplate 发送纯净的 JSON 字符串
             // 避免 RedisTemplate<String, Object> 把它变成带转义的字符串
             stringRedisTemplate.convertAndSend("wknetic:admin:command", packetJson);
+            log.info("已发送聊天消息到服务器 {} [sessionId: {}]: {}", dto.getServerName(), sessionId, messageContent);
             
             // --- 2. 保存历史与通知前端 (保持不变，利用优化后的方法) ---
             ChatMessageVO message = ChatMessageVO.builder()

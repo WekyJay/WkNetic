@@ -18,6 +18,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.messaging.context.SecurityContextChannelInterceptor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -53,51 +54,48 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureClientInboundChannel(@NonNull ChannelRegistration registration) {
-        // 在客户端入站通道添加拦截器，用于验证 JWT token
-        registration.interceptors(
-            // 先做 JWT 认证，保证后续拦截器能拿到 SecurityContext
-            new ChannelInterceptor() {
-                @Override
-                public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
-                    StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-                    
-                    // 只在 STOMP CONNECT 命令时进行认证
-                    if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                        String authHeader = accessor.getFirstNativeHeader("Authorization");
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
+                // 1. 使用 MessageHeaderAccessor 获取可变的 Accessor
+                // 这样对 accessor 的修改（如 setUser）会直接反映在 message 处理流中
+                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                // 防御性判断：如果是心跳等其他类型消息，accessor 可能为 null
+                if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    String authHeader = accessor.getFirstNativeHeader("Authorization");
 
-                        if (StrUtil.isNotBlank(authHeader) && authHeader.startsWith("Bearer ")) {
-                            try {
-                                String token = authHeader.substring(7);
-                                
-                                if (jwtUtil.validateAndRenew(token)) {
-                                    Long userId = jwtUtil.getUserId(token);
+                    if (StrUtil.isNotBlank(authHeader) && authHeader.startsWith("Bearer ")) {
+                        try {
+                            String token = authHeader.substring(7);
+                            if (jwtUtil.validateAndRenew(token)) {
+                                Long userId = jwtUtil.getUserId(token);
+                                SysUser user = userMapper.getUserWithRoleById(userId);
 
-                                    SysUser user = userMapper.getUserWithRoleById(userId);
-                                    
-                                    List<SimpleGrantedAuthority> authorities = Collections.emptyList();
-                                    if (user != null && user.getRole() != null && !user.getRole().isEmpty()) {
-                                        authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
-                                    }
-
-                                    UsernamePasswordAuthenticationToken authentication = 
-                                            new UsernamePasswordAuthenticationToken(userId, null, authorities);
-                                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                                    accessor.setUser(authentication);
-                                    // 确保用户也写入 header，避免后续解析不到
-                                    accessor.setLeaveMutable(true);
+                                List<SimpleGrantedAuthority> authorities = Collections.emptyList();
+                                if (user != null && StrUtil.isNotBlank(user.getRole())) {
+                                    authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
                                 }
-                            } catch (Exception e) {
-                                log.error("WebSocket JWT 认证异常", e);
+
+                                UsernamePasswordAuthenticationToken authentication =
+                                        new UsernamePasswordAuthenticationToken(String.valueOf(userId), null, authorities);
+                                
+                                // 2. 【核心】将认证信息绑定到 WebSocket Session
+                                // Spring 会在后续所有消息中自动携带这个 Principal
+                                accessor.setUser(authentication);
+                                
+                                // 可选：如果是 JWT 场景，通常不需要这一步，除非你的某些 Filter 强依赖它
+                                // SecurityContextHolder.getContext().setAuthentication(authentication);
                             }
+                        } catch (Exception e) {
+                            log.error("WebSocket JWT 认证异常", e);
+                            // 可选：认证失败可以直接返回 null 来拒绝连接
+                            // return null; 
                         }
                     }
-
-                    return message;
                 }
-            },
-            // 再由官方拦截器把 SecurityContext 传播到后续消息处理线程
-            new SecurityContextChannelInterceptor()
-        );
+                return message;
+            }
+        });
     }
 
     @Override

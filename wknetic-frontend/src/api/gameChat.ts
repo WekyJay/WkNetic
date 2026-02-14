@@ -20,20 +20,21 @@ export interface ChatMessage {
 }
 
 /**
- * 聊天历史查询参数
+ * 服务器信息
  */
-export interface ChatHistoryParams {
-  serverName: string
-  channel?: string
-  world?: string
-  limit?: number
+export interface ServerInfo {
+  id: string
+  name: string
+  players: number
+  sessionId?: string  // 可选，如果不存在则使用id作为sessionId
 }
 
 /**
  * 发送消息参数
  */
 export interface SendMessageParams {
-  serverName: string
+  serverName?: string
+  sessionId?: string
   channel: string
   world?: string
   content: string

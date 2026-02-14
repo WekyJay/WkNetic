@@ -1,7 +1,6 @@
 package cn.wekyjay.wknetic.admin.system.service.impl;
 
 import cn.wekyjay.wknetic.common.domain.SysUser;
-import cn.wekyjay.wknetic.common.enums.UserRole;
 import cn.wekyjay.wknetic.common.mapper.SysUserMapper;
 import cn.wekyjay.wknetic.admin.system.domain.SysRole;
 import cn.wekyjay.wknetic.admin.system.service.ISysRoleService;

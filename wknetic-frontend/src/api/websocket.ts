@@ -296,7 +296,8 @@ class WebSocketService {
     channel: string,
     world: string,
     content: string,
-    replyTo?: string
+    replyTo?: string,
+    sessionId?: string
   ): boolean {
     if (!this.client || !this.client.connected) {
       console.error('WebSocket not connected')
@@ -309,11 +310,46 @@ class WebSocketService {
       world,
       content,
       replyTo,
+      sessionId,
       timestamp: Date.now()
     }
 
     this.client.publish({
       destination: `/app/chat/${serverName}/send`,
+      body: JSON.stringify(message)
+    })
+
+    console.info('Sent chat message via WebSocket:', message)
+
+    return true
+  }
+
+  /**
+   * 发送聊天消息（使用sessionId）
+   */
+  public sendChatMessageWithSessionId(
+    sessionId: string,
+    channel: string,
+    world: string,
+    content: string,
+    replyTo?: string
+  ): boolean {
+    if (!this.client || !this.client.connected) {
+      console.error('WebSocket not connected')
+      return false
+    }
+
+    const message = {
+      sessionId,
+      channel,
+      world,
+      content,
+      replyTo,
+      timestamp: Date.now()
+    }
+
+    this.client.publish({
+      destination: `/app/chat/${sessionId}/send`,
       body: JSON.stringify(message)
     })
 

@@ -281,6 +281,7 @@ public class GamePacketHandler extends SimpleChannelInboundHandler<String> {
             return "";
         }
         String cleanUuid = uuid.replace("-", "").toLowerCase();
+        log.info("获取Minecraft头像URL，原始UUID: {}, 清理后UUID: {}", uuid, cleanUuid);
         return "https://mc-heads.net/avatar/" + cleanUuid;
     }
 

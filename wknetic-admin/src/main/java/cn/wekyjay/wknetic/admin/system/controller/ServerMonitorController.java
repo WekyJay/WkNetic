@@ -50,6 +50,7 @@ public class ServerMonitorController {
               
             stringRedisTemplate.convertAndSend(ADMIN_COMMAND_TOPIC, command.toJsonString());
 
+            log.info("Command: {}]", command.toJsonString());
             log.info("发送管理命令: {} [sessionId: {}]", request.getCommandType(), request.getSessionId());
             return Result.success();
         } catch (Exception e) {

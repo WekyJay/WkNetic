@@ -43,6 +43,7 @@ public class GameChatController {
     @Operation(summary = "发送聊天消息")
     public Result<Void> sendMessage(@Validated @RequestBody SendChatMessageDTO dto) {
         Long userId = SecurityUtils.getCurrentUserId();
+        log.info("用户 {} 发送聊天消息: {}", userId, dto);
         boolean success = gameChatService.sendChatMessage(dto, userId);
         
         if (success) {

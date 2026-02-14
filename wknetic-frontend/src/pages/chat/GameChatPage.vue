@@ -27,20 +27,20 @@
         <!-- 服务器选择 -->
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-600 dark:text-gray-400">{{ $t('gameChat.server') }}:</span>
-          <el-select
-            v-model="selectedServer"
-            :placeholder="$t('gameChat.selectServer')"
-            size="small"
-            style="width: 150px"
-            @change="onServerChange"
-          >
-            <el-option
-              v-for="server in servers"
-              :key="server.id"
-              :label="server.name"
-              :value="server.id"
-            />
-          </el-select>
+        <el-select
+          v-model="selectedServerId"
+          :placeholder="$t('gameChat.selectServer')"
+          size="small"
+          style="width: 150px"
+          @change="onServerChange"
+        >
+          <el-option
+            v-for="server in servers"
+            :key="server.id"
+            :label="server.name"
+            :value="server.id"
+          />
+        </el-select>
         </div>
         
         <!-- 频道选择 -->
@@ -111,7 +111,7 @@
               <!-- 玩家头像 -->
               <div class="flex-shrink-0">
                 <UserAvatar
-                  :src="getMinecraftAvatarUrl(message.player.uuid)"
+                  :src="message.player.avatar"
                   :username="message.player.username"
                   size="md"
                 />
@@ -285,7 +285,7 @@ const gameChatStore = useGameChatStore()
 const messagesContainer = ref<HTMLElement>()
 const messageInput = ref('')
 const replyingTo = ref('')
-const selectedServer = ref('')
+const selectedServerId = ref('')
 const selectedChannel = ref<'global' | 'world' | 'party' | 'whisper' | 'staff'>('global')
 const selectedWorld = ref('all')
 const showWorldSelector = computed(() => selectedChannel.value === 'world')
@@ -315,6 +315,12 @@ const hasMinecraftAccount = computed(() => authStore.user?.minecraftUsername != 
 const canReply = computed(() => gameChatStore.hasPermissionToSpeak)
 const canReport = computed(() => gameChatStore.hasPermissionToView)
 const isWebSocketConnected = computed(() => gameChatStore.isWebSocketConnected)
+
+// 获取选中的服务器名称
+const selectedServerName = computed(() => {
+  const server = servers.value.find(s => s.id === selectedServerId.value)
+  return server?.name || ''
+})
 
 const inputPlaceholder = computed(() => {
   if (!isAuthenticated.value) return t('gameChat.placeholders.loginRequired')
@@ -405,7 +411,10 @@ const initializeData = async () => {
   
   // 初始化选择第一个服务器
   if (servers.value.length > 0) {
-    selectedServer.value = servers.value[0].name
+    selectedServerId.value = servers.value[0].id
+    const sessionId = servers.value[0].id
+    await gameChatStore.switchServer(servers.value[0].name, sessionId)
+    console.info(`默认选择服务器: ${servers.value[0].name} (sessionId: ${sessionId})`)
   } else {
     // 如果没有服务器，显示警告
     ElMessage.warning('未找到可用服务器')
@@ -431,8 +440,18 @@ const whisperTo = (username: string) => {
 }
 
 const onServerChange = async () => {
-  if (!selectedServer.value) return
-  await gameChatStore.switchServer(selectedServer.value)
+  if (!selectedServerId.value) return
+  
+  // 获取选中的服务器信息
+  const selectedServer = servers.value.find(s => s.id === selectedServerId.value)
+  if (!selectedServer) return
+  
+  // 获取服务器会话ID，优先使用sessionId字段，否则使用id作为备用
+  const sessionId = selectedServer.id
+  console.info(`切换服务器: ${selectedServer.name} (sessionId: ${sessionId})`)
+  
+  // 传递服务器名称和sessionId
+  await gameChatStore.switchServer(selectedServer.name, sessionId)
   nextTick(() => {
     scrollToBottom()
   })
@@ -538,10 +557,10 @@ onMounted(async () => {
 
   // 检查是否有可用的服务器数据
   if (servers.value.length > 0) {
-    selectedServer.value = servers.value[0].name
+    selectedServerId.value = servers.value[0].id
     
     // 加载消息
-    await gameChatStore.loadChatHistory(selectedServer.value, selectedChannel.value, selectedWorld.value)
+    await gameChatStore.loadChatHistory(selectedServerName.value, selectedChannel.value, selectedWorld.value)
     
     // 滚动到底部
     nextTick(() => {

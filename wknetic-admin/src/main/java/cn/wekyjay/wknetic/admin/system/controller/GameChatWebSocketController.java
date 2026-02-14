@@ -32,6 +32,7 @@ public class GameChatWebSocketController {
                             @Payload SendChatMessageDTO dto,
                             Principal principal) {
         try {
+            log.info("收到WebSocket聊天消息数据: {}", dto);
             Long userId = SecurityUtils.getCurrentUserId();
             if (userId == null && principal != null) {
                 // STOMP 会话里用户信息存在于 Principal，优先尝试获取
